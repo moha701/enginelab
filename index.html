@@ -485,6 +485,14 @@ td.empty{text-align:center;color:var(--dim);font-family:var(--f-body);padding:20
 }
 @media (max-width:400px){.byline{grid-template-columns:minmax(0,1fr)}.byline .ig{justify-self:start}}
 
+/* sound toggle on the lab stage */
+.stage-snd{position:absolute;bottom:12px;inset-inline-end:12px;z-index:2;background:rgba(10,13,17,.86);backdrop-filter:blur(6px);min-height:38px;padding:6px 12px}
+.stage-snd[aria-pressed=true] svg{animation:sndPulse 1.4s ease-in-out infinite}
+@keyframes sndPulse{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.stage-snd[aria-pressed=true] svg{animation:none}}
+@media (max-width:560px){.stage-snd{bottom:8px;inset-inline-end:8px;min-height:36px;padding:5px 10px;font-size:13px}}
+.foot-snd{font-size:12.5px;opacity:.85;max-width:720px}
+
 </style>
 </head>
 <body>
@@ -558,7 +566,7 @@ td.empty{text-align:center;color:var(--dim);font-family:var(--f-body);padding:20
         <button type="button" id="btnStep" class="cbtn"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 5 L15 12 L6 19 Z" fill="currentColor"/><rect x="16" y="5" width="3" height="14" rx="1" fill="currentColor"/></svg><span data-i="ui.step">Step</span></button>
         <div class="spd"><span class="lbl" data-i="ui.speed">Slow motion</span><div class="speeds" id="speeds" role="group"></div><small id="spdTxt"></small></div>
         <button type="button" id="btnLabels" class="cbtn tog" aria-pressed="true"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 12 L11 4 H20 V13 L12 21 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="15.5" cy="8.5" r="1.6" fill="currentColor"/></svg><span data-i="ui.labels">Part names</span></button>
-        <button type="button" id="btnSound" class="cbtn tog" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9 H8 L13 5 V19 L8 15 H4 Z" fill="currentColor"/><path d="M16 9 Q18.5 12 16 15 M18.5 6.5 Q23 12 18.5 17.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span data-i="ui.sound">Sound</span></button>
+        <button type="button" id="btnSound" class="cbtn tog snd-tog" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9 H8 L13 5 V19 L8 15 H4 Z" fill="currentColor"/><path d="M16 9 Q18.5 12 16 15 M18.5 6.5 Q23 12 18.5 17.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span data-i="ui.sound">Sound</span></button>
       </div>
       <ol class="parts-list" id="partsList" hidden></ol>
       <div class="card phase-card">
@@ -623,7 +631,8 @@ td.empty{text-align:center;color:var(--dim);font-family:var(--f-body);padding:20
       <div class="stage-sticky lab-stage">
         <div class="stage"><canvas id="labCv" role="img" aria-label="Engine on the test stand"></canvas>
           <div class="phase-pill" id="labState" aria-live="polite"><i></i><span></span></div>
-          <div class="labclock"><span data-i="lab.clockNote"></span></div></div>
+          <div class="labclock"><span data-i="lab.clockNote"></span></div>
+          <button type="button" id="btnLabSound" class="cbtn tog snd-tog stage-snd" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9 H8 L13 5 V19 L8 15 H4 Z" fill="currentColor"/><path d="M16 9 Q18.5 12 16 15 M18.5 6.5 Q23 12 18.5 17.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span data-i="ui.sound">Sound</span></button></div>
         <div class="labmsg" id="labMsg" aria-live="polite"></div>
       </div>
       <div class="panels">
@@ -706,7 +715,7 @@ td.empty{text-align:center;color:var(--dim);font-family:var(--f-body);padding:20
 <footer class="foot wrap">
   <div class="credit"><img class="uni lg" width="696" height="176" data-alt="credit.uni" alt="University of Technology and Applied Sciences – Ibra" decoding="async"><i class="by-sep" aria-hidden="true"></i><div class="cr-who"><span data-i="credit.by">Created by</span> <b data-i="credit.name">MOHAMMED HAMED AL‑SHABIBI</b></div></div>
   <a class="ig big" href="https://www.instagram.com/mhmd8p2/" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor"/></svg><span data-i="credit.follow">Follow on Instagram</span><b dir="ltr">@mhmd8p2</b></a>
-  <p data-i="foot.a"></p><p data-i="foot.b"></p>
+  <p data-i="foot.a"></p><p data-i="foot.b"></p><p class="foot-snd" data-i="foot.c"></p>
 </footer>
 <script>
 'use strict';
@@ -725,7 +734,7 @@ basics:{title:'Engine words, made simple',sub:'You will see these words in the r
  ['Compression ratio','How much the air is squeezed: the full cylinder volume divided by the small space left at the top.',':1'],['Fuel consumption','How many kilograms of fuel the engine burns each hour.','kg/h'],
  ['Thermal power','Fuel use × calorific value ÷ 3600: the fuel energy going in every second.','kW'],['Thrust','The push from a jet or rocket. 1 kN is about the weight of 102 kg.','kN'],
  ['Specific impulse','How many seconds 1 kg of propellant can push with the force of 1 kg. Higher means more efficient.','s'],['Displacement','The total volume all the pistons sweep in one stroke.','cm³']]},
-foot:{a:'EngineLab is for learning. The models use real engineering equations with simplified assumptions, so treat the numbers as realistic estimates, not manufacturer data.',b:'Tip: open any engine and press Record reading to build your own test table, just like in the lab.'},
+foot:{a:'EngineLab is for learning. The models use real engineering equations with simplified assumptions, so treat the numbers as realistic estimates, not manufacturer data.',b:'Tip: open any engine and press Record reading to build your own test table, just like in the lab.',c:'Engine sounds are not recordings: they are generated live from each engine’s real firing order, speed, load and exhaust pipe acoustics (physically-informed synthesis, after Baldan et al., 2015).'},
 ui:{back:'All engines',play:'Play',pause:'Pause',step:'Step',speed:'Slow motion',slower:'{n}× slower',labels:'Part names',sound:'Sound',frontView:'Front view',whatIs:'What is',
  settings:'Your settings',settingsHint:'Change any value. The engine and results update instantly.',presets:'Quick start',advanced:'Advanced settings',reset:'Reset',results:'Results',more:'More details',
  ok:'Running well. Everything is inside safe limits.',charts:'Graphs',bench:'Test bench',benchHint:'Record readings like a real lab test, or press Auto test to run the engine at six different {x} values.',
@@ -897,7 +906,7 @@ basics:{title:'مصطلحات المحركات بشكل مبسّط',sub:'ستر�
  ['نسبة الانضغاط','مقدار ضغط الهواء: حجم الأسطوانة الكامل مقسومًا على المساحة الصغيرة المتبقية في الأعلى.',':1'],['استهلاك الوقود','عدد كيلوغرامات الوقود التي يحرقها المحرك كل ساعة.','kg/h'],
  ['القدرة الحرارية','استهلاك الوقود × القيمة الحرارية ÷ 3600: طاقة الوقود الداخلة كل ثانية.','kW'],['الدفع','قوة الدفع من المحرك النفاث أو الصاروخ. 1 كيلونيوتن يساوي تقريبًا وزن 102 كغ.','kN'],
  ['الدفع النوعي','عدد الثواني التي يستطيع فيها 1 كغ من الوقود الدفع بقوة 1 كغ. كلما زاد كان أكفأ.','s'],['سعة المحرك','الحجم الكلي الذي تكنسه جميع المكابس في شوط واحد.','cm³']]},
-foot:{a:'مختبر المحركات للتعلّم. تستخدم النماذج معادلات هندسية حقيقية مع افتراضات مبسّطة، لذا اعتبر الأرقام تقديرات واقعية وليست بيانات المصنّع.',b:'نصيحة: افتح أي محرك واضغط «سجّل قراءة» لتبني جدول اختبار خاصًا بك، تمامًا كما في المختبر.'},
+foot:{a:'مختبر المحركات للتعلّم. تستخدم النماذج معادلات هندسية حقيقية مع افتراضات مبسّطة، لذا اعتبر الأرقام تقديرات واقعية وليست بيانات المصنّع.',b:'نصيحة: افتح أي محرك واضغط «سجّل قراءة» لتبني جدول اختبار خاصًا بك، تمامًا كما في المختبر.',c:'أصوات المحركات ليست تسجيلات: تُولَّد مباشرةً من ترتيب الاشتعال الحقيقي لكل محرك وسرعته وحمله وصوتيات أنبوب العادم (توليف صوتي مبني على الفيزياء، وفق Baldan وآخرين، 2015).'},
 ui:{back:'كل المحركات',play:'تشغيل',pause:'إيقاف مؤقت',step:'خطوة',speed:'الحركة البطيئة',slower:'أبطأ ×{n}',labels:'أسماء الأجزاء',sound:'الصوت',frontView:'منظر أمامي',whatIs:'ما هو',
  settings:'إعداداتك',settingsHint:'غيّر أي قيمة. يتحدّث المحرك والنتائج فورًا.',presets:'بداية سريعة',advanced:'إعدادات متقدمة',reset:'إعادة ضبط',results:'النتائج',more:'تفاصيل أكثر',
  ok:'يعمل بشكل جيد. كل شيء ضمن الحدود الآمنة.',charts:'الرسوم البيانية',bench:'منصة الاختبار',benchHint:'سجّل القراءات كما في اختبار مختبر حقيقي، أو اضغط «اختبار تلقائي» لتشغيل المحرك عند ست قيم مختلفة من {x}.',
@@ -1069,7 +1078,7 @@ basics:{title:'इंजन के शब्द, आसान भाषा म�
  ['संपीड़न अनुपात','हवा को कितना दबाया जाता है: पूरे सिलेंडर का आयतन, ऊपर बची छोटी जगह से भाग।',':1'],['ईंधन खपत','इंजन हर घंटे कितने किलोग्राम ईंधन जलाता है।','kg/h'],
  ['तापीय शक्ति','ईंधन खपत × कैलोरिफ़िक मान ÷ 3600: हर सेकंड अंदर जाने वाली ईंधन ऊर्जा।','kW'],['थ्रस्ट','जेट या रॉकेट का धक्का। 1 kN लगभग 102 किलो के वज़न जितना है।','kN'],
  ['विशिष्ट आवेग','1 किलो प्रणोदक कितने सेकंड तक 1 किलो के बल से धक्का दे सकता है। ज़्यादा मतलब अधिक दक्ष।','s'],['विस्थापन','सभी पिस्टन एक स्ट्रोक में जितना कुल आयतन तय करते हैं।','cm³']]},
-foot:{a:'इंजन लैब सीखने के लिए है। मॉडल असली इंजीनियरिंग समीकरणों और सरल मान्यताओं पर आधारित हैं, इसलिए संख्याओं को यथार्थवादी अनुमान मानें, निर्माता का डेटा नहीं।',b:'सुझाव: कोई भी इंजन खोलें और "रीडिंग दर्ज करें" दबाकर अपनी परीक्षण तालिका बनाएँ, बिल्कुल लैब की तरह।'},
+foot:{a:'इंजन लैब सीखने के लिए है। मॉडल असली इंजीनियरिंग समीकरणों और सरल मान्यताओं पर आधारित हैं, इसलिए संख्याओं को यथार्थवादी अनुमान मानें, निर्माता का डेटा नहीं।',b:'सुझाव: कोई भी इंजन खोलें और "रीडिंग दर्ज करें" दबाकर अपनी परीक्षण तालिका बनाएँ, बिल्कुल लैब की तरह।',c:'इंजन की आवाज़ें रिकॉर्डिंग नहीं हैं: ये हर इंजन के असली फ़ायरिंग क्रम, गति, लोड और एग्ज़ॉस्ट पाइप की ध्वनिकी से लाइव बनाई जाती हैं (भौतिकी-आधारित संश्लेषण, Baldan et al., 2015 के आधार पर)।'},
 ui:{back:'सभी इंजन',play:'चलाएँ',pause:'रोकें',step:'एक कदम',speed:'धीमी गति',slower:'{n}× धीमा',labels:'पुर्ज़ों के नाम',sound:'आवाज़',frontView:'सामने से दृश्य',whatIs:'क्या है',
  settings:'आपकी सेटिंग',settingsHint:'कोई भी मान बदलें। इंजन और नतीजे तुरंत बदल जाते हैं।',presets:'जल्दी शुरू करें',advanced:'उन्नत सेटिंग',reset:'रीसेट',results:'नतीजे',more:'और विवरण',
  ok:'ठीक चल रहा है। सब कुछ सुरक्षित सीमा में है।',charts:'ग्राफ़',bench:'टेस्ट बेंच',benchHint:'असली लैब परीक्षण की तरह रीडिंग दर्ज करें, या "ऑटो टेस्ट" दबाकर इंजन को छह अलग {x} मानों पर चलाएँ।',
@@ -2881,6 +2890,249 @@ function labBind(){
 }
 
 'use strict';
+/* ================= SOUND: real-time, physically-informed engine synthesis =================
+   No recordings: every sound is generated live from the engine model (firing order, crank angle,
+   speed, load, exhaust pipe acoustics), after the pulse + waveguide approach of
+   Baldan, Lachambre, Delle Monache & Boussard (2015) "Physically informed car engine sound synthesis".
+   EngSynth is self-contained so it can run inside an AudioWorklet (or a ScriptProcessor fallback). */
+const EngSynth=class{
+  constructor(sr){this.sr=sr;this.x=0x2545F491;this.Q=null;this.pend=null;this.g=0;this.s=null;this.aG=1-Math.exp(-1/(.07*sr))}
+  set(m){if(!this.Q||m.id!==this.Q.id){this.pend=m}else{Object.assign(this.Q,m);this.pend=null}}
+  rnd(){let x=this.x;x^=x<<13;x^=x>>>17;x^=x<<5;this.x=x;return(x>>>0)/2147483648-1}
+  gs(){return(this.rnd()+this.rnd()+this.rnd())*.577}
+  /* ---- tiny DSP kit ---- */
+  bq(type,f,q,gain){const o={z1:0,z2:0,b0:1,b1:0,b2:0,a1:0,a2:0};this.bqs(o,type,f,q,gain);return o}
+  bqs(o,type,f,q,gain){const w=2*Math.PI*Math.min(f,this.sr*.45)/this.sr,c=Math.cos(w),sn=Math.sin(w),al=sn/(2*(q||.707));let b0,b1,b2,a0,a1,a2;
+    if(type==='lp'){b0=(1-c)/2;b1=1-c;b2=b0;a0=1+al;a1=-2*c;a2=1-al}
+    else if(type==='hp'){b0=(1+c)/2;b1=-(1+c);b2=b0;a0=1+al;a1=-2*c;a2=1-al}
+    else if(type==='bp'){b0=al;b1=0;b2=-al;a0=1+al;a1=-2*c;a2=1-al}
+    else{const A=Math.pow(10,(gain||0)/40);b0=1+al*A;b1=-2*c;b2=1-al*A;a0=1+al/A;a1=-2*c;a2=1-al/A}
+    o.b0=b0/a0;o.b1=b1/a0;o.b2=b2/a0;o.a1=a1/a0;o.a2=a2/a0}
+  br(o,x){const y=o.b0*x+o.z1;o.z1=o.b1*x-o.a1*y+o.z2;o.z2=o.b2*x-o.a2*y;return y}
+  wg(len,g,damp){const D=Math.max(2,Math.round(2*len/520*this.sr));return{b:new Float32Array(D+4),D,w:0,g,lp:0,a:damp||.4}} // pipe: round trip at ~520 m/s (hot gas)
+  wr(o,x){const r=o.b[o.w];o.lp+=o.a*(r-o.lp);const y=x+o.g*o.lp;o.b[o.w]=y;o.w=(o.w+1)%o.D;return y}
+  /* ---- (re)build state for the active profile ---- */
+  build(){const Q=this.Q,sr=this.sr,a=t=>1-Math.exp(-1/(t*sr));
+    const s={th:0,rpm:Q.rpm||0,ld:Q.load||0,a1:Q.a||0,a2:Q.b||0,aS:a(.12),aJ:a(1.2),aT:a(.7),nl:0,nl2:0,nlR:0,dcL:[0,0],dcR:[0,0],cnt:0,ph:[0,0,0,0,0,0],env:0,env2:0,clk:0,kn:0,tw:0,tf:2000,mod:0,mod2:0,tm:0,pur:0,purT:4};
+    this.s=s;
+    if(Q.kind==='pist'){
+      s.F=Q.fires.map(f=>({a:f[0],b:f[1]||0,off:f[2]||0,od:0,r:((-f[0])%Q.cycle+Q.cycle)%Q.cycle,amp:0,jit:0}));
+      const N=1536,XM=10,at=.32,tab=new Float32Array(N+1);for(let i=0;i<=N;i++){const x=i/N*XM;let v=x<at?(x/at)*(x/at)*(3-2*x/at):Math.exp(-(x-at)/1.15);if(x>XM*.7)v*=.5+.5*Math.cos(Math.PI*(x-XM*.7)/(XM*.3));tab[i]=v}s.tab=tab;s.XM=XM;
+      s.h=[this.wg(Q.hl,Q.hg,.45),this.wg(Q.hl*(Q.hl2||1),Q.hg,.45)];s.t=[this.wg(Q.tl,Q.tg,.3),this.wg(Q.tl*1.07,Q.tg,.3)];
+      s.mf=[this.bq('lp',Q.lp),this.bq('lp',Q.lp),this.bq('lp',Q.lp),this.bq('lp',Q.lp)];
+      s.body=[this.bq('pk',Q.bf||140,.8,(Q.bg||4)*.6),this.bq('pk',Q.bf||140,.8,(Q.bg||4)*.6)];s.pres=[this.bq('pk',900,.9,4),this.bq('pk',900,.9,4)];
+      s.inb=this.bq('bp',650,.9);s.ckh=this.bq('hp',2600,.7);s.k1=this.bq('bp',1750,7);s.k2=this.bq('bp',3300,9);s.tb=this.bq('bp',3000,3);
+      s.evo=Q.evo;s.mA=Q.mA;s.clkD=Math.exp(-1/(.0011*sr));s.knD=Math.exp(-1/(.0016*sr));
+    }else if(Q.kind==='jet'){
+      const N=2048,T1=new Float32Array(N+1),T2=new Float32Array(N+1);let seed=7;const rr=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+      const amp=[],phs=[];for(let m=1;m<=32;m++){amp.push((.35+.65*rr())/Math.sqrt(m));phs.push(rr()*6.283)}
+      for(let i=0;i<=N;i++){const x=i/N*6.283185;let a1=0,a2=0;for(let h=1;h<=3;h++)a1+=Math.sin(22*h*x+h)/Math.pow(h,1.3);for(let m=1;m<=32;m++)a2+=amp[m-1]*Math.sin(m*x+phs[m-1]);T1[i]=a1*.6;T2[i]=a2*.35}
+      s.T1=T1;s.T2=T2;s.jl=[this.bq('lp',400,.6),this.bq('lp',400,.6)];s.jb=[this.bq('bp',900,.6),this.bq('bp',900,.6)];s.rl=this.bq('lp',70,.7);s.wl=this.bq('lp',9000,.7);s.aS=a(1.4);
+    }else if(Q.kind==='rkt'){
+      s.r1=[this.bq('lp',170,.7),this.bq('lp',170,.7)];s.r2=[this.bq('bp',520,.55),this.bq('bp',520,.55)];s.r3=[this.bq('hp',2600,.7),this.bq('hp',2600,.7)];s.ch=this.bq('hp',700,.7);s.cl=this.bq('lp',7000,.7);s.ck=0;s.ckE=0;s.ckD=Math.exp(-1/(.0005*sr));s.aS=a(.5);
+    }else if(Q.kind==='stm'){
+      s.th0=0;s.c1=this.bq('bp',380,.8);s.c2=this.bq('bp',1500,1.1);s.cl=this.bq('lp',2600,.7);s.m1=this.bq('bp',940,28);s.m2=this.bq('bp',2360,32);s.hs=this.bq('hp',3200,.7);s.prev=1e9;s.prev2=1e9;s.att=a(.004);
+    }else if(Q.kind==='stir'){
+      s.w1=this.bq('bp',520,.9);s.fl=this.bq('lp',380,.7);s.ckh=this.bq('hp',1800,.7);s.prev=1e9;s.clkD=Math.exp(-1/(.002*sr));
+    }else if(Q.kind==='ev'){
+      s.wl=this.bq('lp',2200,.7);s.sm=this.bq('lp',7000,.7);s.aS=a(.25);
+    }else if(Q.kind==='fc'){
+      s.ab=this.bq('bp',1100,.6);s.ph2=this.bq('hp',2500,.7);s.sm=this.bq('lp',6500,.7);s.purT=3;
+    }
+  }
+  /* ---- per-kind voices; write into L/R ---- */
+  pist(L,R,n){const Q=this.Q,s=this.s,sr=this.sr,cyc=Q.cycle,F=s.F,nf=F.length,tab=s.tab,evo=s.evo,mA=s.mA,TW=2*Math.PI/sr;
+    const rmax=Q.rmax||7000,sp=Q.sp||0,gl=.5+sp*.5,gr=.5-sp*.5,fire=Q.fire==null?1:Q.fire;
+    // block-rate updates
+    const rf=Math.min(1.3,s.rpm/rmax),ld=s.ld,raE=Math.max(2,Math.min(Q.ra,(Q.rt||1.1)*Math.max(60,s.rpm)*.006)),k2=(tab.length-1)/s.XM/raE,pw=s.XM*raE;for(const f of F){const od=f.off*s.rpm*.006;f.r-=od-f.od;f.od=od;if(f.r<0)f.r+=cyc}
+    const fc=Q.lp*1.55*(.62+.42*Math.min(ld,1.4))*(.8+.35*rf);for(const o of s.mf)this.bqs(o,'lp',fc,.6);
+    this.bqs(s.inb,'bp',520+380*rf,.9);
+    const tgt=Q.turbo?1600+7200*Math.min(1,Math.max(0,ld-.25))*Math.min(1,.35+rf):0;
+    const rough=(Q.rough||.06)*(1+1.6*Math.max(0,1-rf/.3))*(1.4-.4*Math.min(1,ld)),mis=(Q.mis||0)*(rf<.3?1:.3);
+    const base=.28+.72*Math.min(ld,1.7),inA=(Q.intake||0)*ld*ld*rf*rf,mech=(Q.mech||0)*(.45+.55*rf),kA=(Q.knock||0)*(1.2-.55*Math.min(ld,1)),blA=(Q.blower||0)*.045*(.35+.65*Math.min(ld,1)),moA=(Q.motor||0)*.05;
+    for(let i=0;i<n;i++){
+      s.rpm+=(Q.rpm-s.rpm)*s.aS;s.ld+=(Q.load-s.ld)*s.aS;
+      const dd=s.rpm*6/sr;let th=s.th+dd;if(th>=cyc)th-=cyc;s.th=th;
+      const z=this.rnd();s.nl+=(z-s.nl)*.5;const tn=s.nl,tq=1+(Q.turb+.15)*tn*1.6;
+      let e0=0,e1=0;
+      for(let j=0;j<nf;j++){const f=F[j];const p0=f.r;let r=p0+dd;
+        if(r>=cyc){ // new cycle for this cylinder: cycle-to-cycle variation, timing jitter, misfire, combustion knock
+          r-=cyc;let A=fire*base*(1+rough*this.gs());if(fire&&mis&&this.rnd()>1-2*mis)A*=.12;f.amp=A+(1-fire)*.1;
+          const nj=this.gs()*(Q.jit||1.2);r-=nj-f.jit;f.jit=nj;if(r<0)r=0;
+          if(fire&&kA)s.kn=Math.max(s.kn,.7+.3*this.rnd())}
+        else if(mA&&p0<mA&&r>=mA)s.clk=Math.max(s.clk,.6+.4*this.rnd());
+        f.r=r;const q=r-evo;if(q>=0&&q<pw){const v=f.amp*tab[(q*k2)|0]*tq;if(f.b)e1+=v;else e0+=v}}
+      const y0=this.wr(s.h[0],e0),y1=this.wr(s.h[1],e1);
+      let l=this.wr(s.t[0],y0*gl+y1*gr),r=this.wr(s.t[1],y0*gr+y1*gl);
+      l=this.br(s.mf[2],this.br(s.mf[0],l));r=this.br(s.mf[3],this.br(s.mf[1],r));l=this.br(s.pres[0],this.br(s.body[0],l));r=this.br(s.pres[1],this.br(s.body[1],r));
+      
+      let c=0;
+      if(inA)c+=this.br(s.inb,z)*inA*(.55+.45*Math.cos(6.283185*th*nf/cyc));
+      if(mech&&s.clk>1e-4){c+=this.br(s.ckh,this.rnd())*s.clk*mech;s.clk*=s.clkD}
+      if(kA&&s.kn>1e-4){const kx=this.rnd()*s.kn;c+=(this.br(s.k1,kx)+.7*this.br(s.k2,kx))*kA;s.kn*=s.knD}
+      if(Q.turbo){s.tf+=(Math.max(1200,tgt)-s.tf)*s.aT;s.tw+=((tgt?1:0)*Math.min(1,Math.max(0,ld-.3)/.7)*(.3+.7*Math.min(1,rf))-s.tw)*s.aT;
+        if(s.tw>1e-3){s.ph[0]+=s.tf*TW;if(s.ph[0]>6.283)s.ph[0]-=6.283185;if((s.cnt&63)===0)this.bqs(s.tb,'bp',s.tf*.55,2.5);c+=(Math.sin(s.ph[0])*.04+this.br(s.tb,z)*.05)*s.tw*Q.turbo}}
+      if(blA){const fb=s.rpm/60*Q.bl;s.ph[1]+=fb*TW;if(s.ph[1]>6.283)s.ph[1]-=6.283185;c+=(Math.sin(s.ph[1])+.35*Math.sin(2*s.ph[1]))*blA}
+      if(moA){const fm=s.rpm/60*4;s.ph[2]+=fm*TW;if(s.ph[2]>6.283)s.ph[2]-=6.283185;c+=(Math.sin(s.ph[2])*.6+Math.sin(3*s.ph[2])*.25)*moA+this.br(s.ckh,z)*moA*.15}
+      s.cnt++;L[i]=l+c;R[i]=r+c}}
+  jet(L,R,n){const Q=this.Q,s=this.s,sr=this.sr,T1=s.T1,T2=s.T2,N=T1.length-1;
+    const sp=s.a1,tip=Q.tip||0,fa=.07*Math.pow(sp,1.4),ba=.075*Math.min(1,Math.max(0,(tip-.95)/.35)),ja=.42*Math.min(1.6,Math.pow((Q.v9||300)/480,3)),bya=.16*Math.min(1.5,Math.pow((Q.v19||100)/260,3));
+    const fcJ=220+650*sp;for(const o of s.jl)this.bqs(o,'lp',fcJ,.6);for(const o of s.jb)this.bqs(o,'bp',700+700*sp,.6);
+    for(let i=0;i<n;i++){
+      s.a1+=(Q.a-s.a1)*s.aS;s.rpm+=(Q.rpm*(.3+.7*s.a1)/(.3+.7*Math.max(Q.a,.01))-s.rpm)*s.aS; // spool lag: fan speed follows slowly
+      const f1=s.rpm/60;s.ph[0]+=f1/sr;if(s.ph[0]>=1)s.ph[0]-=1;const x=s.ph[0]*N,k=x|0,fr=x-k;
+      s.mod+=(this.rnd()-s.mod)*.0004;const mo=1+s.mod*3;
+      const t1=T1[k]+(T1[k+1]-T1[k])*fr,t2=T2[k]+(T2[k+1]-T2[k])*fr;
+      s.ph[1]+=f1*3.1*38/sr;if(s.ph[1]>=1)s.ph[1]-=1;const core=Math.sin(s.ph[1]*6.283185)*.01*sp;
+      const tone=this.br(s.wl,(t1*fa*mo+t2*ba)+core);
+      const zl=this.rnd(),zr=this.rnd(),rum=this.br(s.rl,(zl+zr)*.5)*.5*sp;
+      const jl=this.br(s.jl[0],zl)*(ja+bya)*mo+this.br(s.jb[0],zl)*(ja*.35+bya*.6),jr=this.br(s.jl[1],zr)*(ja+bya)*mo+this.br(s.jb[1],zr)*(ja*.35+bya*.6);
+      L[i]=(tone+jl+rum);R[i]=(tone+jr+rum)}}
+  rkt(L,R,n){const Q=this.Q,s=this.s,sr=this.sr;
+    for(let i=0;i<n;i++){s.a1+=(Q.a-s.a1)*s.aS;const lv=s.a1;
+      s.mod+=(this.rnd()-s.mod)*.0012;const mo=1+s.mod*4;
+      const zl=this.rnd(),zr=this.rnd();
+      let l=this.br(s.r1[0],zl)*1.1+this.br(s.r2[0],zl)*.55+this.br(s.r3[0],zl)*.1,r=this.br(s.r1[1],zr)*1.1+this.br(s.r2[1],zr)*.55+this.br(s.r3[1],zr)*.1;
+      // crackle: random shock events with heavy-tailed strength (Poisson process)
+      if(this.rnd()*.5+.5<(Q.rate||120)*lv/sr){const g=this.gs();s.ck=g*g*g*1.8;s.ckE=1}
+      let ck=0;if(s.ckE>1e-3){ck=this.br(s.cl,this.br(s.ch,s.ck*s.ckE));s.ckE*=s.ckD}
+      s.ph[0]+=(2600+14*(Q.b||100))/sr;if(s.ph[0]>=1)s.ph[0]-=1;const pump=Math.sin(s.ph[0]*6.283185)*.006;
+      const sep=(Q.sep||0)*this.rnd()*.15;
+      L[i]=((l*mo+sep)*lv+ck*lv*.9+pump*lv);R[i]=((r*mo+sep)*lv+ck*lv*.8+pump*lv)}}
+  stm(L,R,n){const Q=this.Q,s=this.s,sr=this.sr;const cut=Q.cond?.18:1,iv=60/Math.max(10,Q.rpm)/2,dec=Math.exp(-1/(Math.min(.2,Math.max(.035,iv*.38))*sr));
+    for(let i=0;i<n;i++){s.rpm+=(Q.rpm-s.rpm)*s.aS;s.a1+=(Q.a-s.a1)*s.aS;
+      let th=s.th+s.rpm*6/sr;if(th>=360)th-=360;s.th=th;
+      // two exhaust beats per turn (double-acting), slightly uneven like a real engine
+      const e1=(th-168+360)%360,e2=(th-352+360)%360;
+      if(e1<s.prev){s.env2=Math.max(s.env2,(.9+.15*this.gs())*s.a1)}
+      if(e2<s.prev2){s.env2=Math.max(s.env2,(.78+.15*this.gs())*s.a1)}
+      if(th<s.th0||(s.th0<180&&th>=180))s.clk=1;s.th0=th;
+      s.prev=e1;s.prev2=e2;s.env+=(s.env2-s.env)*s.att;s.env2*=dec;
+      const z=this.rnd(),ch=(this.br(s.c1,z)*1.3+this.br(s.c2,z)*.55)*s.env*cut;
+      const ex=s.clk>1e-3?this.rnd()*s.clk:0;s.clk*=.992;
+      const mech=(this.br(s.m1,ex)+.6*this.br(s.m2,ex))*.6,hiss=this.br(s.hs,this.rnd())*.012*(.4+s.a1);
+      const v=(this.br(s.cl,ch)+mech+hiss);L[i]=v;R[i]=v*.92+hiss*.3}}
+  stir(L,R,n){const Q=this.Q,s=this.s,sr=this.sr;
+    for(let i=0;i<n;i++){s.rpm+=(Q.rpm-s.rpm)*s.aS;s.a1+=(Q.a-s.a1)*s.aS;
+      const f=s.rpm/60;let th=s.th+f/sr;if(th>=1){th-=1;s.clk=1}s.th=th;const w=th*6.283185;
+      const hum=(Math.sin(w)*.5+Math.sin(2*w+.4)*.4+Math.sin(3*w+1)*.3+Math.sin(4*w+.2)*.25+Math.sin(6*w)*.18+Math.sin(8*w+.7)*.12+Math.sin(12*w)*.08)*.12*s.a1;
+      const z=this.rnd(),br=Math.abs(Math.sin(w)),whir=this.br(s.w1,z)*br*br*.5*s.a1*Math.min(1,f/6);
+      s.mod+=(this.rnd()-s.mod)*.002;const fl=this.br(s.fl,this.rnd())*.12*(Q.b||0)*(1+s.mod*5);
+      let ck=0;if(s.clk>1e-3){ck=this.br(s.ckh,this.rnd())*s.clk*.22;s.clk*=s.clkD}
+      const v=(hum+whir+fl+ck);L[i]=v;R[i]=v}}
+  ev(L,R,n){const Q=this.Q,s=this.s,sr=this.sr,TW=1/sr,fade=x=>x<7500?1:x>11000?0:1-(x-7500)/3500;
+    for(let i=0;i<n;i++){s.rpm+=(Q.rpm-s.rpm)*s.aS;s.a1+=(Q.a-s.a1)*s.aS;
+      const rps=s.rpm/60,fe=rps*(Q.pp||4),la=.25+.75*s.a1;
+      const fw=6*fe,fg=rps*21;
+      s.ph[0]+=fw*TW;s.ph[1]+=fg*TW;s.ph[2]+=7800*TW;s.ph[3]+=2*fe*TW;s.ph[4]+=fw*1.004*TW;
+      for(let k=0;k<5;k++)if(s.ph[k]>=1)s.ph[k]-=1;
+      const P=6.283185,low=Math.min(1,rps/12);
+      const whine=(Math.sin(P*s.ph[0])*.5+Math.sin(P*s.ph[4])*.5)*.045*la*fade(fw)*low+Math.sin(2*P*s.ph[0])*.012*la*fade(2*fw)*low;
+      const gear=(Math.sin(P*s.ph[1])*.05+Math.sin(2*P*s.ph[1]+.5)*.016)*la*fade(fg)*Math.min(1,rps/25);
+      const inv=Math.sin(P*s.ph[2]+1.6*Math.sin(P*s.ph[3]))*.006*la*Math.max(0,1-rps/90);
+      const wind=this.br(s.wl,this.rnd())*.13*Math.pow(Math.min(1,s.rpm/18000),2);
+      const v=this.br(s.sm,whine+gear+inv)+wind;L[i]=v;R[i]=v}}
+  fc(L,R,n){const Q=this.Q,s=this.s,sr=this.sr,TW=1/sr;
+    for(let i=0;i<n;i++){s.a1+=(Q.a-s.a1)*s.aS;const a=s.a1,fcmp=1500+4000*a*(.75+.25*(Q.b||2)/2);
+      s.ph[0]+=fcmp*TW;if(s.ph[0]>=1)s.ph[0]-=1;s.ph[1]+=96*TW;if(s.ph[1]>=1)s.ph[1]-=1;const P=6.283185;
+      const comp=(Math.sin(P*s.ph[0])+.35*Math.sin(2*P*s.ph[0]))*.028*(.25+a),pump=(Math.sin(P*s.ph[1])*.02+Math.sin(2*P*s.ph[1])*.01);
+      const air=this.br(s.ab,this.rnd())*.12*(.2+a)*(Q.c||1.8)/1.8;
+      s.tm+=TW;if(s.tm>s.purT){s.tm=0;s.purT=12-7*a+2*this.rnd();s.pur=1}let pg=0;if(s.pur>1e-3){pg=this.br(s.ph2,this.rnd())*.14*s.pur;s.pur*=Math.exp(-1/(.09*sr))}
+      const v=(this.br(s.sm,comp+air)+pump+pg);L[i]=v;R[i]=v*.95+pg*.05}}
+  render(L,R,n){
+    if(this.pend){if(this.g<2e-4||!this.Q||this.Q.kind==='off'){this.Q=this.pend;this.pend=null;this.g=0;if(this.Q.kind!=='off')this.build()}}
+    const Q=this.Q;if(!Q||Q.kind==='off'||!this[Q.kind]){L.fill(0);R.fill(0);return}
+    this[Q.kind](L,R,n);
+    const tg=this.pend?0:(Q.vol==null?1:Q.vol),s=this.s;
+    for(let i=0;i<n;i++){this.g+=(tg-this.g)*this.aG;
+      // DC blocker + gentle soft limiter
+      let l=L[i],r=R[i];const dl=l-s.dcL[0]+.995*s.dcL[1];s.dcL[0]=l;s.dcL[1]=dl;const dr=r-s.dcR[0]+.995*s.dcR[1];s.dcR[0]=r;s.dcR[1]=dr;
+      const G=this.g*(Q.gain||1);l=dl*G;r=dr*G;L[i]=l/Math.sqrt(1+l*l);R[i]=r/Math.sqrt(1+r*r)}}
+};
+
+/* ---------- per-engine acoustic character (firing order, exhaust layout) ---------- */
+const evenF=(n,cyc,alt)=>Array.from({length:n},(_,i)=>[i*cyc/n,alt?i%2:0,0]);
+const SPROF={
+  petrol:{rt:1.0,fires:[[0,0]],hl:.35,hg:-.6,tl:.75,tg:.32,lp:1500,ra:16,pw:175,turb:.4,mech:.1,intake:.1,rough:.11,jit:2,bf:110,bg:5},
+  inline3:{fires:evenF(3,720),hl:.7,hg:-.6,tl:2.1,tg:.34,lp:1150,ra:18,pw:180,turb:.25,mech:.05,intake:.12,rough:.07,bf:120,bg:5},
+  inline4:{fires:evenF(4,720),hl:.8,hg:-.58,tl:2.2,tg:.32,lp:1250,ra:18,pw:180,turb:.25,mech:.05,intake:.15,rough:.06},
+  inline5:{fires:evenF(5,720),hl:.75,hg:-.62,tl:2.2,tg:.34,lp:1350,ra:18,pw:180,turb:.25,mech:.05,intake:.2,rough:.06,turbo:.5},
+  inline6:{fires:evenF(6,720),hl:.8,hg:-.6,tl:2.3,tg:.32,lp:1500,ra:18,pw:180,turb:.2,mech:.04,intake:.18,rough:.05},
+  atkinson:{fires:evenF(4,720),hl:.8,hg:-.5,tl:2.4,tg:.28,lp:900,ra:22,pw:170,turb:.15,mech:.03,intake:.06,rough:.04},
+  v6:{fires:evenF(6,720,1),hl:.7,hg:-.6,tl:2.3,tg:.32,lp:1400,ra:18,pw:180,turb:.22,mech:.04,intake:.18,rough:.06,sp:.5},
+  v8:{fires:[[0,0],[90,1],[180,1],[270,0],[360,1],[450,0],[540,0],[630,1]],hl:.9,hl2:1.04,hg:-.66,tl:2.3,tg:.38,lp:1050,ra:20,pw:185,turb:.25,mech:.05,intake:.2,rough:.08,sp:.75,bf:95,bg:7}, // cross-plane 1-8-4-3-6-5-7-2: uneven per bank = burble
+  v10:{fires:evenF(10,720,1),hl:.6,hg:-.62,tl:2,tg:.3,lp:2100,ra:15,pw:180,turb:.3,mech:.05,intake:.3,rough:.05,sp:.6},
+  v12:{fires:evenF(12,720,1),hl:.6,hg:-.6,tl:2,tg:.3,lp:2300,ra:15,pw:180,turb:.25,mech:.04,intake:.32,rough:.04,sp:.6},
+  vr6:{fires:evenF(6,720,1),hl:.75,hl2:1.08,hg:-.62,tl:2.3,tg:.33,lp:1450,ra:18,pw:180,turb:.25,mech:.05,intake:.2,rough:.06,sp:.15},
+  w12:{fires:evenF(12,720,1),hl:.7,hg:-.6,tl:2.2,tg:.3,lp:1500,ra:17,pw:180,turb:.2,mech:.04,intake:.2,rough:.04,sp:.55,turbo:.6},
+  w16:{fires:evenF(16,720,1),hl:.65,hg:-.6,tl:2.2,tg:.3,lp:1500,ra:17,pw:180,turb:.2,mech:.03,intake:.18,rough:.04,sp:.55,turbo:1},
+  boxer:{fires:[[0,0,0],[180,0,1.1],[360,1,.35],[540,1,1.5]],hl:.85,hg:-.64,tl:2.2,tg:.36,lp:1150,ra:19,pw:180,turb:.25,mech:.06,intake:.15,rough:.08,sp:.2,bf:100,bg:6}, // unequal-length headers: the boxer rumble
+  flat6:{fires:[[0,0],[120,1],[240,0],[360,1],[480,0],[600,1]],hl:.7,hg:-.62,tl:2,tg:.3,lp:2000,ra:16,pw:180,turb:.3,mech:.07,intake:.3,rough:.05,sp:.45},
+  radial:{rt:1.0,fires:evenF(9,720,1),hl:.45,hg:-.55,tl:.6,tg:.22,lp:2400,ra:15,pw:170,turb:.5,mech:.12,intake:.05,rough:.14,jit:2.5,mis:.02,sp:.3,bf:80,bg:6},
+  diesel:{rt:0.85,hl:.75,hg:-.58,tl:2.2,tg:.32,lp:950,ra:13,pw:180,turb:.3,mech:.03,intake:.1,rough:.05,knock:.11,bf:90,bg:6},
+  two:{rt:0.55,hl:.9,hg:-.85,tl:.5,tg:.25,lp:3000,ra:7,pw:140,evo:95,turb:.6,mech:.02,intake:.05,rough:.09,mA:0},
+  wankel:{rt:0.7,hl:.8,hg:-.72,tl:1.6,tg:.3,lp:2200,ra:9,pw:240,evo:0,turb:.45,mech:0,intake:.15,rough:.07,mis:.06,mA:0,sp:.15},
+  opposed:{rt:0.75,hl:.8,hg:-.6,tl:2,tg:.3,lp:1000,ra:12,pw:140,evo:95,turb:.35,mech:0,intake:.05,rough:.05,knock:.09,mA:0,bl:11.4,blower:1},
+};
+// gain calibration (offline-measured so every engine plays at a similar loudness at its default setting)
+const SGAIN={"petrol":2.094,"v8":0.891,"boxer":0.698,"radial":1.225,"diesel":1.633,"two":0.976,"wankel":1.202,"turbofan":3.216,"rocket":2.32,"steam":6.137,"stirling":1.612,"electric":3.369,"inline3":1.192,"inline4":0.8,"inline5":0.819,"inline6":0.739,"atkinson":0.808,"v6":0.683,"v10":1.977,"v12":0.872,"vr6":0.669,"w12":1.471,"w16":0.843,"flat6":0.758,"opposed":1.367,"fuelcell":3.544};
+const SREF={};
+function sRef(e){if(SREF[e.id]==null){const p={};for(const q of e.params)p[q.k]=q.def;if('throttle' in p)p.throttle=100;if('load' in p)p.load=100;try{SREF[e.id]=e.compute(p,false).imep||1}catch(_){SREF[e.id]=1}}return SREF[e.id]}
+function sndPiston(id,e,p,R,ex){
+  const o=SPROF[id];if(!o)return null;const cycle=e.L===720?720:360;let fires=o.fires;
+  if(!fires){const n=id==='wankel'?(p.rotors||2):(p.cyl||1);fires=evenF(n,360*(cycle/360),n>=6)}
+  const ref=sRef(e),ld=Math.max(0,Math.min(2,(R.imep||0)/ref));
+  const rmax=(e.params.find(q=>q.k==='rpm')||{max:7000}).max;
+  const boost=p.boost||0,turbo=o.turbo!=null?o.turbo*(boost>0||id==='w16'||id==='inline5'||id==='w12'?1:0):(boost>0?Math.min(1,.4+boost*.5):0);
+  return Object.assign({id:id+':'+fires.length,kind:'pist',cycle,fires,evo:o.evo??(cycle===720?130:95),mA:o.mA??(cycle===720?360:0),
+    rpm:p.rpm,load:ld,rmax,gain:(SGAIN[id]||1),vol:1,fire:1},o,{fires,turbo,id:id+':'+fires.length},ex||{})}
+function sndProfile(){
+  const lab=!$('#lab').hidden;
+  if(lab){const L=LAB;
+    const run=L.eng==='run',loaded=run&&L.motor&&L.potT>.3,Rm=run?labModel(L.rpm):{imep:0},e=E.petrol;
+    const p={rpm:L.rpm,throttle:LABX.THR[L.thr]},R={imep:loaded?Rm.imep:sRef(e)*(.14+.06*L.thr)};
+    return sndPiston('petrol',e,p,R,{id:'lab:1',vol:L.rpm<25?0:1,fire:run?1:0,motor:L.motor&&L.potS>.5?1:0,rough:L.choke?.2:.11,mis:L.choke?.05:0,gain:SGAIN.petrol||1})}
+  if(!S.id||!S.playing)return{id:'off',kind:'off',vol:0};
+  const e=E[S.id],p=S.p[e.id],R=S.R[e.id];if(!R)return null;return sndFor(e,p,R)}
+function sndFor(e,p,R){const G=SGAIN[e.id]||1;
+  if(e.cat==='ic')return sndPiston(e.id,e,p,R);
+  if(e.id==='turbofan')return{id:'turbofan',kind:'jet',a:R.s,rpm:R.N1,tip:Math.PI*p.dia*R.N1/60/340,v9:R.V9,v19:R.V19||0,gain:G,vol:1};
+  if(e.id==='rocket'){const F=Math.max(1,R.F||0),lv=Math.max(.12,Math.min(1,(Math.log10(F)-3)/3.2));return{id:'rocket',kind:'rkt',a:F>1?lv:0,b:p.pc,rate:90+240*Math.min(1.4,(R.Ve||2500)/3000),sep:R.Pe<.4*R.Pa?1:0,gain:G,vol:F>1?1:0}}
+  if(e.id==='steam')return{id:'steam',kind:'stm',rpm:p.rpm,a:Math.max(.12,Math.min(1.4,Math.sqrt(Math.max(0,(R.Pex||1e5)-9e4)/1.2e5))),cond:p.cond==='cond'?1:0,gain:G,vol:1};
+  if(e.id==='stirling')return{id:'stirling',kind:'stir',rpm:p.rpm,a:Math.min(1.5,Math.sqrt(p.pm/20)),b:Math.max(.1,Math.min(1,(p.th-150)/700)),gain:G,vol:1};
+  if(e.id==='electric')return{id:'electric',kind:'ev',rpm:p.rpm,a:Math.min(1,Math.abs(R.T||0)/(R.Tmax||300)),pp:p.pp,gain:G,vol:p.rpm>5?1:0};
+  if(e.id==='fuelcell')return{id:'fuelcell',kind:'fc',a:Math.min(1,p.i/1.8),b:p.pres,c:p.stoich,gain:G,vol:1};
+  return{id:'off',kind:'off',vol:0}}
+
+/* ---------- Web Audio plumbing: AudioWorklet (blob) with ScriptProcessor fallback ---------- */
+const SND={ac:null,on:false,send:null,last:'',sus:0};
+function sndIR(ac){const len=Math.round(ac.sampleRate*1.3),b=ac.createBuffer(2,len,ac.sampleRate);for(let c=0;c<2;c++){const d=b.getChannelData(c);let lp=0;for(let i=0;i<len;i++){const t=i/ac.sampleRate,env=Math.exp(-t*4.2)*(t<.012?t/.012:1);lp+=(Math.random()*2-1-lp)*(.25+.5*Math.exp(-t*3));d[i]=lp*env*.5}}return b}
+function sndInit(){
+  const ac=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'playback'});SND.ac=ac;
+  const master=ac.createGain();master.gain.value=.9;const comp=ac.createDynamicsCompressor();comp.threshold.value=-18;comp.knee.value=12;comp.ratio.value=3.5;comp.attack.value=.004;comp.release.value=.25;
+  const hs=ac.createBiquadFilter();hs.type='highshelf';hs.frequency.value=5500;hs.gain.value=-4;
+  const rev=ac.createConvolver();rev.buffer=sndIR(ac);const wet=ac.createGain();wet.gain.value=.13;
+  master.connect(hs);hs.connect(comp);master.connect(rev);rev.connect(wet);wet.connect(comp);comp.connect(ac.destination);SND.master=master;
+  const useSP=()=>{const syn=new EngSynth(ac.sampleRate),sp=ac.createScriptProcessor(2048,1,2);sp.onaudioprocess=ev=>{const ob=ev.outputBuffer;syn.render(ob.getChannelData(0),ob.getChannelData(1),ob.length)};sp.connect(master);SND.node=sp;SND.send=m=>syn.set(m);SND.last=''};
+  try{
+    if(!ac.audioWorklet||!window.Blob||!window.URL)throw 0;
+    const src='const EngSynth='+EngSynth.toString()+';\nclass EP extends AudioWorkletProcessor{constructor(){super();this.s=new EngSynth(sampleRate);this.port.onmessage=e=>this.s.set(e.data)}process(i,o){const c=o[0];if(c&&c[0])this.s.render(c[0],c[1]||new Float32Array(c[0].length),c[0].length);return true}}\nregisterProcessor("eng-synth",EP);';
+    const url=URL.createObjectURL(new Blob([src],{type:'application/javascript'}));
+    ac.audioWorklet.addModule(url).then(()=>{const nd=new AudioWorkletNode(ac,'eng-synth',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2]});nd.connect(master);SND.node=nd;SND.send=m=>nd.port.postMessage(m);SND.last=''}).catch(useSP);
+  }catch(_){useSP()}
+}
+function sndToggle(){S.sound=!S.sound;try{if(!SND.ac)sndInit();if(S.sound)SND.ac.resume&&SND.ac.resume()}catch(_){S.sound=false}SND.on=S.sound;SND.sus=0;
+  $$('.snd-tog').forEach(b=>b.setAttribute('aria-pressed',S.sound))}
+function sndUpdate(dt){
+  if(!SND.ac||!SND.send)return;let m=null;
+  if(SND.on&&!document.hidden){try{m=sndProfile()}catch(err){m=null}}
+  if(!m)m={id:(SND.cur||'off'),kind:SND.kind||'off',vol:0};else{SND.cur=m.id;SND.kind=m.kind}
+  const key=JSON.stringify(m);if(key!==SND.last){SND.last=key;SND.send(m)}
+  // let the context sleep when sound is switched off (saves battery)
+  if(!SND.on&&SND.ac.state==='running'){SND.sus+=dt||.016;if(SND.sus>.5){SND.ac.suspend&&SND.ac.suspend()}}
+}
+
+'use strict';
 /* ================= app state + i18n ================= */
 let LANG='en';
 const ORDER=['petrol','inline3','inline4','inline5','inline6','v6','v8','v10','v12','vr6','w12','w16','boxer','flat6','wankel','atkinson','diesel','opposed','two','radial','turbofan','rocket','steam','stirling','electric','fuelcell'];
@@ -2903,30 +3155,6 @@ function phasesOf(e,p){return typeof e.phases==='function'?e.phases(p):e.phases}
 const store={get(k){try{return localStorage.getItem(k)}catch(_){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(_){}}};
 for(const e of ENGINES)S.p[e.id]=defaults(e);
 
-/* ================= sound (Web Audio) ================= */
-const SND={ac:null,on:false};
-function sndInit(){
-  const ac=new (window.AudioContext||window.webkitAudioContext)();const len=ac.sampleRate*2,buf=ac.createBuffer(1,len,ac.sampleRate),d=buf.getChannelData(0);let b=0;for(let i=0;i<len;i++){b=.97*b+.03*(Math.random()*2-1);d[i]=b*3}
-  const noise=ac.createBufferSource();noise.buffer=buf;noise.loop=true;const nf=ac.createBiquadFilter();nf.type='lowpass';const ng=ac.createGain();ng.gain.value=0;
-  const osc=ac.createOscillator();osc.type='sawtooth';const of=ac.createBiquadFilter();of.type='lowpass';of.frequency.value=600;const og=ac.createGain();og.gain.value=0;
-  const wh=ac.createOscillator();wh.type='sine';const wg=ac.createGain();wg.gain.value=0;
-  const lfo=ac.createOscillator();lfo.type='square';const lg2=ac.createGain();lg2.gain.value=0;lfo.connect(lg2);lg2.connect(ng.gain);
-  const master=ac.createGain();master.gain.value=.35;
-  noise.connect(nf);nf.connect(ng);ng.connect(master);osc.connect(of);of.connect(og);og.connect(master);wh.connect(wg);wg.connect(master);master.connect(ac.destination);
-  noise.start();osc.start();wh.start();lfo.start();Object.assign(SND,{ac,nf,ng,osc,of,og,wh,wg,lfo,lg2,master});
-}
-function sndUpdate(){
-  if(!SND.ac)return;const on=SND.on&&S.id&&S.playing&&!document.hidden,e=E[S.id],p=on?S.p[e.id]:null,R=on?S.R[e.id]:null,tt=SND.ac.currentTime,set=(a,v)=>a.setTargetAtTime(v,tt,.08);
-  if(!on){set(SND.master.gain,0);return}set(SND.master.gain,.35);
-  let ng=0,nf=500,og=0,of=500,f=60,wg=0,wf=800,lg=0,lf=4;
-  if(e.cat==='ic'){const ld=(p.throttle??p.load??80)/100,cyl=p.cyl||p.rotors||e.o?.cyl||1;f=p.rpm/60*cyl*(e.L===720?.5:1);og=.18+.25*ld;of=250+1400*ld+f*2;ng=.05+.1*ld;nf=300+f*3}
-  else if(e.id==='turbofan'){const s=R.s;ng=.25+.5*s;nf=500+1500*s;wg=.03+.05*s;wf=Math.min(4000,R.N1/60*18)}
-  else if(e.id==='rocket'){ng=R.F>0?1:0;nf=260+p.pc}
-  else if(e.id==='steam'){ng=.0;lg=.6;lf=p.rpm/60*4;nf=1600}
-  else if(e.id==='stirling'){og=.12;of=200;f=p.rpm/60*2;ng=.03;nf=400}
-  else if(e.id==='electric'){wg=.025+.05*p.throttle/100;wf=Math.min(6000,200+p.rpm/60*p.pp*3);ng=.03;nf=2000}
-  set(SND.ng.gain,ng);set(SND.nf.frequency,nf);set(SND.og.gain,og);set(SND.of.frequency,of);set(SND.osc.frequency,clamp(f,18,500));set(SND.wg.gain,wg);set(SND.wh.frequency,wf);set(SND.lg2.gain,lg);set(SND.lfo.frequency,clamp(lf,.5,40));
-}
 
 /* ================= stage drawing ================= */
 function bg(ctx,w,h){ctx.fillStyle=rg(ctx,w*.5,h*.45,20,Math.max(w,h)*.8,[[0,'#17202b'],[1,'#0a0d11']]);ctx.fillRect(0,0,w,h)}
@@ -3091,7 +3319,7 @@ function buildInfo(){
 }
 function updateControls(){
   const pb=$('#btnPlay');pb.setAttribute('aria-pressed',!S.playing);$('#playTxt').textContent=S.playing?t('ui.pause'):t('ui.play');$('#icoPlay').hidden=S.playing;$('#icoPause').hidden=!S.playing;
-  $('#btnLabels').setAttribute('aria-pressed',S.labels);$('#btnSound').setAttribute('aria-pressed',S.sound);
+  $('#btnLabels').setAttribute('aria-pressed',S.labels);$$('.snd-tog').forEach(b=>b.setAttribute('aria-pressed',S.sound));
   const e=S.id&&E[S.id];if(e)$('#speeds').innerHTML=SPEEDS.map((v,i)=>{const n=Math.round(1/(e.slow*v));return`<button type="button" data-spd="${i}" class="${i===S.spd?'on':''}" aria-pressed="${i===S.spd}" title="${esc(t('ui.slower').replace('{n}',fmt(n)))}">${i===0?'◀◀':i===1?'◀':i===2?'●':i===3?'▶':'▶▶'}</button>`}).join('');
   if(e){const n=Math.round(1/(e.slow*SPEEDS[S.spd]));$('#spdTxt').textContent=t('ui.slower').replace('{n}',fmt(n))}
 }
@@ -3135,7 +3363,7 @@ function bind(){
     if(tg.id==='btnPlay'){S.playing=!S.playing;updateControls();return}
     if(tg.id==='btnStep'){S.playing=false;S.nudge=E[S.id].cyclic===false?10:5;updateControls();return}
     if(tg.id==='btnLabels'){S.labels=!S.labels;S.legendKey='-';updateControls();return}
-    if(tg.id==='btnSound'){S.sound=!S.sound;try{if(!SND.ac)sndInit();SND.ac.resume&&SND.ac.resume()}catch(_){S.sound=false}SND.on=S.sound;updateControls();return}
+    if(tg.id==='btnSound'||tg.id==='btnLabSound'){sndToggle();updateControls();return}
     if(tg.dataset.spd){S.spd=+tg.dataset.spd;updateControls();return}
     if(tg.dataset.preset){const e=E[S.id],pv=e.presets[tg.dataset.preset];for(const k in pv)setParam(k,pv[k],true);$$('#presets .chip').forEach(c=>c.classList.toggle('on',c===tg));return}
     if(tg.id==='btnReset'){const e=E[S.id];for(const q of e.params)setParam(q.k,q.def,true);$$('#presets .chip').forEach(c=>c.classList.remove('on'));return}
@@ -3169,7 +3397,7 @@ function start(snap){
   window.claude?.hot?.snapshot?.(()=>({lang:LANG,p:S.p}));
   let last=performance.now(),frame=0;
   const loop=now=>{const dt=Math.min(.05,(now-last)/1000);last=now;frame++;
-    try{if(S.id){if(S.dirty){S.dirty=false;recompute()}stageFrame(dt,frame)}else if(!$('#lab').hidden){labTick(dt);labDraw(dt);tubeDraw();labUI()}else homeFrame(dt,frame);sndUpdate()}catch(err){console.error(err)}
+    try{if(S.id){if(S.dirty){S.dirty=false;recompute()}stageFrame(dt,frame)}else if(!$('#lab').hidden){labTick(dt);labDraw(dt);tubeDraw();labUI()}else homeFrame(dt,frame);sndUpdate(dt)}catch(err){console.error(err)}
     requestAnimationFrame(loop)};
   requestAnimationFrame(loop);
   document.fonts&&document.fonts.ready.then(()=>{S.legendKey='-'});
