@@ -667,14 +667,16 @@ th.tonly{color:#9ff0c8}
 .simbtns{display:flex;flex-wrap:wrap;gap:8px}
 @media (max-width:1100px){.gar-main{grid-template-columns:minmax(0,1fr)}.gar-panel{height:auto;max-height:none}.gpane{overflow:visible}.gar-results{grid-template-columns:minmax(0,1fr)}.gdyno{grid-row:auto}}
 @media (max-width:760px){
-  .gar-view{height:min(74vh,600px);border-radius:18px}
-  .g3hud{max-width:58%;padding:8px 10px}.g3hud b{font-size:16px}.g3hud span{font-size:11px}
-  .g3live{top:auto;bottom:118px;inset-inline-end:10px;flex-direction:column}.g3live div{min-width:70px;padding:5px 8px}.g3live b{font-size:17px}
-  .g3tach{width:124px;height:124px;bottom:114px;inset-inline-start:8px}
-  .g3ctl{bottom:116px;inset-inline-end:auto;inset-inline-start:50%;transform:translateX(-50%);display:flex;gap:6px}
-  [dir=rtl] .g3ctl{transform:translateX(50%)}
-  .g3btn{min-height:38px;padding:6px 10px;font-size:13px}.g3btn.gas{width:76px;height:76px;font-size:13px}
-  .g3bar{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .gar-view{height:auto;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:'view view' 'live live' 'tach ctl' 'bar bar';gap:8px;padding-bottom:10px;border-radius:18px}
+  .gar-view .g3host{grid-area:view;position:relative;inset:auto;height:min(56vh,440px);border-radius:18px 18px 0 0;overflow:hidden}
+  .g3hud{max-width:72%;padding:6px 9px;top:8px;inset-inline-start:8px}.g3hud b{font-size:15px}.g3hud span{font-size:10.5px}#gFire{display:none}
+  .g3live{grid-area:live;position:static;display:flex;flex-direction:row;gap:6px;padding:0 8px;pointer-events:none}.g3live div{flex:1;min-width:0;padding:6px}.g3live b{font-size:17px}
+  .g3tach{grid-area:tach;position:static;width:128px;height:128px;margin-inline-start:6px;align-self:center}
+  .g3ctl{grid-area:ctl;position:static;transform:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;min-width:0;grid-template-areas:'st snd gas' 'la nos gas' 'dr dr gas';gap:6px;align-items:center;justify-items:stretch;padding-inline-end:8px}
+  [dir=rtl] .g3ctl{transform:none}
+  .g3btn{min-height:40px;padding:6px 6px;font-size:13px;justify-content:center;min-width:0;width:100%;gap:5px}.g3btn.gas{width:88px;height:88px;font-size:15px;justify-self:end}
+  .g3tach{width:116px!important;height:116px!important}
+  .g3bar{grid-area:bar;position:static;flex-wrap:wrap;justify-content:center;margin:0 8px;overflow:visible;inset:auto}
   .g3bar>*{flex:none}
   .gcards.c3,.gcards.c4{grid-template-columns:1fr 1fr}
   .gstats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
@@ -704,11 +706,9 @@ th.tonly{color:#9ff0c8}
 .gspec-act{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
 
 /* drive-mode control layout: GAS on the right, shifting and brake beside it */
-#garage.driving .g3ctl{grid-template-columns:auto auto auto;grid-template-areas:'st dr gas' 'dn up gas' 'br br gas'}
+#garage.driving .g3ctl{grid-template-columns:auto auto auto;grid-template-areas:'st dr gas' 'dn up gas' 'br snd gas'}
 #garage.driving #gStart{grid-area:st}#garage.driving #gDrive{grid-area:dr}#garage.driving #gGas{grid-area:gas}#garage.driving #gDn{grid-area:dn}#garage.driving #gUp{grid-area:up}#garage.driving #gBrake{grid-area:br;justify-self:stretch}
 #garage.driving #gLaunch,#garage.driving #gNos{display:none}
-@media(max-width:760px){#garage.driving .g3ctl{display:grid;grid-template-columns:auto auto auto auto;grid-template-areas:'st dr dn gas' 'br br up gas';gap:5px}}
-@media(max-width:760px){#garage.driving .g3live,#garage.driving .g3hud{display:none}#garage.driving .g3drive{top:10px}#garage.driving .g3tach{width:118px;height:118px;bottom:auto;top:66px}}
 /* ===== shared 3D views (hero, engine pages, lab rigs) ===== */
 .v3wrap{position:relative;width:100%;overflow:hidden;background:#0d1117}
 .v3host{position:absolute;inset:0}.v3host canvas{display:block;touch-action:none;cursor:grab}.v3host canvas:active{cursor:grabbing}
@@ -735,6 +735,13 @@ body.dim2 .stage3d,body.dim2 .lab3d{display:none!important}
 .stage{position:relative}
 
 .lab-stage .viewseg{top:auto;bottom:12px;inset-inline-end:auto;inset-inline-start:12px}
+
+/* garage controls: explicit layout (desktop overlay + mobile dock) */
+@media(min-width:761px){.g3ctl{grid-template-columns:auto auto auto;grid-template-areas:'st snd gas' 'la nos gas' 'dr dr gas';bottom:104px;align-items:center}.g3ctl .g3btn:not(.gas){justify-content:center;width:100%}}
+#gStart{grid-area:st}#gSound{grid-area:snd}#gGas{grid-area:gas}#gLaunch{grid-area:la}#gNos{grid-area:nos}#gDrive{grid-area:dr}#gBrake{grid-area:br}#gDn{grid-area:dn}#gUp{grid-area:up}
+.g3btn.snd-tog[aria-pressed=true]{background:rgba(61,220,151,.2);border-color:#3ddc97;color:#b9f5d6}
+@media(max-width:760px){#garage.driving .g3ctl{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;grid-template-areas:'st dr gas' 'dn up gas' 'br snd gas'}#garage.driving .g3drive{top:calc(min(56vh,440px) - 60px)}
+  #garage.specmode .g3ctl{grid-template-areas:'st snd gas' 'st snd gas'}}
 
 </style>
 </head>
@@ -9636,6 +9643,7 @@ function gBuildUI(){
     <canvas id="gTach" class="g3tach" width="220" height="220" aria-hidden="true"></canvas>
     <div class="g3ctl">
      <button type="button" class="g3btn start" id="gStart" aria-pressed="false"><i></i><span>${esc(gT('start'))}</span></button>
+     <button type="button" class="g3btn snd-tog" id="gSound" aria-pressed="false"><span aria-hidden="true">🔊</span><span>${esc(t('ui.sound'))}</span></button>
      <button type="button" class="g3btn gas" id="gGas"><span>${esc(gT('gas'))}</span></button>
      <button type="button" class="g3btn" id="gLaunch"><span>${esc(gT('launchB'))}</span></button>
      <button type="button" class="g3btn nosb" id="gNos"><span>NOS</span></button>
@@ -9653,7 +9661,6 @@ function gBuildUI(){
      <button type="button" class="g3t" id="gAuto" aria-pressed="true">${esc(gT('v.auto'))}</button>
      <label class="g3slow">${esc(gT('v.speed'))}<input type="range" id="gSlow" min="0" max="100" value="45"></label>
      <div class="seg sm" id="gCam">${['iso','front','side','top'].map(v=>`<button type="button" data-gcam="${v}">${esc(gT('c.'+v))}</button>`).join('')}</div>
-     <button type="button" class="g3t snd-tog" id="gSound" aria-pressed="false">🔊 ${esc(t('ui.sound'))}</button>
     </div>
     <div id="g3labels" class="g3labels"></div><div id="g3tip" class="g3tip" hidden></div><div id="g3info" class="g3info" hidden></div>
     <div id="gBlown" class="g3blown" hidden></div>
@@ -10110,7 +10117,7 @@ function sndProfile(){
     const p={rpm:L.rpm,throttle:LABX.THR[L.thr]},R={imep:loaded?Rm.imep:sRef(e)*(.14+.06*L.thr)};
     return sndPiston('petrol',e,p,R,{id:'lab:1',vol:L.rpm<25?0:1,fire:run?1:0,motor:L.motor&&L.potS>.5?1:0,rough:L.choke?.2:.11,mis:L.choke?.05:0,gain:SGAIN.petrol||1})}
   if(!$('#garage').hidden&&GS.spec){const e=E[GS.spec];if(!GS.specP||!GS.specR)return{id:'off',kind:'off',vol:0};const m=sndFor(e,GS.specP,GS.specR);if(!m)return null;m.id='gs:'+m.id;const on=GS.eng==='run'&&GS.rpm>1;m.vol=on?(m.vol??1):0;if(m.kind==='pist'){m.fire=on?1:0;m.rpm=Math.max(80,GS.rpm);m.load=GS.thr?1:.2}if(m.kind==='jet')m.a=on?Math.max(.05,GS.rpm/100):0;if(m.kind==='rkt')m.a*=on?1:0;return m}
-  if(!$('#garage').hidden&&GS.ck){const b=GS.b,ck=GS.ck,map={I3:'inline3',I4:'inline4',I5:'inline5',I6:'inline6',V6:'v6',V8:'v8',V8F:'v8',V10:'v10',V12:'v12',B4:'boxer',B6:'flat6',VR6:'vr6',W12:'w12',W16:'w16'},sid=b.diesel?'diesel':map[b.base],o={...SPROF[sid]},red=gRedline(b),m=GS.m||{bmep:2};
+  if(!$('#garage').hidden&&GS.ck){const b=GS.b,ck=GS.ck,map={I3:'inline3',I4:'inline4',I5:'inline5',I6:'inline6',V6:'v6',V8:'v8',V8F:'v8',V10:'v10',V12:'v12',B4:'boxer',B6:'flat6',VR6:'vr6',W12:'w12',W16:'w16',I1:'petrol'},sid=b.diesel?'diesel':map[b.base],o={...SPROF[sid]},red=gRedline(b),m=GS.m||{bmep:2};
     const turbo=['t1','twin','tscroll','vgt','seq','etb','tc'].includes(b.ind),scT=['roots','screw','tc'].includes(b.ind)||b.ind==='cent';
     const fires=ck.cyl.map(c=>[((c.phi%720)+720)%720,ck.banks.length>1?c.bank:0,b.exh==='headers'?0:(c.k%3)*.15]);
     if(b.exh==='headers'){o.hl=(o.hl||.7)*1.2;o.hg=-.72}const ex=b.exhSys,lpK=(ex==='straight'?1.75:ex==='sport'?1.3:1)*(turbo?.82:1),gK=(ex==='straight'?1.55:ex==='sport'?1.2:1)*(turbo?.78:1);
@@ -10151,7 +10158,10 @@ function sndInit(){
     ac.audioWorklet.addModule(url).then(()=>{const nd=new AudioWorkletNode(ac,'eng-synth',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2]});nd.connect(master);SND.node=nd;SND.send=m=>nd.port.postMessage(m);SND.last=''}).catch(useSP);
   }catch(_){useSP()}
 }
-function sndToggle(){S.sound=!S.sound;try{if(!SND.ac)sndInit();if(S.sound)SND.ac.resume&&SND.ac.resume()}catch(_){S.sound=false}SND.on=S.sound;SND.sus=0;
+// iPhone: let web audio play even with the silent switch on (audio session = playback) and unlock it inside the tap
+function sndUnlockIOS(){try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(_){}
+  try{if(!SND.el){const a=document.createElement('audio');a.src='data:audio/wav;base64,UklGRmQGAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YUAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';a.loop=true;a.setAttribute('playsinline','');a.volume=.01;SND.el=a}const p=SND.el.play();if(p&&p.catch)p.catch(()=>{})}catch(_){}}
+function sndToggle(){S.sound=!S.sound;try{if(S.sound)sndUnlockIOS();else if(SND.el)SND.el.pause();if(!SND.ac)sndInit();if(S.sound){SND.ac.resume&&SND.ac.resume();SND.last=''}}catch(_){S.sound=false}SND.on=S.sound;SND.sus=0;
   $$('.snd-tog').forEach(b=>b.setAttribute('aria-pressed',S.sound))}
 function sndUpdate(dt){
   if(!SND.ac||!SND.send)return;let m=null;
