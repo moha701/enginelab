@@ -8450,7 +8450,7 @@ function g3Init(host){
   const {THREE,OrbitControls,RoomEnvironment,EffectComposer,RenderPass,UnrealBloomPass,OutputPass}=T3;
   let R;try{R=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'})}catch(e){return false}
   const mob=window.innerWidth<760;G3.q=mob?1:2;
-  R.setPixelRatio(Math.min(window.devicePixelRatio||1,mob?1.5:1.75));R.outputColorSpace=THREE.SRGBColorSpace;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.08;
+  R.setPixelRatio(Math.min(window.devicePixelRatio||1,mob?1.25:1.6));R.outputColorSpace=THREE.SRGBColorSpace;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.08;
   R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.localClippingEnabled=true;
   host.appendChild(R.domElement);R.domElement.className='g3cv';G3.wrap=host.closest('.v3wrap')||host.parentElement;
   const scene=new THREE.Scene();
@@ -8474,7 +8474,7 @@ function g3Init(host){
   const size=new THREE.Vector2();R.getSize(size);
   const rt=new THREE.WebGLRenderTarget(4,4,{type:THREE.HalfFloatType,samples:mob?2:4});
   const comp=new EffectComposer(R,rt);comp.addPass(new RenderPass(scene,cam));
-  const bloom=new UnrealBloomPass(new THREE.Vector2(256,256),.7,.45,2.05);comp.addPass(bloom);comp.addPass(new OutputPass());
+  const bloom=new UnrealBloomPass(new THREE.Vector2(256,256),.7,.45,2.05);bloom.enabled=!mob;comp.addPass(bloom);comp.addPass(new OutputPass());
   Object.assign(G3,{R,scene,cam,ctl,key,comp,bloom,THREE,M:g3Mats(THREE),host,ray:new THREE.Raycaster(),ptr:new THREE.Vector2(),root:null,clip:new THREE.Plane(new THREE.Vector3(0,0,-1),1e3)});
   // pointer: hover labels + click focus
   const el=R.domElement;el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect();G3.ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);G3.ptrPx=[e.clientX-r.left,e.clientY-r.top];G3.ptrT=performance.now()});
@@ -8498,6 +8498,9 @@ function g3H(){const T=G3.THREE,M=G3.M;
   const V=(x,y,z)=>new T.Vector3(x,y,z);
   return{T,M,mesh,cyl,cylX,box,tube,V,atP}}
 
+/* free GPU memory of a replaced model (keeps the shared materials/textures) */
+function g3Dispose(obj){const M=G3.M||{},shared=new Set(Object.values(M).filter(m=>m&&m.isMaterial)),tex=new Set(Object.values(M.tex||{}));if(G3.glassM)shared.add(G3.glassM);if(M.stand)shared.add(M.stand);
+  obj.traverse(o=>{if(o.geometry)o.geometry.dispose();const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){if(shared.has(m))continue;if(m.map&&!tex.has(m.map)&&m.map!==G3.fxTex&&m.map!==G3.dotTex)m.map.dispose();m.dispose()}})}
 /* ---------- shared geometry kit (sprockets, pulleys, flat belts, hulls, pipes) ---------- */
 function g3Kit(b,root,addPart){const {T,M,mesh,cyl,cylX,box,tube,V}=g3H();
   // ---------- helper geometry: sprockets, pulleys, flat belts, hulls, pipes ----------
@@ -8528,7 +8531,7 @@ function g3Kit(b,root,addPart){const {T,M,mesh,cyl,cylX,box,tube,V}=g3H();
 /* ---------- build an engine model ---------- */
 function g3Build(cfg){
   const {T,M,mesh,cyl,cylX,box,tube,V,atP}=g3H();
-  if(G3.root){G3.scene.remove(G3.root);G3.root.traverse(o=>{if(o.geometry)o.geometry.dispose()})}
+  if(G3.root){G3.scene.remove(G3.root);g3Dispose(G3.root)}
   const base=GBASE[cfg.base]||GBASE.I4,ck=g3Crank(base),root=new T.Group();G3.root=root;G3.parts=[];G3.labels=[];G3.fx=[];
   const clipM=m=>{const c=m.clone();c.clippingPlanes=[G3.clip];c.clipShadows=true;return c};
   const Mpaint=clipM(M.paint),Mcover=clipM(M.cover),Mliner=clipM(M.liner),Mcut=clipM(M.cut),Malu=clipM(M.alu);
@@ -8844,7 +8847,7 @@ function g3Build(cfg){
     pipe([[ng.position.x+b*1.65,ng.position.y,ng.position.z],[xBack+b*.6,floorY+b*.12,-(caseW*.5+b*.8)],[xBack-b*.2,0,-(caseW*.5+b*.55)],[sol.x+b*.3,sol.y+b*.3,sol.z],[sol.x,sol.y,sol.z]],b*.03,M.dark,null,root,90);
     const sl=mesh(cyl(b*.08,b*.08,b*.22,16),M.blue,'solenoid');sl.position.copy(sol);root.add(addPart(sl,'solenoid'));pipe([sol,[sol.x-b*.15,tgt.y+b*.2,tgt.z],[tgt.x,tgt.y,tgt.z]],b*.025,M.chrome,null,root,20);anim.nosPos=tgt}
   // ---- engine stand (static, does not rock with the engine) ----
-  {if(G3.stand){G3.scene.remove(G3.stand);G3.stand.traverse(o=>{if(o.geometry)o.geometry.dispose()})}const st=new T.Group();G3.stand=st;st.position.y=-.05;G3.scene.add(st);
+  {if(G3.stand){G3.scene.remove(G3.stand);g3Dispose(G3.stand)}const st=new T.Group();G3.stand=st;st.position.y=-.05;G3.scene.add(st);
     const SM=M.stand||(M.stand=new T.MeshStandardMaterial({color:0x2a2e35,roughness:.45,metalness:.7}));const sy=my-b*.12;
     for(const sg of[-1,1]){const zz=sg*mz,post=mesh(box(.1,sy-floorY,.1,.015),SM,'stand');post.position.set(xm,(sy+floorY)/2,zz);st.add(addPart(post,'stand'));
       const pad=mesh(box(b*.32,.04,b*.32,.01),SM);pad.position.set(xm,sy+.02,zz);st.add(pad);
@@ -8904,7 +8907,7 @@ function g3Frame(dt,st){
   g3Labels(st.labels);
   G3.comp.render(dt);
   // adaptive quality
-  G3.fps=G3.fps*.95+(1/Math.max(dt,1e-3))*.05;if(G3.fps<32&&G3.q>0&&G3.t>3){G3.q--;G3.t=0;if(G3.q===1){G3.R.setPixelRatio(1);g3Resize()}else{G3.R.shadowMap.enabled=false;G3.bloom.enabled=false}}
+  G3.fps=G3.fps*.95+(1/Math.max(dt,1e-3))*.05;if(G3.fps<34&&G3.q>0&&G3.t>1.5){G3.q--;G3.t=0;if(G3.q===1){G3.R.setPixelRatio(1);g3Resize()}else{G3.R.shadowMap.enabled=false;G3.bloom.enabled=false}}
 }
 function g3Fx(dt,st){const T=G3.THREE,a=G3.anim;if(!a)return;
   if(!G3.fxPool){G3.fxPool=[];const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.3,'rgba(255,200,90,.9)');g.addColorStop(.7,'rgba(255,80,10,.4)');g.addColorStop(1,'rgba(255,40,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);
@@ -9106,8 +9109,8 @@ const GSPEC={
 const G3SPEC={};
 function g3Spec(id){
   const {T,M,mesh,cyl,cylX,box,tube,V,atP}=g3H();
-  if(G3.root){G3.scene.remove(G3.root);G3.root.traverse(o=>{if(o.geometry)o.geometry.dispose()})}
-  if(G3.stand){G3.scene.remove(G3.stand);G3.stand.traverse(o=>{if(o.geometry)o.geometry.dispose()})}
+  if(G3.root){G3.scene.remove(G3.root);g3Dispose(G3.root)}
+  if(G3.stand){G3.scene.remove(G3.stand);g3Dispose(G3.stand)}
   const root=new T.Group();G3.root=root;G3.parts=[];G3.labels=[];G3.fx=[];
   const st=new T.Group();G3.stand=st;st.position.y=-.05;G3.scene.add(st);
   const clipM=m=>{const c=m.clone();c.clippingPlanes=[G3.clip];c.clipShadows=true;return c};
@@ -10136,7 +10139,7 @@ function sndInit(){
   const hs=ac.createBiquadFilter();hs.type='highshelf';hs.frequency.value=5500;hs.gain.value=-4;
   const rev=ac.createConvolver();rev.buffer=sndIR(ac);const wet=ac.createGain();wet.gain.value=.13;
   master.connect(hs);hs.connect(comp);master.connect(rev);rev.connect(wet);wet.connect(comp);comp.connect(ac.destination);SND.master=master;
-  const useSP=()=>{const syn=new EngSynth(ac.sampleRate),sp=ac.createScriptProcessor(2048,1,2);sp.onaudioprocess=ev=>{const ob=ev.outputBuffer;syn.render(ob.getChannelData(0),ob.getChannelData(1),ob.length)};sp.connect(master);SND.node=sp;SND.send=m=>syn.set(m);SND.last=''};
+  const useSP=()=>{const syn=new EngSynth(ac.sampleRate),sp=ac.createScriptProcessor(8192,1,2);sp.onaudioprocess=ev=>{const ob=ev.outputBuffer;syn.render(ob.getChannelData(0),ob.getChannelData(1),ob.length)};sp.connect(master);SND.node=sp;SND.send=m=>syn.set(m);SND.last=''};
   try{
     if(!ac.audioWorklet||!window.Blob||!window.URL)throw 0;
     const src='const EngSynth='+EngSynth.toString()+';\nclass EP extends AudioWorkletProcessor{constructor(){super();this.s=new EngSynth(sampleRate);this.port.onmessage=e=>this.s.set(e.data)}process(i,o){const c=o[0];if(c&&c[0])this.s.render(c[0],c[1]||new Float32Array(c[0].length),c[0].length);return true}}\nregisterProcessor("eng-synth",EP);';
@@ -10210,7 +10213,8 @@ function heroSet(i){const h=HOME.hero;h.i=i;h.id=ORDER[i];const e=E[h.id];h.p=de
   $('#heroDots').innerHTML=ORDER.map((id,k)=>`<button type="button" class="dot${k===i?' on':''}" data-hero="${k}" aria-label="${esc(t(`eng.${id}.name`))}"></button>`).join('')}
 function homeFrame(dt,frame){
   const h=HOME.hero,host=$('#hero3d');
-  if(host&&host.offsetParent&&v3Attach(host)){const e=E[h.id];h.t+=dt;v3Model(h.id,{cam:null});v3Frame(dt,{e,p:h.p,R:h.R,run:true,auto:true,slow:e.slow,labels:false});
+  if(host&&!HOME.heroIO&&window.IntersectionObserver){HOME.heroIO=new IntersectionObserver(es=>{HOME.heroVis=es[0].isIntersecting});HOME.heroIO.observe(host);HOME.heroVis=true}
+  if(host&&host.offsetParent&&HOME.heroVis!==false&&v3Attach(host)){const e=E[h.id];h.t+=dt;v3Model(h.id,{cam:null});v3Frame(dt,{e,p:h.p,R:h.R,run:true,auto:true,slow:e.slow,labels:false});
     if(h.t>9&&!RM&&!G3.ptrPx)heroSet((h.i+1)%ORDER.length)}
 }
 
@@ -10442,8 +10446,9 @@ function start(snap){
   if(RM)S.spd=1;bind();labBind();teachBind();lxBind();gBind();window.addEventListener('resize',()=>{if(!$('#lab').hidden)labCharts()});applyLang(l);v3SetDim(!window.__no3d);route();
   window.claude?.hot?.snapshot?.(()=>({lang:LANG,p:S.p}));
   let last=performance.now(),frame=0;
-  const loop=now=>{const dt=Math.min(.05,(now-last)/1000);last=now;frame++;
-    try{if(S.id){if(S.dirty){S.dirty=false;recompute()}stageFrame(dt,frame)}else if(!$('#lab').hidden){labTick(dt);labDraw(dt);tubeDraw();labUI()}else if(!$('#labx').hidden){lxTick(dt);lxDraw(dt);lxUI()}else if(!$('#garage').hidden){gTick(dt)}else homeFrame(dt,frame);sndUpdate(dt)}catch(err){console.error(err)}
+  const loop=now=>{const dt=Math.min(.1,(now-last)/1000);last=now;frame++;
+    try{if(S.id){if(S.dirty){S.dirty=false;recompute()}stageFrame(dt,frame)}else if(!$('#lab').hidden){labTick(dt);labDraw(dt);tubeDraw();labUI()}else if(!$('#labx').hidden){lxTick(dt);lxDraw(dt);lxUI()}else if(!$('#garage').hidden){gTick(dt)}else homeFrame(dt,frame)}catch(err){console.error(err)}
+    try{sndUpdate(dt)}catch(err){console.error(err)}
     requestAnimationFrame(loop)};
   requestAnimationFrame(loop);
   document.fonts&&document.fonts.ready.then(()=>{S.legendKey='-'});
