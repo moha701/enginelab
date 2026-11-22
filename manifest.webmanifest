@@ -1,0 +1,23 @@
+{
+  "name": "EngineLab — engine simulator & virtual lab",
+  "short_name": "EngineLab",
+  "description": "26 engines in 3D with sound, a tuning garage and the CT 150 virtual lab experiment. Works offline.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0b0e12",
+  "theme_color": "#0b0e12",
+  "categories": ["education", "science"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Virtual lab (CT 150)", "short_name": "Lab", "url": "./#lab", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Garage", "short_name": "Garage", "url": "./#garage", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ]
+}
