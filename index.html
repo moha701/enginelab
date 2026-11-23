@@ -9992,16 +9992,25 @@ const GPRE={
   eco:{oilVisc:'0w20',ewp:true,map:'eco',hybrid:'48v',di:'dual',manifold:'vis',cat:'stock',flywheel:'stock'}};
 function gNum(v,d=0){return fmt(v,d)}
 function gT(k){return t('gar.'+k)}
-function openGarage(id){
+// the factory build of a layout: every time you pick an engine it starts from here, so nothing hidden carries over
+function gStock(base,diesel){const b={...GDEF(),base,diesel:!!(diesel&&GDIESEL[base])};if(b.diesel)b.ind='vgt';if(base==='W16')Object.assign(b,{ind:'twin',boost:1.2,ic:'race'});if(base==='W12')Object.assign(b,{ind:'twin',boost:.8});return b}
+function gFresh(){if(typeof GUI!=='undefined'){GUI.q='';GUI.open={};const q=$('#gQ');if(q)q.value='';const x=$('#gQx');if(x)x.hidden=true}const pr=$('#gPre');if(pr)pr.value='stock';GS.dr=null;GS.drive=false;GS.eng='off';GS.rpm=0;GS.boostNow=0;GS.tqc=null;GS.bov=0;
+  const d=$('#gDrive');if(d)d.setAttribute('aria-pressed','false');const g=$('#garage');if(g)g.classList.remove('driving');const st=$('#gStart');if(st){st.setAttribute('aria-pressed','false');const sp=$('span',st);if(sp)sp.textContent=gT('start')}}
+function openGarage(id,opt){id=id||null;const fresh=$('#garage').hidden||id!==(GS.openId||null);GS.openId=id;
   $('#home').hidden=true;$('#sim').hidden=true;$('#lab').hidden=true;$('#labx').hidden=true;$('#garage').hidden=false;S.id=null;
   const map=GMAP;
-  GS.spec=null;if(id&&GSPEC[id]&&!map[id]){GS.spec=id;GS.eng='off';GS.rpm=0;GS.drive=false;GS.dr=null;GS.b.gbox2=(GSPEC[id].box||[null])[0]}
-  else if(id&&map[id]){GS.b={...GDEF(),base:map[id],diesel:id==='diesel'};if(id==='diesel')GS.b.ind='vgt';if(id==='w16')Object.assign(GS.b,{ind:'twin',boost:1.2,ic:'race'});if(id==='w12')Object.assign(GS.b,{ind:'twin',boost:.8})}
+  const keepSpec=!fresh&&GS.spec;GS.spec=null;
+  if(id&&GSPEC[id]&&!map[id]){GS.spec=id;if(fresh){GS.sb[id]=null;GS.b=gStock(GDEF().base,false);GS.eng='off';GS.rpm=0;GS.drive=false;GS.dr=null}GS.b.gbox2=(GSPEC[id].box||[null])[0]}
+  else if(id&&map[id]){if(fresh)GS.b=gStock(map[id],id==='diesel')}
+  else if(keepSpec)GS.spec=keepSpec;
+  else if(fresh&&!(opt&&opt.keep)){GS.b=gStock(GDEF().base,false);GS.sb={}}
   if(!GS.inited){gBuildUI();GS.inited=true;GS.bindHold()}
-  else if(GS.lang!==LANG){gBuildUI();GS.bindHold()}GS.lang=LANG;
+  else if(GS.lang!==LANG){gBuildUI();GS.bindHold()}GS.lang=LANG;gSavedOpt();
   const host=$('#g3host');V3.key='';GS.built='';if(G3.R&&G3.host!==host){host.appendChild(G3.R.domElement);G3.host=host}const ok=g3Init(host);G3.wrap=$('#g3wrap');$('#g3fail').hidden=ok;setTimeout(g3Resize,50);
-  gApply(true);window.scrollTo(0,0);document.title=gT('title')+' · '+t('brand');
+  if(fresh&&!(opt&&opt.keep))gFresh();
+  gApply(true);gPane();if(fresh)window.scrollTo(0,0);document.title=gT('title')+' · '+t('brand');
 }
+function gSavedOpt(){const sel=$('#gPre');if(!sel)return;let has=false;try{has=!!localStorage.getItem('el-garage')}catch(_){}let op=sel.querySelector('option[value="__saved"]');if(has&&!op){op=document.createElement('option');op.value='__saved';sel.appendChild(op)}if(op){op.textContent=gT('mySaved');op.hidden=!has}}
 function closeGarage(){const s=$('#garage');if(s)s.hidden=true}
 function gBuildUI(){
   const sec=$('#garage');
@@ -10173,9 +10182,9 @@ function gShareCode(){const d=GDEF(),b=GS.b,o={};for(const k in b)if(JSON.string
 function gLoadCode(c){try{const o=JSON.parse(decodeURIComponent(escape(atob(c))));GS.b={...GDEF(),...o};return true}catch(_){return false}}
 function gBind(){
   document.addEventListener('click',ev=>{const tg=ev.target.closest('#garage button,#garage [data-gbase]');if(!tg)return;const b=GS.b;
-    if(tg.dataset.gspec){GS.spec=tg.dataset.gspec;GS.eng='off';GS.rpm=0;GS.drive=false;GS.dr=null;GS.boostNow=0;GS.tqc=null;$('#gDrive').setAttribute('aria-pressed','false');$('#garage').classList.remove('driving');GS.b.gbox2=(GSPEC[GS.spec].box||[null])[0];$('#gStart').setAttribute('aria-pressed','false');$('span',$('#gStart')).textContent=gT('start');gApply();return}
-    if(tg.dataset.gbase){if(GS.spec){GS.spec=null;GS.built='';GS.eng='off';GS.rpm=0;GS.drive=false;GS.dr=null;GS.boostNow=0;$('#garage').classList.remove('driving');$('#gDrive').setAttribute('aria-pressed','false')}const base=tg.dataset.gbase,dsl=b.diesel&&!!GDIESEL[base];GS.b={...b,base,diesel:dsl,boreK:0,strokeK:0,cr:0,limiter:0};gApply();gPane();return}
-    if(tg.id==='gDiesel'){b.diesel=!b.diesel;if(b.diesel){b.ind=b.ind==='na'?'vgt':b.ind;b.fuel='95'}b.cr=0;if(!gbCompat(b).includes(b.gbox))b.gbox='manual';gApply();gPane();return}
+    if(tg.dataset.gspec){GS.spec=tg.dataset.gspec;GS.sb[GS.spec]=null;gFresh();GS.eng='off';GS.rpm=0;GS.drive=false;GS.dr=null;GS.boostNow=0;GS.tqc=null;$('#gDrive').setAttribute('aria-pressed','false');$('#garage').classList.remove('driving');GS.b.gbox2=(GSPEC[GS.spec].box||[null])[0];$('#gStart').setAttribute('aria-pressed','false');$('span',$('#gStart')).textContent=gT('start');gApply();return}
+    if(tg.dataset.gbase){if(GS.spec){GS.spec=null;GS.built='';GS.eng='off';GS.rpm=0;GS.drive=false;GS.dr=null;GS.boostNow=0;$('#garage').classList.remove('driving');$('#gDrive').setAttribute('aria-pressed','false')}const base=tg.dataset.gbase;GS.b=gStock(base,false);gFresh();GS.built='';gApply();gPane();return}
+    if(tg.id==='gDiesel'){GS.b=gStock(b.base,!b.diesel);gFresh();GS.built='';gApply();gPane();return}
     if(tg.dataset.gtab){gTab(tg.dataset.gtab);return}
     if(tg.dataset.gstab){GS.stab=tg.dataset.gstab;if(typeof GUI!=='undefined'&&GUI.q){GUI.q='';const q=$('#gQ');if(q)q.value='';const x=$('#gQx');if(x)x.hidden=true}gPane();return}
     if(GS.spec&&(tg.dataset.gsx||tg.dataset.gsp)){const st=gsxS(GS.spec);if(tg.dataset.gsx){const g=GSX[GS.spec].parts.find(x=>x.k===tg.dataset.gsx),o=g&&g.o.find(x=>x.v===tg.dataset.gv);st.parts[tg.dataset.gsx]=tg.dataset.gv;if(o&&o.set)Object.assign(st.p,o.set)}else st.p[tg.dataset.gsp]=tg.dataset.gv;
@@ -10197,13 +10206,14 @@ function gBind(){
     if(tg.id==='gRepair'){GS.blown=null;$('#gBlown').hidden=true;return}
 
     if(tg.id==='gReset'){GS.b={...GDEF(),base:b.base,diesel:b.diesel};if(b.diesel)GS.b.ind='vgt';gApply();gPane();return}
-    if(tg.id==='gSave'){try{localStorage.setItem('el-garage',JSON.stringify(GS.b))}catch(_){}teachToast(gT('saved'));return}
+    if(tg.id==='gSave'){if(GS.spec){teachToast(gT('saveCar'));return}try{localStorage.setItem('el-garage',JSON.stringify(GS.b))}catch(_){}gSavedOpt();teachToast(gT('saved'));return}
     if(tg.id==='gShare'){const url=location.href.split('#')[0]+'#garage='+gShareCode();try{navigator.clipboard.writeText(url).then(()=>teachToast(gT('copied')),()=>{fallbackCopy(url);teachToast(gT('copied'))})}catch(_){fallbackCopy(url);teachToast(gT('copied'))}return}
   });
   document.addEventListener('input',ev=>{const k=ev.target.dataset&&ev.target.dataset.gs;if(k){GS.b[k]=+ev.target.value;gApply();gPaneValue(k)}
     const ks=ev.target.dataset&&ev.target.dataset.gsr;if(ks&&GS.spec){const q=E[GS.spec].params.find(x=>x.k===ks);gsxS(GS.spec).p[ks]=+ev.target.value;const o=$('#gspo_'+ks);if(o)o.innerHTML=gsxFmt(q,+ev.target.value);gApply();if(!GS.rqU){GS.rqU=1;requestAnimationFrame(()=>{GS.rqU=0;gsxResultsUI(GS.spec)})}}
     if(ev.target.id==='gSlow'){const v=+ev.target.value/100;GS.slow=Math.pow(10,-2.4+v*2.2)}});
-  document.addEventListener('change',ev=>{const k=ev.target.dataset&&ev.target.dataset.gt;if(k){GS.b[k]=ev.target.checked;gApply()}if(ev.target.dataset&&ev.target.dataset.gsxauto!==undefined){GS.b.autoShift=ev.target.checked}if(ev.target.id==='gPre'){const p=GPRE[ev.target.value]||{};const keep={base:GS.b.base,diesel:GS.b.diesel,color:GS.b.color,cover:GS.b.cover};GS.b={...GDEF(),...p,...keep};if(GS.b.diesel){GS.b.fuel='95';if(GS.b.ind==='na')GS.b.ind='vgt'}gApply();gPane()}});
+  document.addEventListener('change',ev=>{const k=ev.target.dataset&&ev.target.dataset.gt;if(k){GS.b[k]=ev.target.checked;gApply()}if(ev.target.dataset&&ev.target.dataset.gsxauto!==undefined){GS.b.autoShift=ev.target.checked}if(ev.target.id==='gPre'&&ev.target.value==='__saved'){let o=null;try{o=JSON.parse(localStorage.getItem('el-garage')||'null')}catch(_){}if(o&&GBASE[o.base]){GS.spec=null;GS.b={...GDEF(),...o};GS.built='';gFresh();ev.target.value='__saved';gApply();gPane()}return}
+    if(ev.target.id==='gPre'){const p=GPRE[ev.target.value]||{};const keep={base:GS.b.base,diesel:GS.b.diesel,color:GS.b.color,cover:GS.b.cover};GS.b={...GDEF(),...p,...keep};if(GS.b.diesel){GS.b.fuel='95';if(GS.b.ind==='na')GS.b.ind='vgt'}gApply();gPane()}});
   const hold=(id,k)=>{const el=$('#'+id);if(!el)return;const on=e=>{e.preventDefault();if(k!=='nos'&&GS.eng!=='run'&&!GS.blown){GS.eng='run';GS.rpm=Math.max(GS.rpm,300);$('#gStart').setAttribute('aria-pressed','true');$('span',$('#gStart')).textContent=gT('stop')}GS.held[k]=true;if(k==='nos')GS.nosOn=true;if(k==='launch')GS.held.gas=false;el.classList.add('on')},off=()=>{GS.held[k]=false;if(k==='nos')GS.nosOn=false;el.classList.remove('on')};
     el.addEventListener('pointerdown',on);el.addEventListener('pointerup',off);el.addEventListener('pointerleave',off);el.addEventListener('pointercancel',off);el.addEventListener('contextmenu',e=>e.preventDefault())};
   document.addEventListener('keydown',ev=>{if($('#garage').hidden||ev.target.matches('input,select,textarea'))return;if(ev.code==='Space'||ev.key==='w'||ev.key==='ArrowUp'){ev.preventDefault();if(GS.eng!=='run'){GS.eng='run';GS.rpm=300}GS.held.gas=true}if(ev.key==='l')GS.held.launch=true;if(ev.key==='n')GS.nosOn=true;if(GS.drive){if(ev.key==='s'||ev.key==='ArrowDown'){ev.preventDefault();GS.held.brake=true}if(!ev.repeat&&(ev.key==='e'||ev.key==='ArrowRight'))(GS.spec?gsxShift:gbShift)(1);if(!ev.repeat&&(ev.key==='q'||ev.key==='ArrowLeft'))(GS.spec?gsxShift:gbShift)(-1)}});
@@ -10377,7 +10387,7 @@ const T={
   ewp:['No belt drag and steady cooling at any rpm: a few hp and cooler running.','بدون سحب سير وتبريد ثابت في كل الدورات: بضعة أحصنة وحرارة أقل.','बेल्ट का खिंचाव नहीं, हर rpm पर स्थिर कूलिंग: कुछ hp और ठंडा इंजन।'],girdle:['Ties the main caps together so the crank stays straight at high rpm.','يربط أغطية السبيكة معاً ليبقى الكرنك مستقيماً في الدوران العالي.','मेन कैप को जोड़ता है ताकि ऊँचे rpm पर क्रैंक सीधा रहे।'],
   windage:['Stops oil whipping around the crank: frees power at high rpm.','يمنع الزيت من الدوران حول الكرنك: يحرّر قوة في الدوران العالي.','क्रैंक के आसपास तेल घूमना रोकता है: ऊँचे rpm पर पावर बचाता है।'],rockers:['Less valvetrain friction and the valves stay controlled to higher rpm.','احتكاك أقل في الصمامات وتبقى مضبوطة إلى دوران أعلى.','वाल्वट्रेन में कम घर्षण, ऊँचे rpm तक वाल्व नियंत्रित।'],
   nosHeat:['Keeps the bottle at about 950 psi so the shot stays full strength.','يحافظ على ضغط القارورة نحو ٩٥٠ psi لتبقى الدفعة كاملة.','बोतल को लगभग 950 psi पर रखता है ताकि शॉट पूरा रहे।'],nosPurge:['Clears gas out of the line before the shot: the famous white cloud.','يطرد الغاز من الخط قبل الدفعة: السحابة البيضاء الشهيرة.','शॉट से पहले लाइन से गैस निकालता है: मशहूर सफ़ेद बादल।']}};
-const X={advC:['advanced','متقدّمة','आगे'],retC:['retarded','متأخّرة','पीछे'],zeroC:['0° (stock)','0° (وكالة)','0° (स्टॉक)']};
+const X={mySaved:['★ My saved build','★ تعديلي المحفوظ','★ मेरा सहेजा बिल्ड'],saveCar:['Saving works for car engines.','الحفظ متاح لمحركات السيارات.','सहेजना कार इंजनों के लिए है।'],advC:['advanced','متقدّمة','आगे'],retC:['retarded','متأخّرة','पीछे'],zeroC:['0° (stock)','0° (وكالة)','0° (स्टॉक)']};
 const P={exhValve:['Exhaust valve actuator','مشغّل صمام العادم','एग्ज़ॉस्ट वाल्व एक्चुएटर','Opens or closes a flap in the exhaust: quiet or loud at the press of a button.','يفتح أو يغلق صماماً في العادم: هادئ أو صاخب بضغطة زر.','एग्ज़ॉस्ट में फ़्लैप खोलता या बंद करता है: बटन दबाते ही शांत या तेज़।'],
  ewp:['Electric water pump','مضخة ماء كهربائية','इलेक्ट्रिक वॉटर पंप','Pumps coolant with an electric motor instead of a belt.','تضخ سائل التبريد بمحرك كهربائي بدل السير.','बेल्ट के बजाय इलेक्ट्रिक मोटर से कूलेंट पंप करता है।'],
  nosNozzle:['Nitrous nozzle','فوهة النيتروس','नाइट्रस नोज़ल','Sprays nitrous (and fuel on a wet kit) into the intake just before the throttle.','ترش النيتروس (والوقود في الطقم الرطب) في السحب قبل بوابة الهواء.','थ्रॉटल से ठीक पहले इनटेक में नाइट्रस (वेट किट में ईंधन भी) छिड़कता है।'],
@@ -11500,7 +11510,7 @@ function homeFrame(dt,frame){
 }
 
 /* ================= simulator view ================= */
-function openEngine(id){
+function openEngine(id){S.p[id]=defaults(E[id]);
   const e=E[id];S.id=id;S.inst={};S.th=0;S.partsBuilt=false;S.bbox=probeBBox(e,S.p[id],e.compute(S.p[id],true));S.legendKey='';S.legendKey='';S.disp={};S.chart[id]=S.chart[id]||e.charts[0];S.bench[id]=S.bench[id]||[];
   $('#home').hidden=true;$('#lab').hidden=true;$('#sim').hidden=false;document.title=t(`eng.${id}.name`)+' · '+t('brand');
   buildSim();window.scrollTo(0,0);
@@ -11666,7 +11676,7 @@ function stageFrame2(dt,frame){
 /* ================= events ================= */
 function goBench(){const c=$('#benchCard');if(!c)return;c.scrollIntoView({behavior:RM?'auto':'smooth',block:'start'});c.classList.remove('flash');void c.offsetWidth;c.classList.add('flash');setTimeout(()=>{c.classList.remove('flash');const b=$('#btnRecord');if(b)b.focus({preventScroll:true})},1700)}
 function route(){const h=decodeURIComponent(location.hash.slice(1));
-  if(h==='garage'||h.startsWith('garage=')||h.startsWith('garage/')){if(h.startsWith('garage=')&&gLoadCode(h.slice(7))){GS.built=''}closeLab();closeLabX();openGarage(h.startsWith('garage/')?h.slice(7):null);return}
+  if(h==='garage'||h.startsWith('garage=')||h.startsWith('garage/')){let keep=false;if(h.startsWith('garage=')&&gLoadCode(h.slice(7))){GS.built='';GS.spec=null;keep=true;$('#garage').hidden=true;try{history.replaceState(null,'','#garage')}catch(_){}}closeLab();closeLabX();openGarage(h.startsWith('garage/')?h.slice(7):null,{keep});return}
   closeGarage();if(h==='lab'||h==='lab/petrol'){if(S.id){S.id=null;$('#sim').hidden=true}closeLabX();openLab();return}
   if(h.startsWith('lab/')&&E[h.slice(4)]){if(S.id){S.id=null;$('#sim').hidden=true}closeLab();openLabX(h.slice(4));return}
   closeLab();closeLabX();if(h&&E[h]){if(S.id!==h)openEngine(h);if(S.goBench){S.goBench=false;setTimeout(goBench,160)}}else{if(S.id)closeEngine();$('#home').hidden=false;$('#sim').hidden=true;if(h==='basics'||h==='engines')setTimeout(()=>$('#'+h).scrollIntoView({behavior:RM?'auto':'smooth'}),30)}}
@@ -11677,7 +11687,7 @@ function applyLang(l){
   buildHome();if(S.id){buildSim();document.title=t(`eng.${S.id}.name`)+' · '+t('brand')}else document.title=t('brand')+' · '+t('hero.eyebrow');
   if(!$('#lab').hidden){openLab();labSay(LAB.msgK||'welcome')}
   if(!$('#labx').hidden&&LX.id){lxBuild();lxSetMode(LX.mode)}
-  if(!$('#garage').hidden){openGarage()}
+  if(!$('#garage').hidden){openGarage(GS.openId)}
   anyLabOptions();teachApply();
 }
 function bind(){
@@ -11720,12 +11730,12 @@ function bind(){
   cv.addEventListener('pointerup',()=>lx=null);cv.addEventListener('pointercancel',()=>lx=null);
   const io=new IntersectionObserver(es=>es.forEach(x=>S.chartVis=x.isIntersecting));io.observe($('#chartCv'));
   window.addEventListener('hashchange',route);
+  window.addEventListener('pageshow',ev=>{if(!ev.persisted)return;for(const e of ENGINES)S.p[e.id]=defaults(e);if(!$('#garage').hidden){$('#garage').hidden=true;GS.openId=undefined;route()}else if(S.id){const id=S.id;S.id=null;openEngine(id)}});
 }
 function start(snap){
   let l=snap&&snap.lang||store.get('el-lang');if(!l){const n=(navigator.language||'en').slice(0,2);l=n==='ar'?'ar':n==='hi'?'hi':'en'}
-  if(snap&&snap.p)for(const id in snap.p)if(S.p[id])Object.assign(S.p[id],snap.p[id]);
   if(RM)S.spd=1;bind();labBind();teachBind();lxBind();gBind();window.addEventListener('resize',()=>{if(!$('#lab').hidden)labCharts()});applyLang(l);v3SetDim(!window.__no3d);route();
-  window.claude?.hot?.snapshot?.(()=>({lang:LANG,p:S.p}));
+  window.claude?.hot?.snapshot?.(()=>({lang:LANG}));
   let last=performance.now(),frame=0;
   const loop=now=>{const dt=Math.min(.1,(now-last)/1000);last=now;frame++;
     try{if(S.id){if(S.dirty){S.dirty=false;recompute()}stageFrame(dt,frame)}else if(!$('#lab').hidden){labTick(dt);labDraw(dt);tubeDraw();labUI()}else if(!$('#labx').hidden){lxTick(dt);lxDraw(dt);lxUI()}else if(!$('#garage').hidden){gTick(dt)}else homeFrame(dt,frame)}catch(err){console.error(err)}
