@@ -11216,19 +11216,23 @@ const EngSynth=class{
       // blow-off valve / compressor flutter after lifting off boost
       if(Q.bovN!=null&&Q.bovN!==s.bovN){s.bovN=Q.bovN;const fty=Q.bovT||'sport';
         if(fty==='flutter'||fty==='none'){// compressor surge "stu-tu-tu": a train of air chuffs as the trapped boost bangs back through the compressor
-          s.flE=Math.min(1.15,Q.flE||1);s.flT=0;s.flNext=.012;s.flK=0;s.flN=Q.flN||10;s.flI=Q.flI||.09;s.flA=0;s.flP=9;s.flTy=fty;this.bqs(s.f1,'bp',Q.flF||1400,fty==='flutter'?1.8:1.1)}
+          s.flE=Math.min(1.15,Q.flE||1);s.flT=0;s.flNext=.012;s.flK=0;s.flN=Q.flN||10;s.flI=Q.flI||.09;s.flA=0;s.flP=9;s.flTy=fty;s.flF0=Q.flF||1500;s.flPh=0;s.flPm=0;s.flFm=1/(s.flI*.42);s.flTA=fty==='flutter'?1:.85;s.flNA=fty==='flutter'?.35:.5}
         else{s.bovE=1;s.bovT=0}}
       if(s.flE>0){const dt=1/sr;s.flT+=dt;s.flP+=dt;
+        // stu-tu-tu: a train of whistling chirps from the compressor wheel as boost surges back through it.
+        // Each chirp is a tone with strong harmonics that glides down; every chirp starts a little lower; a fast flutter rides on top.
         if(s.flK<s.flN&&s.flT>=s.flNext){s.flK++;s.flP=0;const u=.5+.5*this.rnd(),prog=s.flK/s.flN;
-          s.flA=s.flE*(s.flK===1?.7:1)*(.8+.35*u)*Math.pow(s.flTy==='none'?.94:.9,s.flK-1);
-          let I=s.flI*(1+.45*prog)*(.86+.28*(.5+.5*this.rnd()));if(s.flK>1&&.5+.5*this.rnd()<.14)I*=.42;s.flNext=s.flT+I}
-        const tp=s.flP,z3=this.rnd();
-        if(tp<.3){const pe=tp<.002?tp/.002:.41*Math.exp(-(tp-.002)/.004)+.59*Math.exp(-(tp-.002)/(s.flTy==='none'?.085:.065));
-          let v=this.br(s.f1,z3)+this.br(s.f2,z3)*.4+this.br(s.f3,z3)*.2;if(tp<.006)v+=z3*.6*(1-tp/.006);if(tp<.022)v+=this.br(s.f5,z3)*.7*(1-tp/.022);
-          c+=this.br(s.f4,v)*s.flA*pe*.65}
-        // faint rush of air between the chuffs
-        const hl=s.flK<s.flN?1:Math.max(0,1-(s.flT-s.flNext)/.25);c+=this.br(s.f6,z3)*.035*s.flE*hl;
-        if(s.flK>=s.flN&&tp>.3)s.flE=0}
+          s.flA=s.flE*(s.flK===1?.8:1)*(.85+.25*u)*Math.pow(s.flTy==='none'?.95:.92,s.flK-1);
+          s.flFk=s.flF0*Math.pow(.935,s.flK-1)*(.97+.06*(.5+.5*this.rnd()));this.bqs(s.f1,'bp',s.flFk,6);this.bqs(s.f3,'bp',s.flFk*2,7);
+          let I=s.flI*(1+.35*prog)*(.9+.2*(.5+.5*this.rnd()));s.flLp=I*.64;s.flNext=s.flT+I}
+        const tp=s.flP,z3=this.rnd(),Lp=s.flLp||.06;
+        if(tp<Lp+.014){const ev=tp<.006?tp/.006:tp<Lp?1-.35*(tp-.006)/Lp:.65*(1-(tp-Lp)/.014);
+          const f=s.flFk*(1.04-.12*Math.min(1,tp/Lp))*(1+.007*Math.sin(tp*233));s.flPh+=f*TW;if(s.flPh>6.283185)s.flPh-=6.283185;s.flPm+=s.flFm*TW;
+          const am=1-.38*(.5+.5*Math.cos(s.flPm)),tone=Math.sin(s.flPh)+.5*Math.sin(2*s.flPh+.6)+.18*Math.sin(3*s.flPh+1.1)+.05*Math.sin(4*s.flPh),air=this.br(s.f1,z3)*2.6+this.br(s.f3,z3)*1.4;
+          c+=(tone*s.flTA+air*s.flNA)*ev*am*s.flA*.22}
+        // faint rush of air between the chirps
+        const hl=s.flK<s.flN?1:Math.max(0,1-(s.flT-s.flNext)/.25);c+=this.br(s.f6,z3)*.02*s.flE*hl;
+        if(s.flK>=s.flN&&tp>Lp+.2)s.flE=0}
       if(s.bovE>1e-3){s.bovT+=1/sr;const z2=this.rnd();let bv=0;const ty=Q.bovT||'sport';
         if(ty==='sport')bv=(this.br(s.bw,z2)*1.5+this.br(s.b1,z2)*.45+this.br(s.b3,z2)*.15)*s.bovE*(s.bovT<.035?s.bovT/.035:1)*.6;
         else if(ty==='stock')bv=this.br(s.b2,z2)*s.bovE*.35*(s.bovT<.02?s.bovT/.02:1);
@@ -11379,7 +11383,7 @@ function sndProfile(){
     return Object.assign({},o,{id:'gar:'+b.base+(b.diesel?'d':'')+':'+b.exh+':'+ck.order.join('')+(merge?':x':'')+(eq?':eq':''),kind:'pist',cycle:720,fires,evo:130,mA:b.diesel?0:360,rpm:Math.max(60,GS.rpm),load,rmax:red,gain:(SGAIN[sid]||1)*gK*vK,vol:GS.rpm>80?1:0,
       fire:GS.cut?0:1,lp:(o.lp||1200)*lpK*vL,tg:ex==='straight'?.12:o.tg,rough:((o.rough||.06)+camK+(b.balDel&&(b.base==='I4'||b.base==='I3')?.02:0))*(b.coils==='race'?.85:1),mis:camK*.35,intake:(o.intake||.15)*(b.intake==='itb'?3:b.intake==='cone'?1.6:1)*(vk>1?1.4:1),sp:(o.sp||0)*(b.xpipe==='h'?.5:1),motor:b.hybrid==='48v'&&GS.thr&&GS.rpm<3200?.45:0,scream:turbo&&b.wg==='external'&&GS.thr&&GS.boostNow>b.boost*.85?1:0,turb:(o.turb||.25)+(ex==='straight'?.15:0),
       turbo:turbo?clamp(.35+GS.boostNow*.5,0,1.2):0,blower:scT?clamp(.7+1.2*GS.boostNow,0,2):0,bl:b.ind==='cent'?28:b.ind==='roots'?7.5:12,
-      bovN:GS.bov,bovT:turbo?b.bov:'stock',flI:b.bov==='flutter'?.058+.01*(b.tsize||0):.072+.017*(b.tsize||0),flF:(b.bov==='flutter'?1700:1500)-170*(b.tsize||0),flN:Math.round(6+4*Math.min(1.6,GS.bovBoost||b.boost||1)),flE:clamp(.5+.32*(GS.bovBoost||1),.5,1.15),pop:b.diesel?0:GS.pops*(b.pops==='loud'?1:b.pops==='mild'?.5:.15),nos:GS.nosOn&&GS.thr>0,purge:b.nosPurge&&b.nos!=='none'&&GS.t-(GS.purgeT??-9)<.55,knock:b.diesel?.12:0})}
+      bovN:GS.bov,bovT:turbo?b.bov:'stock',flI:b.bov==='flutter'?.058+.01*(b.tsize||0):.072+.017*(b.tsize||0),flF:(b.bov==='flutter'?1750:1650)-140*(b.tsize||0),flN:Math.round(6+4*Math.min(1.6,GS.bovBoost||b.boost||1)),flE:clamp(.5+.32*(GS.bovBoost||1),.5,1.15),pop:b.diesel?0:GS.pops*(b.pops==='loud'?1:b.pops==='mild'?.5:.15),nos:GS.nosOn&&GS.thr>0,purge:b.nosPurge&&b.nos!=='none'&&GS.t-(GS.purgeT??-9)<.55,knock:b.diesel?.12:0})}
   if(!$('#labx').hidden&&LX.id){const e=E[LX.id],q=e.params.find(x=>x.k===labSpec(e).key),xm=Math.max(LX.x,q.min),p=lxP(xm),R=lxModel(xm),rf=lxRun();if(q.k==='rpm')p.rpm=Math.max(q.min*.5,LX.x);
     const m=sndFor(e,p,R);if(!m)return null;m.id='lx:'+m.id;m.vol=rf>.03&&(q.k!=='rpm'||LX.x>25)?(m.vol??1):0;if(m.kind==='pist'){m.fire=LX.eng==='start'?0:1;m.rpm=Math.max(80,LX.x)}if(m.kind==='jet'){m.a=Math.max(.05,(R.s||0)*rf)}if(m.kind==='rkt'){m.a*=rf}return m}
   if(!S.id||!S.playing)return{id:'off',kind:'off',vol:0};
