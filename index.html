@@ -10566,7 +10566,7 @@ function gTickSpec(dt){const id=GS.spec,sp=GSPEC[id],sx=GSX[id],run=GS.eng==='ru
   if(GS.drive&&sx){gsxDrive(dt,thr,run);ecoSpec(dt,run,thr);if(!GS.uiD||GS.t-GS.uiD>.1){GS.uiD=GS.t;gsxDriveHUD();ecoHUD()}}
   const e=E[id];if(!GS.spT||GS.t-GS.spT>.1){GS.spT=GS.t;const p=gSpecP(e,thr);let R={};try{R=gsxResults(id,e.compute(p,false)||{},GS.rpm/red,GS.boostNow)}catch(_){}GS.specP=p;GS.specR=R}
   const R=GS.specR||{},burnt=GS.drive&&GS.dr&&GS.dr.burn,on=run&&!burnt&&GS.rpm>(sp.idle*.5);
-  g3Frame(dt,{rpm:GS.rpm,run:on,thr:thr&&!burnt?1:0,load:thr?1:.15,boost:Math.max(GS.boostNow,thr?.25:0),egt:on?(thr?660:430):280,slow:GS.slow,explode:GS.explode,auto:GS.auto&&!GS.held.gas,labels:GS.labels,phases:GS.phases,flame:0,bov:(GS.t-(GS.bovT??-9))<.4?1:0,wg:clamp(GS.boostNow-.85,0,1)*6,smoke:gsxSmoke(id,on,thr)});gGaugeTick(dt);
+  g3Frame(dt,{rpm:GS.rpm,run:on,thr:thr&&!burnt?1:0,load:thr?1:.15,boost:Math.max(GS.boostNow,thr?.25:0),egt:on?(thr?660:430):280,slow:GS.slow,explode:GS.explode,auto:GS.auto&&!GS.held.gas,labels:GS.labels,phases:GS.phases,flame:0,bov:(GS.t-(GS.bovT??-9))<.4?1:0,wg:clamp(GS.boostNow-.85,0,1)*6,smoke:gsxSmoke(id,on,thr),mount:gsxSum(id).mount||1});gGaugeTick(dt);
   gTach();
   if(!GS.uiT||GS.t-GS.uiT>.12){GS.uiT=GS.t;const k=on?1:0,pw=R.power??R.Pnet??R.Pout??0,F=R.thrust??(R.F!=null?R.F/1000:null);
     const t1=id==='rocket'?(R.Isp||0):id==='turbofan'?(R.fuelKgh||0):Math.max(0,pw);$('#gLhp').textContent=fmt(t1*k,t1*k<10?1:0);$('#gLnm').textContent=fmt(Math.max(0,(F!=null&&(id==='turbofan'||id==='rocket'))?F:(R.torque||R.T||0))*k,1);$('#gLbo').textContent=fmt(id==='rocket'?GS.rpm:id==='turbofan'?(R.eth||0)*k:Math.max(0,(R.eff||0)*(R.eff<=1?100:1))*k,0)+'%'}}
@@ -11037,12 +11037,12 @@ const GSX={
 // ---------- state per engine: tuned settings + chosen parts ----------
 function gsxDef(g){return(g.o.find(o=>o.def)||g.o[0]).v}
 function gsxS(id){GS.sb=GS.sb||{};if(!GS.sb[id]){const sx=GSX[id]||{},st={p:{...(sx.init||{})},parts:{}};(sx.parts||[]).forEach(g=>st.parts[g.k]=gsxDef(g));GS.sb[id]=st}return GS.sb[id]}
-function gsxOpts(id){const st=gsxS(id);return(GSX[id]?.parts||[]).map(g=>g.o.find(o=>o.v===st.parts[g.k])||g.o[0])}
+function gsxOpts(id){const st=gsxS(id),all=(GSX[id]?.parts||[]).map(g=>[g.k,g.o.find(o=>o.v===st.parts[g.k])||g.o[0]]),cut=new Set();for(const[,o]of all)for(const c of(o.cancel||[]))cut.add(c);return all.filter(([k])=>!cut.has(k)).map(([,o])=>o)}
 // add up every chosen part: pw power ×, ef efficiency ×, red/idle shifts, boost (turbo power that arrives with rpm), spool time, risk, sound, 3D, vehicle
 function gsxSum(id){const s={pw:1,ef:1,red:0,idle:0,boost:0,boostK:1,spool:0,inert:1,risk:0,lowcut:0,cd:1,eta:.8,mass:0,kwh:75,rg:.12,h2:5.6,boostKW:30,awd:0,rev:0,fdk:1,snd:{},vis:{},p:{},veh:{},smoke:{},gauge:{},lock:0,kwhK:1,topcut:0};
   for(const o of gsxOpts(id)){s.pw*=o.pw||1;s.ef*=o.ef||1;s.red+=o.red||0;s.idle+=o.idle||0;s.boost+=o.boost||0;s.boostK*=o.boostK||1;s.spool+=o.spool||0;s.inert*=o.inert||1;s.risk+=o.risk||0;s.lowcut+=o.lowcut||0;s.cd*=o.cd||1;s.fdk*=o.fdk||1;
     if(o.eta)s.eta=o.eta;s.mass+=o.mass||0;if(o.kwh)s.kwh=o.kwh;if(o.rg!=null)s.rg=o.rg;if(o.h2)s.h2=o.h2;if(o.boostKW)s.boostKW=o.boostKW;if(o.awd)s.awd=1;if(o.rev)s.rev=1;
-    Object.assign(s.vis,o.vis||{});Object.assign(s.veh,o.veh||{});s.topcut+=o.topcut||0;s.kwhK*=o.kwhK||1;if(o.lock)s.lock=1;for(const k in(o.smoke||{}))s.smoke[k]=(s.smoke[k]||0)+o.smoke[k];for(const k in(o.gauge||{}))s.gauge[k]=/K$/.test(k)?(s.gauge[k]??1)*o.gauge[k]:(s.gauge[k]||0)+o.gauge[k];for(const k in(o.snd||{}))s.snd[k]=k==='gain'||k==='lp'?(s.snd[k]||1)*o.snd[k]:(s.snd[k]||0)+o.snd[k];Object.assign(s.p,o.p||{})}
+    Object.assign(s.vis,o.vis||{});Object.assign(s.veh,o.veh||{});s.topcut+=o.topcut||0;s.kwhK*=o.kwhK||1;if(o.lock)s.lock=1;if(o.bovT)s.bovT=o.bovT;if(o.mount)s.mount=o.mount;if(o.startSmoke)s.startSmoke=1;if(o.startHiss)s.startHiss=1;for(const k in(o.smoke||{}))s.smoke[k]=(s.smoke[k]||0)+o.smoke[k];for(const k in(o.gauge||{}))s.gauge[k]=/K$/.test(k)?(s.gauge[k]??1)*o.gauge[k]:(s.gauge[k]||0)+o.gauge[k];for(const k in(o.snd||{}))s.snd[k]=k==='gain'||k==='lp'?(s.snd[k]||1)*o.snd[k]:(s.snd[k]||0)+o.snd[k];Object.assign(s.p,o.p||{})}
   s.boost*=s.boost?s.boostK:1;s.lowcut=Math.max(0,s.lowcut);s.kwh*=s.kwhK;return s}
 // simulator settings for this build: defaults → your tune → part changes (big bore, high-compression head…)
 function gsxParams(e){const id=e.id,st=gsxS(id),sum=gsxSum(id),p={};for(const q of e.params)p[q.k]=q.def;
@@ -11329,6 +11329,75 @@ A('fuelcell',[
   {v:'both',n:L3('Ejector + blower','قاذف + نافخ','इजेक्टर + ब्लोअर'),d:L3('Ejector at high load, blower at low load: best of both.','القاذف عند الحمل العالي والنافخ عند المنخفض: أفضل الاثنين.','हाई लोड पर इजेक्टर, लो लोड पर ब्लोअर: दोनों का फ़ायदा।'),ef:1.015}]}]);
 })();
 
+/* EngineLab — the last special-engine parts: chrome-coated rotor housings, blow-off valve and engine mounts for the rotary,
+   oil-injection pump / race clutch / head insert for the two-stroke, air-start and oil purifier for the Deltic, carb heat and
+   cartridge starter for the radial, geared fan and compressor wash for the turbofan, boost pumps and propellant pre-chill for
+   the rocket, mechanical lubricator / safety-valve setting / spark arrestor for the steam engine, heat-pipe heater, linear
+   alternator and displacer for the Stirling, AVAS for the electric motor, purge valve and cold-start heater for the fuel cell. */
+(function(){
+const A=(id,groups)=>{const sx=GSX[id];if(!sx)return;for(const g of groups)if(!sx.parts.some(x=>x.k===g.k))sx.parts.push(g)};
+const O=(v,en,ar,hi,den,dar,dhi,fx)=>Object.assign({v,n:L3(en,ar,hi),d:L3(den,dar,dhi)},fx||{});
+A('wankel',[
+ {k:'housing',n:L3('Rotor housings','أغلفة الروتور','रोटर हाउसिंग'),o:[O('stock','Stock housings','أغلفة وكالة','स्टॉक हाउसिंग','Chrome-plated from the factory: fine for the road.','مطلية بالكروم من المصنع: جيدة للشارع.','फ़ैक्ट्री से क्रोम-प्लेटेड: सड़क के लिए ठीक।'),
+  O('hard','Hard-chrome / Nikasil re-coat','طلاء كروم صلب / نيكاسيل','हार्ड-क्रोम / निकासिल कोटिंग','A fresh, harder running surface: the apex seals seal better and wear far less (it also cures worn seals).','سطح احتكاك جديد وأقسى: موانع القمة تُحكم أفضل وتتآكل أقل بكثير (ويعالج الموانع المستهلكة).','नई, सख़्त सतह: एपेक्स सील बेहतर बंद करती हैं और बहुत कम घिसती हैं (घिसी सील भी ठीक)।',{pw:1.02,ef:1.01,risk:-.08,cancel:['fApex']})]},
+ {k:'bov',n:L3('Blow-off valve','صمام تنفيس البوست','ब्लो-ऑफ़ वाल्व'),o:[O('sport','Sport BOV (pssh)','صمام رياضي (بسسش)','स्पोर्ट BOV (प्श्श)','Vents boost to the air with the classic pssh. Only matters with a turbo.','يطلق البوست للهواء بصوت بسسش الكلاسيكي. يهم مع التوربو فقط.','बूस्ट हवा में छोड़ता है, क्लासिक प्श्श। सिर्फ़ टर्बो के साथ।',{bovT:'sport'}),
+  O('flutter','No BOV (flutter)','بدون صمام (رفرفة)','BOV नहीं (फ़्लटर)','Boost bounces back through the compressor: stu-tu-tu.','البوست يرتد عبر الضاغط: ستو-تو-تو.','बूस्ट कंप्रेसर से वापस टकराता है: स्टू-टू-टू।',{bovT:'flutter',risk:.02}),
+  O('stock','Recirculating valve (quiet)','صمام إعادة تدوير (هادئ)','रीसर्कुलेटिंग वाल्व (शांत)','Sends boost back to the intake: silent.','يعيد البوست إلى السحب: صامت.','बूस्ट इनटेक में लौटाता है: शांत।',{bovT:'stock'})]},
+ {k:'mount',n:L3('Engine mounts','مساند المحرك','इंजन माउंट'),o:[O('rubber','Rubber (stock)','مطاط (وكالة)','रबर (स्टॉक)','Soft and quiet; the engine rocks under torque.','ناعمة وهادئة؛ المحرك يتمايل مع العزم.','नरम व शांत; टॉर्क पर इंजन हिलता है।'),
+  O('poly','Polyurethane','بولي يوريثان','पॉलीयूरेथेन','Stiffer: sharper response, a little more buzz.','أقسى: استجابة أحد واهتزاز أكثر قليلاً.','सख़्त: तेज़ प्रतिक्रिया, थोड़ी ज़्यादा भनभनाहट।',{mount:.45}),
+  O('solid','Solid race mounts','مساند سباق صلبة','सॉलिड रेस माउंट','No movement at all: every vibration reaches the chassis.','بلا حركة: كل اهتزاز يصل للهيكل.','बिल्कुल हलचल नहीं: हर कंपन चेसिस तक।',{mount:.12,snd:{rough:.01}})]}]);
+A('two',[
+ {k:'oilp',n:L3('Two-stroke oil supply','تزويد زيت الشوطين','टू-स्ट्रोक तेल आपूर्ति'),o:[O('premix','Premix in the fuel','مخلوط مع الوقود','ईंधन में मिला हुआ','Oil is mixed into the petrol: simple, but always the same amount, so it smokes at idle.','الزيت مخلوط بالبنزين: بسيط لكن الكمية ثابتة فيدخّن في السلانسيه.','तेल पेट्रोल में मिला: सरल, पर मात्रा हमेशा बराबर, आइडल पर धुआँ।'),
+  O('pump','Oil-injection pump','مضخة حقن الزيت','ऑयल-इंजेक्शन पंप','A pump meters oil by rpm and throttle: less smoke and carbon, no mixing at the pump.','مضخة تقيس الزيت حسب الدوران والدواسة: دخان وكربون أقل ولا خلط يدوي.','पंप rpm व थ्रॉटल से तेल मापता है: कम धुआँ व कार्बन, मिलाना नहीं।',{ef:1.01,smoke:{blue:-.06},risk:-.03})]},
+ {k:'clutch',n:L3('Clutch','القابض','क्लच'),o:[O('stock','Stock clutch','قابض وكالة','स्टॉक क्लच','Smooth take-up for the street.','تعشيق ناعم للشارع.','सड़क के लिए नरम पकड़।'),
+  O('race','Race clutch (stiffer springs, sintered plates)','قابض سباق (نوابض أقسى وأقراص ملبّدة)','रेस क्लच (सख़्त स्प्रिंग, सिंटर्ड प्लेट)','Holds full power without slipping: quicker launches, a heavier lever.','يتحمل القوة كاملة بلا انزلاق: انطلاق أسرع وذراع أثقل.','पूरी पावर बिना फिसले: तेज़ शुरुआत, भारी लीवर।',{inert:.95,risk:-.02})]},
+ {k:'insert',n:L3('Cylinder head insert','حشوة رأس الأسطوانة','सिलेंडर हेड इंसर्ट'),o:[O('stock','Stock head','رأس وكالة','स्टॉक हेड','Factory squish and compression.','انضغاط وسحق المصنع.','फ़ैक्ट्री स्क्विश व कम्प्रेशन।'),
+  O('insert','Billet head + swappable insert','رأس مشغول + حشوة قابلة للتبديل','बिलेट हेड + बदलने योग्य इंसर्ट','A combustion-chamber insert sets the compression for the fuel: tighter squish, more power, needs good fuel.','حشوة غرفة الاحتراق تضبط الانضغاط حسب الوقود: سحق أضيق وقوة أكثر وتحتاج وقوداً جيداً.','दहन-कक्ष इंसर्ट ईंधन के हिसाब से कम्प्रेशन तय करता है: कसा स्क्विश, ज़्यादा पावर, अच्छा ईंधन चाहिए।',{p:{cr:'+1'},pw:1.03,risk:.06})]}]);
+A('opposed',[
+ {k:'start',n:L3('Starting system','نظام التشغيل','स्टार्टिंग सिस्टम'),o:[O('elec','Electric starter','مارش كهربائي','इलेक्ट्रिक स्टार्टर','Batteries crank the engine.','البطاريات تدير المحرك.','बैटरियाँ इंजन घुमाती हैं।'),
+  O('air','Air-start system','نظام التشغيل بالهواء','एयर-स्टार्ट सिस्टम','Compressed air is blown into the cylinders in firing order (ships and locomotives): huge cranking power, a loud hiss at start.','يُنفخ هواء مضغوط في الأسطوانات بترتيب الاشتعال (السفن والقطارات): قوة تدوير هائلة وفحيح عالٍ عند التشغيل.','संपीड़ित हवा फ़ायरिंग क्रम में सिलेंडरों में (जहाज़ व इंजन): ज़बरदस्त क्रैंकिंग, स्टार्ट पर तेज़ फुफकार।',{startHiss:1})]},
+ {k:'purifier',n:L3('Oil cleaning','تنقية الزيت','तेल सफ़ाई'),o:[O('filter','Paper filter','فلتر ورقي','पेपर फ़िल्टर','Catches the bigger particles.','يلتقط الجزيئات الأكبر.','बड़े कण पकड़ता है।'),
+  O('centrifuge','Centrifugal oil purifier','منقّي زيت بالطرد المركزي','सेंट्रीफ़्यूगल ऑयल प्यूरिफ़ायर','Spins soot and water out of the oil: bearings last much longer.','يطرد السخام والماء من الزيت بالدوران: السبايك تدوم أطول بكثير.','घुमाकर तेल से कालिख व पानी निकालता है: बेयरिंग बहुत ज़्यादा चलते हैं।',{risk:-.08,gauge:{oilT:-4}})]}]);
+A('radial',[
+ {k:'carbheat',n:L3('Carburettor heat','تسخين الكاربريتر','कार्बोरेटर हीट'),o:[O('off','Carb heat off','التسخين مطفأ','कार्ब हीट बंद','Cold, dense air: full power, but ice can form in the venturi in humid air.','هواء بارد كثيف: قوة كاملة لكن قد يتكوّن الجليد في الفنتوري بالهواء الرطب.','ठंडी घनी हवा: पूरी पावर, पर नम हवा में वेंचुरी में बर्फ़ बन सकती है।'),
+  O('on','Carb heat on','التسخين مشغّل','कार्ब हीट चालू','Warm air from around the exhaust melts carburettor ice: safer, but about 5 % less power.','هواء دافئ من حول العادم يذيب جليد الكاربريتر: أكثر أماناً لكن قوة أقل بنحو 5 %.','एग्ज़ॉस्ट के पास की गर्म हवा कार्ब की बर्फ़ पिघलाती है: सुरक्षित, पर लगभग 5 % कम पावर।',{pw:.95,risk:-.04,gauge:{cht:4}})]},
+ {k:'starter',n:L3('Starter','المارش','स्टार्टर'),o:[O('inertia','Inertia starter','مارش بالقصور الذاتي','इनर्शिया स्टार्टर','A flywheel is wound up, then clutched to the crank.','حدّافة تُدار ثم تُعشّق بالمرفق.','फ़्लाईव्हील घुमाकर क्रैंक से जोड़ा जाता है।'),
+  O('cart','Cartridge (Coffman) starter','مارش بالخرطوشة (كوفمان)','कार्ट्रिज (कॉफ़मैन) स्टार्टर','A shotgun-size cartridge fires to spin the engine: an instant start and a big puff of black smoke.','خرطوشة بحجم طلقة بندقية تُطلق لتدوير المحرك: تشغيل فوري ونفثة دخان أسود كبيرة.','बंदूक जैसी कार्ट्रिज फ़ायर होकर इंजन घुमाती है: तुरंत स्टार्ट और काले धुएँ का बड़ा गुबार।',{startSmoke:1})]}]);
+A('turbofan',[
+ {k:'gfan',n:L3('Fan drive','تشغيل المروحة','फ़ैन ड्राइव'),o:[O('direct','Direct drive','تشغيل مباشر','डायरेक्ट ड्राइव','The fan turns at low-pressure turbine speed.','المروحة تدور بسرعة توربين الضغط المنخفض.','फ़ैन लो-प्रेशर टर्बाइन की गति पर घूमता है।'),
+  O('geared','Geared turbofan','مروحة بتروس','गियर्ड टर्बोफ़ैन','A 3:1 gearbox lets a huge, slow fan and a fast turbine both run at their best speed: much higher bypass, far less fuel and noise.','علبة تروس 3:1 تتيح لمروحة كبيرة بطيئة ولتوربين سريع العمل بأفضل سرعة: تجاوز أعلى بكثير ووقود وضجيج أقل بكثير.','3:1 गियरबॉक्स से बड़ा धीमा फ़ैन व तेज़ टर्बाइन दोनों अपनी सबसे अच्छी गति पर: बहुत ज़्यादा बायपास, बहुत कम ईंधन व शोर।',{ef:1.12,snd:{gain:.85}})]},
+ {k:'wash',n:L3('Compressor wash','غسيل الضاغط','कंप्रेसर वॉश'),o:[O('none','Not washed','بدون غسيل','धुला नहीं','Normal service interval.','فترة صيانة عادية.','सामान्य सर्विस अंतराल।'),
+  O('wash','Fresh compressor wash','غسيل ضاغط حديث','ताज़ा कंप्रेसर वॉश','Hot water and detergent through the core: clean blades, lower EGT, a little less fuel (cures compressor fouling).','ماء ساخن ومنظف عبر القلب: شفرات نظيفة وحرارة عادم أقل ووقود أقل قليلاً (يعالج اتّساخ الضاغط).','कोर में गर्म पानी व डिटर्जेंट: साफ़ ब्लेड, कम EGT, थोड़ा कम ईंधन (कंप्रेसर गंदगी ठीक)।',{ef:1.01,gauge:{egt:-10},cancel:['fFoul']})]}]);
+A('rocket',[
+ {k:'bpump',n:L3('Boost pumps','مضخات التعزيز','बूस्ट पंप'),o:[O('none','None','بدون','नहीं','Tank pressure alone feeds the turbopump inlet.','ضغط الخزان وحده يغذي مدخل المضخة التوربينية.','सिर्फ़ टैंक दबाव टर्बोपंप इनलेट को खिलाता है।'),
+  O('boost','Low-pressure boost pumps','مضخات تعزيز منخفضة الضغط','लो-प्रेशर बूस्ट पंप','Small pumps lift the inlet pressure so the main pump never cavitates; thinner, lighter tanks.','مضخات صغيرة ترفع ضغط المدخل فلا تتكهف المضخة الرئيسية؛ خزانات أرق وأخف.','छोटे पंप इनलेट दबाव बढ़ाते हैं ताकि मुख्य पंप कभी कैविटेट न करे; पतले, हल्के टैंक।',{risk:-.08,pw:1.01,mass:-300})]},
+ {k:'chill',n:L3('Propellant conditioning','تهيئة الوقود','प्रणोदक कंडीशनिंग'),o:[O('normal','Normal temperature','حرارة عادية','सामान्य तापमान','Propellants loaded at their usual temperature.','الوقود يُحمّل بحرارته المعتادة.','प्रणोदक सामान्य तापमान पर भरे जाते हैं।'),
+  O('chill','Densified (sub-cooled)','مكثّف (مبرّد بعمق)','घनीकृत (सब-कूल्ड)','Chilled LOX and RP-1 are denser: about 8 % more propellant in the same tanks and a little more thrust (SpaceX style).','الأكسجين السائل والكيروسين المبرّدان أكثف: وقود أكثر بنحو 8 % في نفس الخزانات ودفع أكثر قليلاً (أسلوب سبيس إكس).','ठंडा LOX व RP-1 ज़्यादा घना: उन्हीं टैंकों में लगभग 8 % ज़्यादा प्रणोदक और थोड़ा ज़्यादा थ्रस्ट (स्पेसएक्स शैली)।',{pw:1.03,risk:.03})]}]);
+A('steam',[
+ {k:'lub',n:L3('Cylinder lubrication','تزييت الأسطوانات','सिलेंडर स्नेहन'),o:[O('hand','Hand oiler','مزيّتة يدوية','हाथ से तेल','The driver oils the valves by hand now and then.','السائق يزيّت الصمامات يدوياً من وقت لآخر.','चालक समय-समय पर हाथ से तेल देता है।'),
+  O('mech','Mechanical lubricator','مزيّت ميكانيكي','मैकेनिकल लुब्रिकेटर','A pump driven by the motion feeds steam oil with every stroke: less wear and friction.','مضخة تديرها الحركة تغذي زيت البخار مع كل شوط: تآكل واحتكاك أقل.','गति से चलने वाला पंप हर स्ट्रोक पर स्टीम ऑयल देता है: कम घिसाव व घर्षण।',{ef:1.02,risk:-.08})]},
+ {k:'sv',n:L3('Safety-valve setting','ضبط صمام الأمان','सेफ़्टी-वाल्व सेटिंग'),o:[O('low','Low (gentle)','منخفض (لطيف)','कम (नरम)','Lifts 15 % below working pressure: kind to an old boiler, less power.','يفتح أقل بـ15 % من ضغط التشغيل: لطيف على المرجل القديم وقوة أقل.','काम के दबाव से 15 % नीचे खुलता है: पुराने बॉयलर के लिए अच्छा, कम पावर।',{p:{pb:'*0.85'},risk:-.06}),
+  O('std','Standard','قياسي','मानक','Lifts at the boiler’s rated pressure.','يفتح عند الضغط المقنن للمرجل.','बॉयलर के रेटेड दबाव पर खुलता है।',{def:1}),
+  O('high','High (pushed)','عالٍ (مدفوع)','ऊँचा (धकेला)','15 % more pressure: more pull, more stress on the boiler plates.','ضغط أعلى بـ15 %: سحب أكثر وإجهاد أكبر على ألواح المرجل.','15 % ज़्यादा दबाव: ज़्यादा खिंचाव, बॉयलर पर ज़्यादा तनाव।',{p:{pb:'*1.15'},risk:.14})]},
+ {k:'arrest',n:L3('Spark arrestor','مانع الشرر','स्पार्क अरेस्टर'),o:[O('none','None','بدون','नहीं','Hot cinders can fly out of the chimney.','قد تتطاير جمرات ساخنة من المدخنة.','चिमनी से गर्म अंगारे उड़ सकते हैं।'),
+  O('mesh','Chimney spark arrestor','مانع شرر للمدخنة','चिमनी स्पार्क अरेस्टर','A mesh cage stops burning cinders setting fields on fire; slightly weaker draught.','قفص شبكي يمنع الجمرات من إشعال الحقول؛ سحب أضعف قليلاً.','जाली का पिंजरा जलते अंगारों को रोकता है; थोड़ा कमज़ोर ड्राफ़्ट।',{pw:.98})]}]);
+A('stirling',[
+ {k:'hpipe',n:L3('Heat transfer','نقل الحرارة','ऊष्मा स्थानांतरण'),o:[O('direct','Direct-fired head','رأس بتسخين مباشر','सीधा गर्म हेड','The flame heats the cylinder head directly: hot spots.','اللهب يسخّن الرأس مباشرة: بقع ساخنة.','लौ सीधे हेड गर्म करती है: गर्म धब्बे।'),
+  O('hpipe','Sodium heat-pipe heater','سخّان بأنابيب حرارية صوديوم','सोडियम हीट-पाइप हीटर','Boiling sodium spreads the heat perfectly evenly: the head can run hotter safely, more power and efficiency.','الصوديوم المغلي يوزّع الحرارة بالتساوي: يمكن تشغيل الرأس أسخن بأمان وقوة وكفاءة أكثر.','उबलता सोडियम गर्मी समान फैलाता है: हेड सुरक्षित रूप से ज़्यादा गर्म, ज़्यादा पावर व दक्षता।',{p:{th:'+40'},pw:1.05,ef:1.04,risk:-.03})]},
+ {k:'alt',n:L3('Power take-off','أخذ القدرة','पावर टेक-ऑफ़'),o:[O('crank','Crank + generator','مرفق + مولّد','क्रैंक + जनरेटर','Pistons drive a crankshaft and a generator.','المكابس تدير عمود مرفق ومولّداً.','पिस्टन क्रैंकशाफ़्ट व जनरेटर चलाते हैं।'),
+  O('linear','Free-piston linear alternator','مولّد خطي بمكبس حر','फ़्री-पिस्टन लीनियर अल्टरनेटर','The piston is a magnet moving inside a coil: no crank, no oil, almost no friction (NASA space power style).','المكبس مغناطيس يتحرك داخل ملف: بلا مرفق ولا زيت وتقريباً بلا احتكاك (أسلوب ناسا للطاقة الفضائية).','पिस्टन कुंडली में चलता चुंबक है: क्रैंक नहीं, तेल नहीं, लगभग घर्षण नहीं (नासा अंतरिक्ष शैली)।',{ef:1.06,pw:1.02,risk:-.05,snd:{gain:.8}})]},
+ {k:'disp',n:L3('Displacer','المُزيح','डिस्प्लेसर'),o:[O('solid','Solid displacer','مزيح مصمت','ठोस डिस्प्लेसर','Simple and strong.','بسيط وقوي.','सरल व मज़बूत।'),
+  O('hollow','Hollow insulated displacer','مزيح مجوّف معزول','खोखला इंसुलेटेड डिस्प्लेसर','Lighter and leaks less heat from the hot end to the cold end.','أخف ويسرّب حرارة أقل من الطرف الساخن للبارد.','हल्का और गर्म से ठंडे सिरे तक कम गर्मी रिसाव।',{ef:1.03,inert:.92})]}]);
+A('electric',[
+ {k:'avas',n:L3('Pedestrian warning sound (AVAS)','صوت تحذير المشاة (AVAS)','पैदल यात्री चेतावनी ध्वनि (AVAS)'),o:[O('off','Off','مطفأ','बंद','Almost silent at low speed.','شبه صامت بالسرعة المنخفضة.','कम गति पर लगभग शांत।'),
+  O('on','AVAS speaker','سماعة AVAS','AVAS स्पीकर','A required hum below about 20 km/h so pedestrians hear the car coming.','همهمة إلزامية تحت نحو ٢٠ كم/س ليسمع المشاة السيارة قادمة.','लगभग 20 km/h से नीचे ज़रूरी गुनगुनाहट ताकि पैदल यात्री कार आती सुनें।',{snd:{avas:1}})]}]);
+A('fuelcell',[
+ {k:'purge',n:L3('Hydrogen purge','تنفيس الهيدروجين','हाइड्रोजन पर्ज'),o:[O('timed','Timed purge valve','صمام تنفيس مؤقت','टाइम्ड पर्ज वाल्व','Opens every few seconds to flush water and nitrogen, wasting a little hydrogen.','يفتح كل بضع ثوانٍ لطرد الماء والنيتروجين ويهدر قليلاً من الهيدروجين.','हर कुछ सेकंड खुलकर पानी व नाइट्रोजन निकालता है, थोड़ी हाइड्रोजन बर्बाद।'),
+  O('smart','Voltage-controlled purge','تنفيس بالتحكم بالجهد','वोल्टेज-नियंत्रित पर्ज','Purges only when the cell voltages say it is needed: less hydrogen wasted, steadier voltage.','ينفّس فقط عندما تدل جهود الخلايا على الحاجة: هيدروجين مهدر أقل وجهد أثبت.','सिर्फ़ तब पर्ज जब सेल वोल्टेज बताएँ: कम हाइड्रोजन बर्बाद, स्थिर वोल्टेज।',{ef:1.02,gauge:{cellV:.01}})]},
+ {k:'heater',n:L3('Cold start','التشغيل البارد','कोल्ड स्टार्ट'),o:[O('none','No heater','بدون سخّان','हीटर नहीं','Below freezing the water in the stack can freeze and damage it.','تحت التجمد قد يتجمد الماء في الكومة ويتلفها.','जमाव से नीचे स्टैक का पानी जमकर नुकसान कर सकता है।'),
+  O('heater','Cold-start heater','سخّان التشغيل البارد','कोल्ड-स्टार्ट हीटर','Warms the stack and coolant before start: starts at −30 °C, costs a little energy.','يسخّن الكومة والمبرد قبل التشغيل: يعمل عند −30 °C ويستهلك قليلاً من الطاقة.','स्टार्ट से पहले स्टैक व कूलेंट गर्म करता है: −30 °C पर स्टार्ट, थोड़ी ऊर्जा लेता है।',{ef:.995,risk:-.06,gauge:{temp:2}})]}]);
+})();
+
 /* EngineLab — Faults & gauges.
    Car engines: nine real-world faults (each changes the physics, the sound, the exhaust smoke and the warning light),
    a live gauge cluster (boost / vacuum, lambda, EGT, oil pressure + temperature, coolant, knock retard, compression test),
@@ -11391,12 +11460,12 @@ function gIdleHunt(b){const t=GS.t||0;return(b.fVac&&!b.diesel?60+70*Math.sin(t*
 
 /* ---------- smoke ---------- */
 const SMK={blue:0xa6bfe6,white:0xf4f6f8,black:0x262626};
-function gSmoke(b,run,thr,m){if(!run)return null;const out=[],idle=(b.diesel?GDIESEL[b.base]:GENG[b.base]).idle,lift=!thr&&GS.rpm>idle*1.6?1:0;
+function gSmoke(b,run,thr,m){if(!run)return null;const out=[],cs=GS.t-(GS.startT??-99),cd=b.diesel?(b.glow==='ceramic'?1.2:3.5):0;if(cs<cd)out.push({c:SMK.white,a:.6*(1-cs/cd)});const idle=(b.diesel?GDIESEL[b.base]:GENG[b.base]).idle,lift=!thr&&GS.rpm>idle*1.6?1:0;
   if(b.fRings)out.push({c:SMK.blue,a:.3+.45*lift+.2*thr});
   if(b.fGasket)out.push({c:SMK.white,a:.5+.25*thr});
   let blk=0;if(b.fInj)blk+=(b.diesel?.65:.38)*(.45+.55*thr);if(b.diesel&&thr&&GS.rpm<gRedline(b)*.55&&b.dpf==='off')blk+=.35;if(!b.diesel&&thr&&m&&m.lam<.8)blk+=.25;if(b.diesel&&b.fAir&&thr)blk+=.25;
   if(blk)out.push({c:SMK.black,a:Math.min(1,blk),dark:1});return out.length?out:null}
-function gsxSmoke(id,on,thr){if(!on)return null;const s=gsxSum(id).smoke,out=[];let blue=(s.blue||0)+(id==='two'?.1:0);
+function gsxSmoke(id,on,thr){const S=gsxSum(id),st=GS.t-(GS.startT??-99);if(S.startSmoke&&GS.eng==='run'&&st<1.4)return[{c:SMK.black,a:1-st/1.6,dark:1}];if(!on)return null;const s=S.smoke,out=[];let blue=(s.blue||0)+(id==='two'?.1:0);
   if(blue)out.push({c:SMK.blue,a:Math.min(1,blue*(.7+.5*thr))});if(s.white)out.push({c:SMK.white,a:Math.min(1,s.white)});if(s.black)out.push({c:SMK.black,a:Math.min(1,s.black*(.5+.6*thr)),dark:1});return out.length?out:null}
 
 /* ---------- check-engine light + warnings ---------- */
@@ -11428,7 +11497,7 @@ function gPaneCond(b){const myst=gMysValid()&&!GS.mys.done;let h=`<p class="gnot
   if(gTurbo(b))h+=`<h3 class="gh">${esc(gct('hTurbo'))}</h3>`+gCards('fWg',[['ok'],['shut'],['open']],3);return h}
 function gsxPaneCond(id){const st=gsxS(id),fs=GSX[id].parts.filter(g=>g.f),myst=gMysValid()&&!GS.mys.done;let h=`<p class="gnote">${esc(gct('note'))}</p>`+gMysBox();if(myst||!fs.length)return h;
   h+=`<h3 class="gh">${esc(gct('hFaults'))}</h3>`;for(const g of fs){const o=g.o.find(x=>x.v==='on');h+=`<label class="gtog"><input type="checkbox" data-gsxf="${g.k}" ${st.parts[g.k]==='on'?'checked':''}><span>${esc(sxT(g.n))}</span><small>${esc(sxT(o.d))}</small></label>`}return h}
-function gCanStart(){if(GS.spec&&GSX[GS.spec]&&gsxSum(GS.spec).lock){const el=$('#gBlown');if(el){el.hidden=false;el.classList.add('lock');el.innerHTML=`<b>🛑 ${esc(gct('lockT'))}</b><p>${esc(gct('lockD'))}</p><button type="button" class="btn sm" id="gLockOk">${esc(gct('lockOk'))}</button>`}return false}return true}
+function gCanStart(){if(GS.spec&&GSX[GS.spec]&&gsxSum(GS.spec).lock){const el=$('#gBlown');if(el){el.hidden=false;el.classList.add('lock');el.innerHTML=`<b>🛑 ${esc(gct('lockT'))}</b><p>${esc(gct('lockD'))}</p><button type="button" class="btn sm" id="gLockOk">${esc(gct('lockOk'))}</button>`}return false}GS.startT=GS.t||0;return true}
 
 /* ---------- gauges ---------- */
 // tile: {k, v, d decimals, u unit, mn/mx bar range, w:[lo,hi] amber, b:[lo,hi] red, sub small text}
@@ -11679,7 +11748,7 @@ const PICON={
 const PICMAP={fuel:v=>['fuel',{e85:'E85',meth:'M100',race:'RACE'}[v]||v],pump:()=>['pump'],fuelSys:v=>[v==='return'?'ret':'pump'],pops:()=>['flame'],gasket:()=>['gasket'],rad:()=>['rad'],map:v=>['ecu',{eco:'ECO',stock:'OEM',sport:'SPT',race:'RACE'}[v]],
   plugs:()=>['plug'],oilVisc:v=>['oil',{'0w20':'0W20','5w30':'5W30','10w60':'10W60'}[v]],trac:()=>['tyre'],lim:()=>['wave'],cycle:()=>['pv'],mounts:()=>['mount'],glow:()=>['glow'],
   als:()=>['flame'],flat:()=>['shift'],bbg:()=>['boost'],studs:()=>['bolt'],balDel:()=>['shaft'],knockProt:()=>['shield'],flex:()=>['sensor'],cda:()=>['cyl'],scr:()=>['drop','SCR'],fPlugs:()=>['plug'],launch:()=>['tach']};
-const PICSX=[[/^(ecu|ctl|gov|map)$/,'ecu'],[/^(fuel|fuelsys|jet|mix|oct)$/,'fuel'],[/^(ign|cdi)$/,'plug'],[/^(oil|oilc|lub)$/,'oil'],[/^(cool|rad|cowl)$/,'rad'],[/^(bc|boost)$/,'boost']];
+const PICSX=[[/^(ecu|ctl|gov|map)$/,'ecu'],[/^(fuel|fuelsys|jet|mix|oct)$/,'fuel'],[/^(ign|cdi)$/,'plug'],[/^(oil|oilc|lub|oilp|purifier)$/,'oil'],[/^(cool|rad|cowl)$/,'rad'],[/^(bc|boost|sv)$/,'boost'],[/^mount$/,'mount'],[/^(carbheat|heater)$/,'flame'],[/^(start|starter)$/,'tach'],[/^avas$/,'wave'],[/^(chill|wash)$/,'drop'],[/^(bpump)$/,'pump'],[/^insert$/,'gasket'],[/^clutch$/,'shift'],[/^purge$/,'sensor'],[/^bov$/,'boost'],[/^arrest$/,'flame']];
 function gPic(k,v){let i=PPIC.m[k+'.'+v];if(i==null&&(v===true||v==='true'))i=PPIC.m['t.'+k];if(i!=null)return`<img class="gpic" src="${picUrl(i)}" alt="" loading="lazy" decoding="async">`;
   let ic=null;if(k.startsWith('sx.')){const g=k.split('.')[2];const hit=PICSX.find(([re])=>re.test(g));if(hit)ic=[hit[1]]}else if(PICMAP[k])ic=PICMAP[k](v);
   return ic&&PICON[ic[0]]?`<span class="gpic gico" aria-hidden="true"><svg viewBox="0 0 64 40">${PICON[ic[0]](ic[1])}</svg></span>`:''}
@@ -12004,7 +12073,8 @@ const EngSynth=class{
       const gear=(Math.sin(P*s.ph[1])*.05+Math.sin(2*P*s.ph[1]+.5)*.016)*la*fade(fg)*Math.min(1,rps/25);
       const inv=Math.sin(P*s.ph[2]+1.6*Math.sin(P*s.ph[3]))*.006*la*Math.max(0,1-rps/90);
       const wind=this.br(s.wl,this.rnd())*.13*Math.pow(Math.min(1,s.rpm/18000),2);
-      const v=this.br(s.sm,whine+gear+inv)+wind;L[i]=v;R[i]=v}}
+      let av=0;if(Q.avas){const ak=Math.max(0,1-rps/45);if(ak>0){s.ph[5]=(s.ph[5]||0)+(320+rps*4)*TW;s.ph[6]=(s.ph[6]||0)+(480+rps*6)*TW;if(s.ph[5]>=1)s.ph[5]-=1;if(s.ph[6]>=1)s.ph[6]-=1;av=(Math.sin(P*s.ph[5])*.6+Math.sin(P*s.ph[6])*.4)*.035*ak*(.75+.25*Math.sin(P*s.ph[5]*.013))}}
+      const v=this.br(s.sm,whine+gear+inv)+wind+av;L[i]=v;R[i]=v}}
   fc(L,R,n){const Q=this.Q,s=this.s,sr=this.sr,TW=1/sr;
     for(let i=0;i<n;i++){s.a1+=(Q.a-s.a1)*s.aS;const a=s.a1,fcmp=1500+4000*a*(.75+.25*(Q.b||2)/2);
       s.ph[0]+=fcmp*TW;if(s.ph[0]>=1)s.ph[0]-=1;s.ph[1]+=96*TW;if(s.ph[1]>=1)s.ph[1]-=1;const P=6.283185;
@@ -12082,12 +12152,12 @@ function sndProfile(){
     return sndPiston('petrol',e,p,R,{id:'lab:1',vol:L.rpm<25?0:1,fire:run?1:0,motor:L.motor&&L.potS>.5?1:0,rough:L.choke?.2:.11,mis:L.choke?.05:0,gain:SGAIN.petrol||1})}
   if(!$('#garage').hidden&&GS.spec){const e=E[GS.spec];if(!GS.specP||!GS.specR)return{id:'off',kind:'off',vol:0};const m=sndFor(e,GS.specP,GS.specR);if(!m)return null;m.id='gs:'+m.id;const on=GS.eng==='run'&&GS.rpm>1;m.vol=on?(m.vol??1):0;if(m.kind==='pist'){m.fire=on?1:0;m.rpm=Math.max(80,GS.rpm);m.load=GS.thr?1:.2}if(m.kind==='jet')m.a=on?Math.max(.05,GS.rpm/100):0;if(m.kind==='rkt')m.a*=on&&!(GS.dr&&GS.dr.burn)?1:0;
     // fitted parts change the sound: porting roughness, exhaust volume/brightness, turbo whistle + blow-off, afterburner roar
-    const sx=typeof gsxSum==='function'&&GSX[GS.spec]?gsxSum(GS.spec).snd:{};if(m.kind==='pist'){m.rough=Math.max(0,(m.rough||.06)+(sx.rough||0));m.mis=Math.max(0,(m.mis||0)+(sx.mis||0));m.gain*=sx.gain||1;m.lp=(m.lp||1200)*(sx.lp||1);
-      if(sx.turbo){m.turbo=clamp(.3+(GS.boostNow||0)*.6,0,1.2)*Math.min(1.3,sx.turbo);m.bovN=GS.bov||0;m.bovT='sport'}}
+    const SS=typeof gsxSum==='function'&&GSX[GS.spec]?gsxSum(GS.spec):{snd:{}},sx=SS.snd;if(m.kind==='pist'){m.rough=Math.max(0,(m.rough||.06)+(sx.rough||0));m.mis=Math.max(0,(m.mis||0)+(sx.mis||0));m.gain*=sx.gain||1;m.lp=(m.lp||1200)*(sx.lp||1);
+      if(sx.turbo){m.turbo=clamp(.3+(GS.boostNow||0)*.6,0,1.2)*Math.min(1.3,sx.turbo);m.bovN=GS.bov||0;m.bovT=SS.bovT||'sport';if(m.bovT==='flutter'){m.flI=.09;m.flF=1250;m.flN=Math.round(5+2.5*Math.min(1.6,(GS.bovBoost||1)));m.flE=clamp(.5+.32*(GS.bovBoost||1),.5,1.15)}}}
     if(m.kind==='jet'&&sx.ab){m.gain*=1+.6*(GS.thr?1:0);m.v9=(m.v9||500)*(GS.thr?1.35:1)}if(sx.gain&&m.kind!=='pist')m.gain*=sx.gain;
     if(GS.spec==='radial'&&m.kind==='pist'){const nc=(gsxVis('radial').cyl)||9;if(nc!==9){m.fires=evenF(nc,720,1);m.id+=':c'+nc}}
     if(m.kind==='pist'&&sx.mis)m.lope=(m.lope||0)+sx.mis*4;
-    m.fx={h:sx.hiss||0,r:sx.rat||0,g:sx.grind||0};m.id+=':'+JSON.stringify(sx);return m}
+    const stt=GS.t-(GS.startT??-99);m.fx={h:(sx.hiss||0)+(SS.startHiss&&GS.eng==='run'&&stt<1.2?1.2*(1-stt/1.2):0),r:sx.rat||0,g:sx.grind||0};if(m.kind==='ev')m.avas=sx.avas&&GS.eng==='run'?1:0;m.id+=':'+JSON.stringify(sx);return m}
   if(!$('#garage').hidden&&GS.ck){const b=GS.b,ck=GS.ck,map={I3:'inline3',I4:'inline4',I5:'inline5',I6:'inline6',V6:'v6',V8:'v8',V8F:'v8',V10:'v10',V12:'v12',B4:'boxer',B6:'flat6',VR6:'vr6',W12:'w12',W16:'w16',I1:'petrol'},sid=b.diesel?'diesel':map[b.base],o={...SPROF[sid]},red=gRedline(b),m=GS.m||{bmep:2};
     const turbo=['t1','twin','tscroll','vgt','seq','etb','tc'].includes(b.ind),scT=['roots','screw','tc'].includes(b.ind)||b.ind==='cent';
     const twoB=ck.banks.length>1,merge=twoB&&b.xpipe==='x',eq=b.eqlen&&GBASE[b.base].lay==='B';
