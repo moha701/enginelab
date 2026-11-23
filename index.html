@@ -900,6 +900,10 @@ details.gsec.chg{border-color:rgba(255,123,50,.3)}details.gsec.chg .gsec-dot{bac
   .gg{padding:5px 6px 7px}.gg b{font-size:13px}.gg small{font-size:9px}.gg em{font-size:8.5px}
   .gmys-l{grid-template-columns:1fr}
 }
+.gst.wide{grid-column:1/-1}.gst.eok b{color:#9ff0c8}.gst.ebad b{color:#ffb3a0}
+.g3reset{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:4;padding:7px 14px;border-radius:999px;border:1px solid rgba(255,138,74,.6);background:rgba(8,11,15,.78);backdrop-filter:blur(10px);color:#ffc09a;font:700 13px var(--f-body);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.45);animation:dlgIn .25s}
+.g3reset[hidden]{display:none}.g3reset:hover{background:rgba(255,123,50,.2)}
+@media (max-width:760px){.g3reset{left:auto;transform:none;inset-inline-end:8px;top:calc(min(56vh,440px) - 42px);padding:6px 11px;font-size:12px}.v3wrap>.g3reset{top:auto;bottom:56px}}
 
 </style>
 </head>
@@ -8923,7 +8927,7 @@ function g3Init(host){
   const bg=new THREE.CanvasTexture(bgc);bg.colorSpace=THREE.SRGBColorSpace;scene.background=bg;
   const pm=new THREE.PMREMGenerator(R);scene.environment=pm.fromScene(new RoomEnvironment(),.04).texture;scene.environmentIntensity=.62;
   const cam=new THREE.PerspectiveCamera(34,1,.05,200);cam.position.set(7.5,4.2,8.5);
-  const ctl=new OrbitControls(cam,R.domElement);ctl.enableDamping=true;ctl.dampingFactor=.07;ctl.minDistance=3;ctl.maxDistance=22;ctl.maxPolarAngle=Math.PI*.495;ctl.target.set(0,.4,0);ctl.autoRotateSpeed=.6;
+  const ctl=new OrbitControls(cam,R.domElement);ctl.enableDamping=true;ctl.dampingFactor=.07;ctl.minDistance=3;ctl.maxDistance=22;ctl.maxPolarAngle=Math.PI*.495;ctl.target.set(0,.4,0);ctl.autoRotateSpeed=.6;ctl.addEventListener('start',()=>{G3.camTok=(G3.camTok||0)+1});
   scene.add(new THREE.HemisphereLight(0x9fb4d8,0x0b0c0e,.35));
   const key=new THREE.DirectionalLight(0xfff1e0,2.9);key.position.set(5,9,6);key.castShadow=true;key.shadow.mapSize.set(mob?1024:2048,mob?1024:2048);const sc=key.shadow.camera;sc.left=-7;sc.right=7;sc.top=7;sc.bottom=-7;sc.near=1;sc.far=30;key.shadow.bias=-.0004;key.shadow.radius=4;scene.add(key);
   const rim=new THREE.SpotLight(0x58b6ff,40,30,.6,.6);rim.position.set(-7,5,-6);scene.add(rim);
@@ -8947,9 +8951,19 @@ function g3Init(host){
   let down=null;el.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY]});
   el.addEventListener('pointerup',e=>{if(down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<5){const r=el.getBoundingClientRect();G3.ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);G3.ptrPx=[e.clientX-r.left,e.clientY-r.top];const h=g3Pick();if(h)g3Focus(h)}down=null});
   g3Resize();window.addEventListener('resize',g3Resize);return true}
-function g3Fit(){const T=G3.THREE,bx=new T.Box3().setFromObject(G3.root),sp=bx.getBoundingSphere(new T.Sphere()),sz=bx.getSize(new T.Vector3());if(sz.y>1.25*Math.max(sz.x,sz.z))sp.radius*=1.1;G3.fitR=sp.radius;G3.fitC=sp.center.clone();
+function g3Fit(){const T=G3.THREE,bx=new T.Box3().setFromObject(G3.root),sp=bx.getBoundingSphere(new T.Sphere()),sz=bx.getSize(new T.Vector3());if(sz.y>1.25*Math.max(sz.x,sz.z))sp.radius*=1.1;G3.fitR=sp.radius;G3.fitC=sp.center.clone();G3.fitBox=bx.clone().expandByScalar(sp.radius*.03);G3.fitBoxL=bx.clone().expandByScalar(sp.radius*.25);
   const fov=G3.cam.fov*Math.PI/180,asp=G3.cam.aspect||1.6,d=sp.radius/Math.sin(Math.min(fov,fov*asp)/2)*.92;G3.fitD=d;G3.ctl.minDistance=sp.radius*.7;G3.ctl.maxDistance=d*2.4;
   const dir=G3.cam.position.clone().sub(G3.ctl.target).normalize();G3.ctl.target.copy(sp.center);G3.cam.position.copy(sp.center).addScaledVector(dir,d);G3.ctl.update()}
+// the camera never ends up inside the engine (pinch-zoom, two-finger pan or tapping parts on a phone could put it there):
+// the pivot stays near the model and the camera is pushed back out through the model's bounding box
+function g3Guard(){const B=G3.fitBox,c=G3.ctl,cam=G3.cam;if(!B||!c||G3.ex>.05)return;const T=G3.THREE;c.target.clamp(G3.fitBoxL.min,G3.fitBoxL.max);
+  if(!B.containsPoint(cam.position))return;const dir=cam.position.clone().sub(c.target);let len=dir.length();if(len<1e-4){dir.set(.62,.36,.7);len=dir.length()}dir.divideScalar(len);
+  const tin=B.containsPoint(c.target),p=new T.Ray(c.target.clone(),dir).intersectBox(B,new T.Vector3());if(!p)return;cam.position.copy(p).addScaledVector(dir,(tin?1:-1)*G3.fitR*.02);if(!tin&&B.containsPoint(cam.position))cam.position.copy(c.target).addScaledVector(dir,Math.max(G3.ctl.minDistance,1))}
+// a "reset view" button appears in the 3D view whenever you have zoomed, panned or tapped far from the normal framing
+function g3ResetBtn(){G3.rbN=(G3.rbN||0)+1;if(G3.rbN%8)return;const w=G3.wrap;if(!w||!G3.fitD)return;let bt=w.querySelector(':scope>.g3reset');
+  if(!bt){bt=document.createElement('button');bt.type='button';bt.className='g3reset';bt.hidden=true;bt.addEventListener('click',e=>{e.stopPropagation();g3ResetCam('iso');bt.hidden=true});w.appendChild(bt)}
+  const tx='⟲ '+(LANG==='ar'?'إعادة العرض':LANG==='hi'?'व्यू रीसेट':'Reset view');if(bt.textContent!==tx)bt.textContent=tx;
+  const d=G3.cam.position.distanceTo(G3.ctl.target),off=G3.ctl.target.distanceTo(G3.fitC),away=d<G3.fitD*.62||d>G3.fitD*1.6||off>G3.fitR*.3;if(bt.hidden===away)bt.hidden=!away}
 // keep the framing when the view box changes size: same target, distance adjusted for the new aspect (re-measuring the moving engine every time made it jump)
 function g3Refit(){if(!G3.fitR||!G3.root)return g3Fit();const fov=G3.cam.fov*Math.PI/180,asp=G3.cam.aspect||1.6,d=G3.fitR/Math.sin(Math.min(fov,fov*asp)/2)*.92,cur=G3.cam.position.distanceTo(G3.ctl.target),k=G3.fitD?Math.max(.3,Math.min(3,cur/G3.fitD)):1;
   G3.fitD=d;G3.ctl.minDistance=G3.fitR*.7;G3.ctl.maxDistance=d*2.4;const dir=G3.cam.position.clone().sub(G3.ctl.target).normalize();G3.cam.position.copy(G3.ctl.target).addScaledVector(dir,d*k);G3.ctl.update()}
@@ -9033,7 +9047,8 @@ function g3Build(cfg){
       for(let i=0;i<per;i++)for(const zs of[-1,1]){const bt=mesh(cyl(b*.04,b*.04,b*.05,6),M.chrome);bt.position.set(x0+i*pitch+pitch*.5-(i===per-1?pitch*.05:0),deck+headH+b*.42,zs*b*.62*WF);H0.add(bt)}}
     // cams (intake side = -z local for inline; valley side for V)
     const inSide=inSideOf(bi),camY=deck+b*.9*Math.cos(.18)+b*.21,camZ=b*.42,noSp=pairM&&ownerOf(bi)!==bi;
-    const camI=new T.Group(),camE=new T.Group();camI.position.set(0,camY,inSide*camZ);camE.position.set(0,camY,-inSide*camZ);hd.add(camI,camE);
+    const camL=cfg.cams||'dohc',camI=new T.Group(),camE=new T.Group();camI.position.set(0,camY,camL==='dohc'?inSide*camZ:0);camE.position.set(0,camY,-inSide*camZ);hd.add(camI,camE);if(camL!=='dohc')camE.visible=false;if(camL==='ohv')camI.visible=false;
+    if(camL==='ohv'){const rs=mesh(cylX(b*.05,len+b*.1,12),M.steel,'rocker');rs.position.set(0,camY+b*.06,0);hd.add(addPart(rs,'rocker',bi===0))}
     [camI,camE].forEach((cg,ci)=>{const sh=mesh(cylX(b*.07,len+b*.3,16),M.steel,'cam');cg.add(addPart(sh,'cam',bi===0&&ci===0));
       if(!noSp){const sp=mesh(gearG(b*.44,36,b*.08,6),M.steel,'sprocket');sp.position.x=xFront+b*.02;cg.add(addPart(sp,'sprocket'));anim.spin.push({o:sp,k:.5,axis:'x'});const nut=mesh(cylX(b*.1,b*.12,6),M.chrome);nut.position.x=xFront-b*.03;cg.add(nut)}
       anim.cams.push({g:cg,bank:bi,kind:ci?'E':'I',noSp})});
@@ -9075,10 +9090,14 @@ function g3Build(cfg){
     const P=c.P*Math.PI/180,pinM=mesh(cylX(b*.13,rodW*1.02,20),M.steel,'crank');pinM.position.set(xc,Math.cos(P)*r,Math.sin(P)*r);crank.add(addPart(pinM,'crank',c.no===1));
     // valves (2 intake, 2 exhaust) in the head
     const hd=bank.userData.hd,inS=bank.userData.inSide,vs=[];
-    for(const kind of['I','E'])for(const dx of[-b*.2,b*.2]){const zz=(kind==='I'?inS:-inS)*b*.26,vg=new T.Group();vg.position.set(xc+dx,deck+.01,zz);vg.rotation.x=(kind==='I'?inS:-inS)*.18;hd.add(vg);
+    const VP={2:[[0],[0],1.3,1.3],3:[[-.2,.2],[0],1,1.3],4:[[-.2,.2],[-.2,.2],1,1],5:[[-.27,0,.27],[-.2,.2],.82,1]}[cfg.vpc||4]||[[-.2,.2],[-.2,.2],1,1],camL=cfg.cams||'dohc';
+    for(const kind of['I','E'])for(const dx0 of(kind==='I'?VP[0]:VP[1])){const dx=dx0*b,vk=kind==='I'?VP[2]:VP[3],zz=(kind==='I'?inS:-inS)*b*.26,vg=new T.Group();vg.position.set(xc+dx,deck+.01,zz);vg.rotation.x=(kind==='I'?inS:-inS)*.18;vg.scale.set(vk,1,vk);hd.add(vg);
       const v=mesh(valveG,kind==='I'?M.steel:M.dark,'valve');vg.add(addPart(v,'valve',c.no===1&&kind==='I'&&dx<0));
       const spr=mesh(springG,kind==='I'?M.blue:M.redAno,'spring');spr.position.y=b*.45;vg.add(addPart(spr,'spring'));const bk=mesh(cyl(b*.1,b*.1,b*.08,18),M.chrome,'tappet');bk.position.y=b*.94;v.add(addPart(bk,'tappet'));const ret=mesh(cyl(b*.085,b*.06,b*.03,14),M.steel);ret.position.y=b*.885;v.add(ret);
-      const lb=mesh(lobeG,M.chrome,'cam');const cg=anim.cams.find(q=>q.bank===c.bank&&q.kind===kind);lb.position.x=xc+dx;cg.g.add(lb);
+      const lb=mesh(lobeG,M.chrome,'cam');const cg=anim.cams.find(q=>q.bank===c.bank&&q.kind===(camL==='dohc'?kind:'I'));lb.position.x=xc+dx;cg.g.add(lb);
+      if(camL!=='dohc'){// rocker arm from the cam (SOHC) or the rocker shaft (OHV) over to the valve tip
+        const camY0=hd.userData.camY,tip=V(xc+dx,deck+b*.97,zz+Math.sin((kind==='I'?inS:-inS)*.18)*b*.97),piv=V(xc+dx,camY0+b*.06,camL==='ohv'?0:Math.sign(zz)*b*.05),dv=tip.clone().sub(piv),ra=mesh(box(b*.07,b*.05,dv.length()+b*.06),M.steel,'rocker');ra.position.copy(piv.clone().lerp(tip,.5));ra.quaternion.setFromUnitVectors(V(0,0,1),dv.clone().normalize());hd.add(addPart(ra,'rocker'));
+        if(camL==='ohv'){const pzs=(base.lay==='V'?inS:-1)*b*.36,pt=V(xc+dx,camY0+b*.02,pzs),pb=V(xc+dx,deck-b*.55,pzs*1.12),pr=mesh(cyl(b*.022,b*.022,pt.distanceTo(pb),8),M.chrome,'pushrod');pr.position.copy(pt.clone().lerp(pb,.5));orient(pr,pt.clone().sub(pb).normalize());hd.add(addPart(pr,'pushrod',c.no===1&&kind==='I'))}}
       vs.push({kind,v,spr,lb})}
     // spark plug + coil (petrol) or injector (diesel)
     const plug=new T.Group();plug.position.set(xc,deck+headH+b*.42,0);hd.add(plug);
@@ -9167,7 +9186,7 @@ function g3Build(cfg){
     valleyTop=Math.max(pts[1].y,pts[2].y);valleyZ=Math.min(Math.abs(pts[1].z),Math.abs(pts[2].z))}
   const mfd=cfg.intake==='itb'?'stock':(cfg.manifold||'stock'),plenumPos=side1?V(0,deck+headH*.7,-b*(1.85+(base.vr?.42:0))*({stock:1,short:.88,long:1.18,vis:1.06}[mfd]||1)):vee?V(0,valleyTop+b*(.27+({stock:0,short:-.06,long:.3,vis:.12}[mfd]||0)),0):V(0,r+b*(1.6+({stock:0,short:-.15,long:.35,vis:.12}[mfd]||0)),0);
   const ind=cfg.ind||'na',turbo=ind.startsWith('t')||ind==='twin'||ind==='seq'||ind==='vgt'||ind==='etb'||ind==='tc',scTop=ind==='roots'||ind==='screw'||ind==='tc',scCent=ind==='cent';
-  const itb=cfg.intake==='itb'&&!scTop;
+  const carbK=cfg.carb&&cfg.carb!=='efi'?cfg.carb:null,itb=(cfg.intake==='itb'||carbK==='weber')&&!scTop;
   const intakeG=new T.Group();root.add(explode(intakeG,side1?[0,.3,-1.3]:[0,1.4,0]));
   const injPts=[];// per cylinder injector seat (petrol port injection) for the fuel rail
   if(itb){anim.cyl.forEach(a=>{const bi=a.c.bank,inS=anim['bank'+bi].userData.inSide;let p0,p1;
@@ -9176,18 +9195,22 @@ function g3Build(cfg){
       const run=mesh(tube([[p0.x,p0.y,p0.z],[p1.x,(p0.y+p1.y)/2+.05,(p0.z+p1.z)/2],[p1.x,p1.y,p1.z]],b*.16,24,18),M.alu,'runner');intakeG.add(addPart(run,'runner'));
       const dir=p1.clone().sub(p0).normalize(),tr=mesh(new T.LatheGeometry([new T.Vector2(b*.16,0),new T.Vector2(b*.17,b*.22),new T.Vector2(b*.24,b*.4),new T.Vector2(b*.31,b*.45),new T.Vector2(b*.29,b*.47)],32),Mchd,'itb');tr.position.copy(p1);orient(tr,dir);intakeG.add(addPart(tr,'itb',a.c.no===1));
       const bf=mesh(cyl(b*.15,b*.15,.01,20),M.alu);bf.position.copy(p1.clone().addScaledVector(dir,-b*.1));orient(bf,dir);intakeG.add(bf);(anim.itbF=anim.itbF||[]).push({o:bf,q:bf.quaternion.clone()});
-      injPts.push({p:p0.clone().lerp(p1,.45),bi,xc:a.xc,dir})})}
+      injPts.push({p:p0.clone().lerp(p1,.45),bi,xc:a.xc,dir,p1:p1.clone()})});
+    if(carbK==='weber'){const byB={};injPts.forEach(q=>{(byB[q.bi]=byB[q.bi]||[]).push(q)});for(const k in byB){const ps=byB[k].sort((p,q)=>p.xc-q.xc);for(let i=0;i<ps.length;i+=2){const grp=ps.slice(i,i+2),c0=grp.reduce((a,q)=>a.add(q.p1.clone().addScaledVector(q.dir,-b*.16)),V(0,0,0)).multiplyScalar(1/grp.length),w=grp.length>1?Math.abs(grp[1].xc-grp[0].xc)+b*.55:b*.6;
+        const cb=mesh(box(w,b*.3,b*.52,.04),M.alu,'weber');cb.position.copy(c0);orient(cb,grp[0].dir);intakeG.add(addPart(cb,'weber',i===0&&k==='0'));const fb=mesh(cylX(b*.07,w*.6,12),M.brass||M.copper);fb.position.copy(c0.clone().add(V(0,b*.3,0)));intakeG.add(fb)}}}}
   else{const plL=len*(vee?.98:.92);const pl=mesh(box(plL,b*.62,b*(vee?Math.min(.95,valleyZ*1.5/b):.78),.18),cfg.carbonPlenum?M.carbon:Malu,'plenum');pl.position.copy(plenumPos);intakeG.add(addPart(pl,'plenum',true));
     anim.cyl.forEach(a=>{const bi=a.c.bank,inS=anim['bank'+bi].userData.inSide;let p0,pm,mid;
       if(vee&&scTop){const zs=vTopZ(bi);p0=V(a.xc,valleyTop-b*.02,zs*.78);pm=V(a.xc,plenumPos.y-b*.06,Math.sign(zs)*b*.16);mid=V(a.xc,(p0.y+pm.y)/2+b*.04,zs*.52)}
       else if(vee){const zs=vTopZ(bi);p0=V(a.xc,valleyTop-b*.02,zs*.78);pm=V(a.xc,plenumPos.y+b*.12,-Math.sign(zs)*b*.12);mid=V(a.xc,plenumPos.y+b*.42,zs*.42)}
       else{p0=portS(bi,a.xc,inS);pm=plenumPos.clone();pm.x=a.xc;mid=p0.clone().lerp(pm,.5);mid.y+=b*.25}
       intakeG.add(addPart(mesh(tube([[p0.x,p0.y,p0.z],[mid.x,mid.y,mid.z],[pm.x,pm.y,pm.z]],b*.13,28,14),Malu,'runner'),'runner'));injPts.push({p:vee?p0.clone().add(V(0,b*.12,-Math.sign(p0.z)*b*.05)):p0.clone().lerp(mid,.28),bi,xc:a.xc})});
-    if(!scTop){const tbK=cfg.tb==='big'?1.2:1,tb=mesh(cylX(b*.27*tbK,b*.32,32),M.alu,'throttle');tb.position.set(plenumPos.x-plL/2-b*.16,plenumPos.y,plenumPos.z);intakeG.add(addPart(tb,'throttle'));
+    if(carbK){const ck4=carbK==='carb4',cw=b*(ck4?.78:.56),top=plenumPos.clone().add(V(0,b*.31,0)),cb=mesh(box(cw,b*.36,cw,.05),M.alu,'carb');cb.position.copy(top).add(V(0,b*.18,0));intakeG.add(addPart(cb,'carb',true));
+      const ac=mesh(cyl(b*(ck4?1.02:.78),b*(ck4?1.02:.78),b*.22,36),M.black,'airCleaner');ac.position.copy(top).add(V(0,b*.47,0));intakeG.add(addPart(ac,'airCleaner'));const lid=mesh(cyl(b*(ck4?.9:.68),b*(ck4?.95:.72),b*.04,36),M.chrome);lid.position.copy(ac.position).add(V(0,b*.13,0));intakeG.add(lid);const wn=mesh(cyl(b*.05,b*.05,b*.06,6),M.chrome);wn.position.copy(lid.position).add(V(0,b*.05,0));intakeG.add(wn)}
+    else if(!scTop){const tbK=cfg.tb==='big'?1.2:1,tb=mesh(cylX(b*.27*tbK,b*.32,32),M.alu,'throttle');tb.position.set(plenumPos.x-plL/2-b*.16,plenumPos.y,plenumPos.z);intakeG.add(addPart(tb,'throttle'));
       const bf=mesh(cyl(b*.24,b*.24,.012,24),M.chrome);bf.rotation.z=Math.PI/2;tb.add(bf);anim.butterfly=bf;anim.tbPos=tb.position.clone();anim.tbIn=tb.position.clone().add(V(-b*.16,0,0));}}
   if(mfd==='vis'&&!itb){const plL=len*(vee?.98:.92),act=mesh(cyl(b*.11,b*.11,b*.26,18),M.black,'visActuator');act.position.set(plenumPos.x+plL/2-b*.25,plenumPos.y+b*.38,plenumPos.z);intakeG.add(addPart(act,'visActuator'));const rod=mesh(cylX(b*.02,plL*.8,8),M.chrome);rod.position.set(plenumPos.x,plenumPos.y+b*.33,plenumPos.z+(side1?b*.2:b*.12));intakeG.add(rod)}
   // fuel rail + injectors (petrol) along each bank
-  if(!cfg.diesel&&injPts.length){banksIn.filter(q=>ownerOf(q.bi)===q.bi).forEach(({bi})=>{const ps=injPts.filter(q=>ownerOf(q.bi)===bi).sort((p,q)=>p.xc-q.xc);if(!ps.length)return;const up=base.lay==='I'?bankP(bi,0,1,0).sub(bankP(bi,0,0,0)).normalize():V(0,1,0),sideO=base.lay==='B'?V(0,0,Math.sign(ps[0].p.z)*b*.22):V(0,0,0);
+  if(!cfg.diesel&&!carbK&&injPts.length){banksIn.filter(q=>ownerOf(q.bi)===q.bi).forEach(({bi})=>{const ps=injPts.filter(q=>ownerOf(q.bi)===bi).sort((p,q)=>p.xc-q.xc);if(!ps.length)return;const up=base.lay==='I'?bankP(bi,0,1,0).sub(bankP(bi,0,0,0)).normalize():V(0,1,0),sideO=base.lay==='B'?V(0,0,Math.sign(ps[0].p.z)*b*.22):V(0,0,0);
       const railPts=ps.map(q=>q.p.clone().addScaledVector(up,vee?b*.13:b*.2).add(sideO));const r0=railPts[0].clone(),r1=railPts[railPts.length-1].clone();r0.x-=b*.25;r1.x+=b*.2;
       const rl=mesh(tube([r0,...railPts,r1].map(p=>[p.x,p.y,p.z]),b*.05,48,10),M.redAno,'fuelRail');intakeG.add(addPart(rl,'fuelRail',bi===0));
       ps.forEach((q,i)=>{const inj=mesh(cyl(b*.035,b*.045,b*.2,12),M.black,'injector');inj.position.copy(q.p.clone().addScaledVector(up,b*.1).addScaledVector(sideO,.5));orient(inj,up);intakeG.add(addPart(inj,'fuelInj'));
@@ -9398,6 +9421,13 @@ function g3Build(cfg){
     const cap=mesh(cyl(b*.125,b*.125,b*.03,24),M.blue);cap.rotation.x=Math.PI/2;cap.position.z=-b*.36;g.add(cap);const pl=mesh(box(b*.07,b*.08,b*.08,.01),M.dark);pl.position.set(0,b*.13,-b*.24);g.add(pl);
     orc.set(V(ex,ey,ez+b*.12),V(1,0,0));const h=orc.intersectObjects(oilSolid,false)[0],fx=h&&h.point.x<ex+b*.9?h.point.x:ex+b*.4;
     pipe([[ex+b*.12,ey,ez+b*.12],[ex+b*.2,ey,ez+b*.12],[fx-b*.03,ey,ez+b*.12],[fx,ey,ez+b*.12]],b*.05,M.dark,null,root,12);const fi=mesh(cylX(b*.085,b*.06,14),M.alu);fi.position.set(fx-b*.02,ey,ez+b*.12);root.add(fi)}
+  // ---- oil catch can beside the cam cover (exhaust side, near the front) + breather hose ----
+  if(cfg.catchCan&&anim.hd0){const h0=anim.hd0,inS0=h0.userData.inSide,dIn=Math.sign(xBack-xFront)||1,zc=-inS0*(b*.725*WF+b*.31+(base.vr?b*.45:0)),cx=xFront+dIn*b*.55,cy=deck+headH+b*.18;
+    const can=mesh(cyl(b*.15,b*.15,b*.46,20),M.alu,'catchCan');can.position.set(cx,cy,zc);h0.add(addPart(can,'catchCan'));const cap=mesh(cyl(b*.16,b*.16,b*.06,20),M.black);cap.position.set(cx,cy+b*.26,zc);h0.add(cap);
+    const hz=-inS0*b*.42*WF,hy=deck+headH+b*.5;h0.add(mesh(tube([[cx,cy+b*.29,zc],[cx+dIn*b*.12,cy+b*.44,zc*.85],[cx+dIn*b*.3,hy,hz]],b*.035,16,8),M.rubber));const nip=mesh(cyl(b*.05,b*.05,b*.1,12),M.black);nip.position.set(cx+dIn*b*.3,hy-b*.05,hz);h0.add(nip)}
+  // ---- mechanical diesel injection pump (front of the block, gear-driven) ----
+  if(cfg.diesel&&cfg.dpump==='mech'){const dIn=Math.sign(xBack-xFront)||1,inl=base.lay==='I',px=inl?xFront+dIn*b*.5:xFront-dIn*b*.42,py=inl?(deck+r)/2+b*.05:valleyTop+b*.25,pz=inl?anim.bank0.userData.inSide*b*1.05:0,par=inl?anim.bank0:root;
+    const pmp=mesh(box(b*.55,b*.42,b*.36,.04),M.alu,'injPump');pmp.position.set(px,py,pz);par.add(addPart(pmp,'injPump'));const hdp=mesh(cylX(b*.12,b*.2,16),M.steel);hdp.position.set(px-dIn*b*.36,py,pz);par.add(hdp)}
   // ---- engine stand (static, does not rock with the engine) ----
   {if(G3.stand){G3.scene.remove(G3.stand);g3Dispose(G3.stand)}const st=new T.Group();G3.stand=st;st.position.y=-.05;G3.scene.add(st);
     const SM=M.stand||(M.stand=new T.MeshStandardMaterial({color:0x2a2e35,roughness:.45,metalness:.7}));const sy=my-b*.12;
@@ -9420,9 +9450,9 @@ function g3Frame(dt,st){
   if(a.crank)a.crank.rotation.x=th*Math.PI/180;if(a.frame)a.frame(dt,st,vis,th);
   if(a.flows)for(const f of a.flows)for(const p of f.sp){let q=((p.t+dt*(+f.v||0)*.45)%1+1)%1;if(!isFinite(q))q=0;p.t=q;p.s.position.copy(f.cv.getPointAt(Math.min(.999,q)))}
   // engine rocks on its rubber mounts: torque reaction on throttle changes + firing-pulse shake at idle
-  if(!a.spec||['wankel','two','opposed','radial'].includes(a.spec)){const tq=st.run?(st.thr?1:.12)*(.6+.4*Math.min(1,(st.boost||0)+.4)):0,tgt=-tq*.022,k=140,c=16;G3.rollV=(G3.rollV||0)+((tgt-(G3.roll||0))*k-(G3.rollV||0)*c)*Math.min(dt,.04);G3.roll=(G3.roll||0)+G3.rollV*Math.min(dt,.04);
+  if(!a.spec||['wankel','two','opposed','radial'].includes(a.spec)){const mK=st.mount??1,tq=st.run?(st.thr?1:.12)*(.6+.4*Math.min(1,(st.boost||0)+.4)):0,tgt=-tq*.022*mK,k=140,c=16;G3.rollV=(G3.rollV||0)+((tgt-(G3.roll||0))*k-(G3.rollV||0)*c)*Math.min(dt,.04);G3.roll=(G3.roll||0)+G3.rollV*Math.min(dt,.04);
    // idle shake: a gentle low-frequency rock (the real firing frequency is faster than the screen can show and would flicker), fading out as revs rise
-   const vA=st.run?.0011*Math.max(0,1-st.rpm/2200)*(ck&&ck.cyl.length<=2||a.spec==='two'||a.spec==='opposed'?1.8:1)*(st.cutCyl?1.6:1):0;G3.vibA=(G3.vibA||0)+(vA-(G3.vibA||0))*Math.min(1,dt*3);
+   const vA=st.run?.0011*Math.max(0,1-st.rpm/2200)*(ck&&ck.cyl.length<=2||a.spec==='two'||a.spec==='opposed'?1.8:1)*(st.cutCyl?1.6:1)*(st.shake||1)*(.45+.55*mK):0;G3.vibA=(G3.vibA||0)+(vA-(G3.vibA||0))*Math.min(1,dt*3);
    const vib=G3.vibA*(Math.sin(G3.t*2*Math.PI*5.3)*.6+Math.sin(G3.t*2*Math.PI*3.1+1.3)*.4);G3.root.rotation.x=G3.roll+vib;G3.root.position.x=0}
   const dur=(st.camDur||240),liftK=(st.camLift||1),bAng=b=>b;
   for(const c of a.cyl){const P=c.c.P,ang=(th+P-c.c.beta)*Math.PI/180,rr=a.r,L=a.L,x=rr*Math.cos(ang)+Math.sqrt(L*L-Math.pow(rr*Math.sin(ang),2));
@@ -9456,7 +9486,7 @@ function g3Frame(dt,st){
   const ex=G3.ex=(G3.ex||0)+((st.explode?1:0)-(G3.ex||0))*Math.min(1,dt*4);for(const e of a.explode){e.o.position.copy(e.base).addScaledVector(e.dir,ex)}
   // flames / nitrous purge particles
   g3Fx(dt,st);
-  G3.ctl.autoRotate=!!st.auto;G3.ctl.update();{const k=.85+.15*Math.sin(G3.t*1.3);G3.ring.material.color.setRGB(.5*k,1.9*k,2.6*k)}
+  G3.ctl.autoRotate=!!st.auto;G3.ctl.update();g3Guard();g3ResetBtn();{const k=.85+.15*Math.sin(G3.t*1.3);G3.ring.material.color.setRGB(.5*k,1.9*k,2.6*k)}
   if(G3.ptrPx&&performance.now()-(G3.lastPick||0)>90){G3.lastPick=performance.now();g3Hover(g3Pick())}
   g3Labels(st.labels);
   G3.comp.render(dt);
@@ -9485,14 +9515,14 @@ function g3Hover(h){const tip=G3w('.g3tip');if(!tip)return;const k=h&&h.object.u
   if(G3.hl&&G3.hl!==h?.object){if(G3.hl.material&&G3.hl.userData.em!=null&&G3.hl.material.emissive){G3.hl.material.emissive.setHex(G3.hl.userData.em);}G3.hl=null}
   if(!k||!G3.ptrPx){tip.hidden=true;G3.R&&(G3.R.domElement.style.cursor='grab');return}
   tip.hidden=false;tip.innerHTML=`<b>${esc(t('gar.p.'+k))}</b><span>${esc(t('gar.pd.'+k))}</span>`;const [x,y]=G3.ptrPx,W=G3.host.clientWidth;tip.style.left=Math.min(W-tip.offsetWidth-8,x+14)+'px';tip.style.top=Math.max(8,y-tip.offsetHeight-10)+'px';G3.R.domElement.style.cursor='pointer'}
-function g3Focus(h){const p=h.point.clone(),c=G3.ctl,start=c.target.clone(),cs=G3.cam.position.clone(),dir=cs.clone().sub(start).normalize(),dist=Math.max(4,Math.min(9,cs.distanceTo(start)*.75)),end=p.clone().addScaledVector(dir,dist);let k=0;
-  const step=()=>{k=Math.min(1,k+.06);const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;c.target.lerpVectors(start,p,e);G3.cam.position.lerpVectors(cs,end,e);if(k<1)requestAnimationFrame(step)};step();
+function g3Focus(h){const tok=G3.camTok=(G3.camTok||0)+1,p=h.point.clone(),c=G3.ctl,start=c.target.clone(),cs=G3.cam.position.clone(),dir=cs.clone().sub(start).normalize(),dist=Math.max(4,Math.min(9,cs.distanceTo(start)*.75)),end=p.clone().addScaledVector(dir,dist);let k=0;
+  const t0=performance.now();const step=()=>{if(tok!==G3.camTok)return;k=Math.min(1,(performance.now()-t0)/550);const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;c.target.lerpVectors(start,p,e);G3.cam.position.lerpVectors(cs,end,e);if(k<1)requestAnimationFrame(step)};step();
   const card=G3w('.g3info');if(card){const k2=h.object.userData.part;card.hidden=false;card.innerHTML=`<button type="button" class="g3x" id="g3infoX" aria-label="×">×</button><b>${esc(t('gar.p.'+k2))}</b><p>${esc(t('gar.pd.'+k2))}</p>`}}
 function g3View(mode){if(!G3.anim)return;const xr=mode==='xray',cut=mode==='cut';G3.clip.constant=cut?0:1e3;
   for(const m of G3.Mx){m.transparent=xr;m.opacity=xr?.16:1;m.depthWrite=!xr;m.needsUpdate=true}
   G3.root.traverse(o=>{if(o.material===G3.M.cut||(o.material&&o.material.side===G3.THREE.BackSide&&o.material.color&&o.material.color.getHex()===0xff5a1f))o.visible=!xr})}
-function g3ResetCam(v){const c=G3.ctl,cam=G3.cam,T=G3.THREE;const D={iso:[.62,.36,.7],front:[-1,.12,.001],side:[.001,.14,1],top:[.001,1,.08],back:[.75,.25,-.6]}[v||'iso'];const C=G3.fitC||new T.Vector3(0,.4,0),dd=G3.fitD||12;let k=0;const s=cam.position.clone(),st=c.target.clone(),e=C.clone().add(new T.Vector3(...D).normalize().multiplyScalar(dd));
-  const step=()=>{k=Math.min(1,k+.05);const q=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;cam.position.lerpVectors(s,e,q);c.target.lerpVectors(st,C,q);if(k<1)requestAnimationFrame(step)};step()}
+function g3ResetCam(v){const c=G3.ctl,cam=G3.cam,T=G3.THREE;const D={iso:[.62,.36,.7],front:[-1,.12,.001],side:[.001,.14,1],top:[.001,1,.08],back:[.75,.25,-.6]}[v||'iso'];const C=G3.fitC||new T.Vector3(0,.4,0),dd=G3.fitD||12,tok=G3.camTok=(G3.camTok||0)+1;let k=0;const s=cam.position.clone(),st=c.target.clone(),e=C.clone().add(new T.Vector3(...D).normalize().multiplyScalar(dd));
+  const t0=performance.now();const step=()=>{if(tok!==G3.camTok)return;k=Math.min(1,(performance.now()-t0)/650);const q=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;cam.position.lerpVectors(s,e,q);c.target.lerpVectors(st,C,q);if(k<1)requestAnimationFrame(step)};step()}
 function g3Labels(on){const host=G3w('.g3labels');if(!host)return;if(!on||!G3.labels.length){if(host.childElementCount)host.innerHTML='';return}
   if(host.childElementCount!==G3.labels.length||host.dataset.lang!==LANG){host.dataset.lang=LANG;host.innerHTML=G3.labels.map(l=>`<span class="g3lab">${esc(t('gar.p.'+l.k))}</span>`).join('')}
   const W=G3.host.clientWidth,H=G3.host.clientHeight,v=new G3.THREE.Vector3();
@@ -9568,7 +9598,7 @@ function gDrive(dt,b,thr,run){
 function gEngBrake(b,N){const e=b.diesel?GDIESEL[b.base]:GENG[b.base];return gDisp(b)*(8+28*N/gRedline(b))*(b.diesel?1.3:1)}
 function gbShift(dir){const b=GS.b,G=GBOX[b.gbox]||GBOX.manual,D=GS.dr;if(!D||G.cont||D.shiftT>0)return;const g=D.gear+dir;if(g<1||g>G.n)return;
   if(dir<0){const wN=D.v/gbWr(b)*60/(2*Math.PI),N=wN*G.r[g-1]*gbFd(b);if(N>gRedline(b)*1.04)return}
-  D.from=D.gear;D.gear=g;D.shiftT=G.shift*(b.flat&&GS.thr&&G.cut==='clutch'?.55:1);D.clutch=G.cut==='clutch'?0:1;GS.shiftN=(GS.shiftN||0)+1;if(G.cut==='ign'&&GS.thr&&GS.b.pops!=='off')GS.pops=Math.min(1,GS.pops+.7)}
+  D.from=D.gear;D.gear=g;D.shiftT=G.shift*(b.flat&&GS.thr&&G.cut==='clutch'?.55:1)*({poly:.94,solid:.88}[b.mounts]||1);D.clutch=G.cut==='clutch'?0:1;GS.shiftN=(GS.shiftN||0)+1;if(G.cut==='ign'&&GS.thr&&GS.b.pops!=='off')GS.pops=Math.min(1,GS.pops+.7)}
 
 /* ---------- 3D gearbox model (bolted to the back of the engine) ---------- */
 function G3glass(T){return G3.glassM||(G3.glassM=new T.MeshStandardMaterial({color:0x5d6b7e,metalness:.3,roughness:.22,transparent:true,opacity:.13,depthWrite:false,side:T.DoubleSide,envMapIntensity:.35}))}
@@ -10175,29 +10205,31 @@ const GDEF=()=>({base:'I6',diesel:false,ind:'na',tsize:1,boost:1,ar:.82,bov:'spo
   nos:'none',shot:75,nosRpm:3000,
   head:'stock',manifold:'stock',tb:'stock',cat:'stock',xpipe:'none',wg:'internal',bc:'stock',chra:'journal',wheel:'cast',fuelSys:'stock',di:'port',coils:'stock',flywheel:'stock',oil:'wet',rad:'stock',bearings:'stock',hybrid:'none',map:'stock',crp:'stock',egr:'on',dpf:'on',valvetrain:'stock',vvl:false,eqlen:false,balDel:false,wmi:false,oilCooler:false,studs:false,squirters:false,flat:false,bbg:false,camAdv:0,plugs:'stock',oilVisc:'5w30',ewp:false,block:'stock',girdle:false,windage:false,rockers:false,trac:'off',exhValve:'none',wrap:'none',nosHeat:false,nosPurge:false,
   fAir:false,fRings:false,fPlugs:false,fInj:false,fVac:false,fChain:false,fGasket:false,fMaf:false,fWg:'ok',
+  carb:'efi',vpc:4,cams:'dohc',twinSpark:false,catchCan:false,mounts:'rubber',damper:false,flex:false,cda:false,v8crank:'',turboPos:'side',stage:'all',cycle:'otto',dpump:'cr',glow:'stock',scr:false,swirlDel:false,nozzle:'stock',ign1:'coil',
   gbox:'manual',fdK:1,autoShift:true,mass:1450,color:'#b3121b',cover:'#15171b',carbonPlenum:false,scColor:'chrome'});
 const GS={b:GDEF(),stock:null,rpm:0,thr:0,eng:'off',spool:0,boostNow:0,egt:300,lastThr:0,bov:0,pops:0,cut:false,cutT:0,limPh:0,nosOn:false,dyno:null,curve:[],stockCurve:[],view:'solid',labels:false,phases:true,auto:true,slow:1/40,explode:false,blown:null,built:'',held:{gas:false,rev:false,launch:false,nos:false},t:0,lastPull:null};
 function gEng(b){const d=b.diesel&&GDIESEL[b.base]?GDIESEL[b.base]:GENG[b.base];return{...d,bore:d.bore+b.boreK,stroke:d.stroke+b.strokeK,cr:(b.cr||d.cr),red:d.red}}
 function gDisp(b){const e=gEng(b),n=GBASE[b.base].n;return n*Math.PI/4*Math.pow(e.bore/100,2)*(e.stroke/100)} // litres
-function gRedline(b){const e=gEng(b),base=e.red,sk=Math.pow(GENG[b.base].stroke/e.stroke,.8);const lim=b.limiter||Math.round(base*sk/100)*100;return lim}
+function gRedline(b){const e=gEng(b),base=e.red,sk=Math.pow(GENG[b.base].stroke/e.stroke,.8);const lim=b.limiter||Math.round((base*sk+Math.min(0,gHw(b).vf)*.9)/100)*100;return lim}
 /* ---- the model: returns everything at one rpm and throttle ---- */
 function gModel(b,N,thr=1,o={}){
   const e=gEng(b),n=GBASE[b.base].n,Vd=gDisp(b)/1000,diesel=b.diesel,F=GFUEL[diesel?'diesel':b.fuel],red=e.red*Math.pow(GENG[b.base].stroke/e.stroke,.8);
   const ind=b.ind,turbo=['t1','twin','tscroll','vgt','seq','etb','tc'].includes(ind),sc=['roots','screw','cent','tc'].includes(ind),cA=(b.camAdv||0)-(b.fChain?5:0);
+  const H=gHw(b),carb=H.carb,cyc=H.cyc,nCyl=GBASE[b.base].n,cdaOn=H.cda&&thr<.3&&N<3500;
   // breathing: volumetric efficiency vs rpm
   const camF={stock:0,street:.45,race:1,custom:clamp((b.camDur-220)/80,0,1.3)}[b.cam]??0;
   const twoBank=GBASE[b.base].lay!=='I'&&!GBASE[b.base].vr;
   let ve0=(e.ve||.9)-.04+.06*camF+({stock:0,cold:.015,cone:.025,itb:.06}[b.intake]||0)+(b.exh==='headers'?.03:0)+({stock:0,sport:.015,straight:.035}[b.exhSys]||0)+(diesel?.04:0)
-    +({stock:0,port:.02,cnc:.035,bigvalve:.045}[b.head]||0)+({stock:0,short:-.006,long:.012,vis:.008}[b.manifold]||0)+(b.tb==='big'?.008:0)+({stock:-.012,hiflow:-.004,race:0}[b.cat]??0)+(twoBank?({none:0,h:.004,x:.008}[b.xpipe]||0):0)+(b.di==='dual'&&!diesel?.005:0)+(b.vvl?.015:0)+(b.eqlen&&GBASE[b.base].lay==='B'?.008:0)+(diesel?(b.dpf==='on'?-.015:0)+(b.egr==='off'?.01:0):0)+(b.exhValve==='quiet'?-.012:b.exhValve==='open'?.004:b.exhValve==='auto'?(N>3500||thr>.7?.004:-.012):0);
-  const npk=red*((e.pk||.68)+.12*camF+(b.intake==='itb'?.05:0)+(b.exh==='headers'?.03:0)+({stock:0,port:.01,cnc:.015,bigvalve:.03}[b.head]||0)+({stock:0,short:.06,long:-.08,vis:0}[b.manifold]||0)+(b.vvl?.02:0)-cA*.011),wid=red*(.62-.14*camF)*(b.vvt?1.25:1)*(b.vvl?1.15:1)*({stock:1,short:.92,long:.95,vis:1.25}[b.manifold]||1);
+    +({stock:0,port:.02,cnc:.035,bigvalve:.045}[b.head]||0)+({stock:0,short:-.006,long:.012,vis:.008}[b.manifold]||0)+(b.tb==='big'?.008:0)+({stock:-.012,hiflow:-.004,race:0}[b.cat]??0)+(twoBank?({none:0,h:.004,x:.008}[b.xpipe]||0):0)+(b.di==='dual'&&!diesel?.005:0)+(b.vvl?.015:0)+(b.eqlen&&GBASE[b.base].lay==='B'?.008:0)+(diesel?(b.dpf==='on'?-.015:0)+(b.egr==='off'?.01:0):0)+(b.exhValve==='quiet'?-.012:b.exhValve==='open'?.004:b.exhValve==='auto'?(N>3500||thr>.7?.004:-.012):0)+H.ve+(diesel&&b.swirlDel?.006:0);
+  const npk=red*((e.pk||.68)+.12*camF+(b.intake==='itb'?.05:0)+(b.exh==='headers'?.03:0)+({stock:0,port:.01,cnc:.015,bigvalve:.03}[b.head]||0)+({stock:0,short:.06,long:-.08,vis:0}[b.manifold]||0)+(b.vvl?.02:0)-cA*.011+H.npk),wid=red*(.62-.14*camF)*(b.vvt?1.25:1)*(b.vvl?1.15:1)*({stock:1,short:.92,long:.95,vis:1.25}[b.manifold]||1);
   let ve=ve0-.28*Math.pow((N-npk)/wid,2)+cA*.0025*(N<npk?1:-1)*Math.min(1,Math.abs(N-npk)/wid);if(N<npk)ve-=(camF*.12*(b.vvl?.5:1)+(b.head==='bigvalve'?.03:0))*Math.max(0,1-N/(red*.45));if(b.fRings)ve-=.025;ve=clamp(ve,.35,1.14);
   // boost
   let pr=1-(b.intake==='stock'?.03:.015)*(b.tb==='big'?.5:1)-(b.fAir?.075*Math.pow(Math.min(1.15,N/red),2)*Math.max(.2,thr):0),scLoss=0,boost=0,spool=0,Tc=298;const tz=GTURBO[b.tsize]||GTURBO[1];
   if(turbo){let ns=red*tz.spool*Math.pow(2.5/Math.max(.8,Vd*1000),.25)*({t1:1,twin:.92,tscroll:.86,vgt:.72,seq:.68,etb:.42,tc:1}[ind]||1)*(b.ar<.7?.9:b.ar>.9?1.1:1)*(b.chra==='ball'?.86:1)*({stock:1,manual:.97,ebc:.9}[b.bc]||1)*({none:1,wrap:.97,ceramic:.95}[b.wrap]||1);
-    ns*=1.45;spool=ns;const x=clamp((N-ns*.5)/(ns*.5),0,1);let bt=b.boost*x*x*(3-2*x);
+    ns*=1.45*(H.hotv?.85:1)*(H.stage?.72:1);spool=ns;const x=clamp((N-ns*.5)/(ns*.5),0,1);let bt=b.boost*x*x*(3-2*x);
     if(b.als&&o.als)bt=Math.max(bt,b.boost*.85);
     if(b.wg!=='external'&&b.boost>1.4)bt*=1-.12*(b.boost-1.4)*Math.min(1,N/red);
-    if(b.fWg==='shut')bt=b.boost*x*x*(3-2*x)*(1+.5*Math.min(1,N/red));else if(b.fWg==='open')bt*=.3;if(b.fAir)bt*=1-.12*Math.min(1,N/red);
+    if(H.stage)bt*=1-.1*Math.exp(-Math.pow((N-3800)/350,2));if(b.fWg==='shut')bt=b.boost*x*x*(3-2*x)*(1+.5*Math.min(1,N/red));else if(b.fWg==='open')bt*=.3;if(b.fAir)bt*=1-.12*Math.min(1,N/red);
     const flow=tz.flow*(ind==='twin'||ind==='seq'?1.85:1)*(b.wheel==='billet'?1.12:1),need=1.2*(1+bt)*Vd*ve*N/120*1.18;if(need>flow)bt*=Math.max(.45,1-(need-flow)/flow*.9);
     boost=bt}
   if(sc){const sb=ind==='cent'?b.sc*Math.pow(N/red,2)*1.15:b.sc*clamp(N/(red*.18),0,1)*(ind==='roots'?1-.12*N/red:1);if(ind==='tc')boost=Math.max(boost,sb*clamp(1.4-N/(spool||red*.4),0,1));else boost=sb;}
@@ -10206,35 +10238,36 @@ function gModel(b,N,thr=1,o={}){
   // charge temperature after compressor + intercooler + fuel cooling
   if(boost>0){const eta=ind==='roots'?.55:ind==='screw'||ind==='tc'?.7:ind==='cent'?.74:.72,T2=298*(1+(Math.pow(pr,.286)-1)/eta),eps={none:0,street:.68,race:.84,w2a:.8}[b.ic]??0;Tc=T2-eps*(T2-298);
     if(sc){const mdot=1.2*pr*(298/Tc)*Vd*ve*N/120;scLoss=mdot*1005*(T2-298)/.92*(ind==='tc'?.5:1)}}
-  Tc-=F.cool+(b.wmi&&boost>.05?22:0)+(diesel&&b.egr==='off'?8:0)+({none:0,wrap:3,ceramic:4}[b.wrap]||0);
+  Tc+=H.hotv&&boost>0?6:0;Tc-=F.cool+(b.wmi&&boost>.05?22:0)+(diesel&&b.egr==='off'?8:0)+({none:0,wrap:3,ceramic:4}[b.wrap]||0);
   // air mass per second and fuel
   const thrE=diesel?1:Math.max(.08,thr),rho=1.18*pr*(298/Tc),mair=rho*Vd*ve*N/120*(diesel?1:thrE);
   let lam=diesel?Math.max(1.12-({stock:0,cp3:.04,race:.07}[b.crp]||0),1.62-.5*(b.dfuel/100-1)-boost*.03-({stock:0,cp3:.03,race:.05}[b.crp]||0)):(thr>.9?(b.map==='eco'?Math.max(b.lam,.96):b.map==='race'?Math.min(b.lam,.85):b.lam):1),mfReq=mair/(F.afr*lam);
+  if(carb)lam=thr>.9?{carb1:.9,weber:.87,carb4:.88}[carb]:{carb1:.95,weber:.93,carb4:.94}[carb];if(H.flexLean)lam*=1.3;if(diesel){lam=Math.max(1.02,lam-(b.nozzle==='big'?.06:0)-(b.dpump==='mech'?.04:0))}
   if(!diesel){if(b.fVac)lam*=1+.17*Math.max(0,1-thrE*1.7);if(b.fMaf)lam*=1.07;if(b.fInj)lam*=.91}else{if(b.fMaf)lam*=1.12;if(b.fInj)lam*=.9}
   mfReq=mair/(F.afr*lam);
   const injMax=n*b.inj/60*.75*.85/1000*({stock:1,uprated:1,race:1}[b.pump])*(b.di==='dual'?1.6:1),pumpMax={stock:.04,uprated:.075,race:.15}[b.pump]*(F.afr<10?1:1)*(Vd>4e-3?1.4:1)*(b.fuelSys==='return'?1.35:1);
-  const fuelCap=Math.min(injMax*1000*0.001*1000/1000,pumpMax);let mf=Math.min(mfReq,fuelCap),lean=mfReq>fuelCap?mfReq/fuelCap:1;lam=lam*lean;
+  const fuelCap=carb?pumpMax:Math.min(injMax*1000*0.001*1000/1000,pumpMax);let mf=Math.min(mfReq,fuelCap),lean=mfReq>fuelCap?mfReq/fuelCap:1;lam=lam*lean;
   // knock margin (spark ignition)
-  const mapT={eco:-2,stock:0,sport:1,race:2}[b.map]||0,tim=b.timing+mapT,crEff=e.cr*Math.pow(pr,.76)*Math.sqrt(ve/.9),onReq=78+1.3*crEff+.11*(Tc-298)+tim*1.6-(N/red)*4+(lam<.9?-2:0)+(lam>1?3:0)-(b.wmi&&boost>.05?4:0)-(b.di==='dual'?2.5:0)-(b.plugs==='colder'?(boost>.3?1.8:.4):0)-(b.plugs==='iridium'?.5:0),km=diesel?20:F.oct-onReq;
+  const mapT={eco:-2,stock:0,sport:1,race:2}[b.map]||0,tim=b.timing+mapT,crEff=e.cr*Math.pow(pr,.76)*Math.sqrt(ve/.9),onReq=78+1.3*crEff+.11*(Tc-298)+tim*1.6-(N/red)*4+(lam<.9?-2:0)+(lam>1?3:0)-(b.wmi&&boost>.05?4:0)-(b.di==='dual'?2.5:0)-(b.plugs==='colder'?(boost>.3?1.8:.4):0)-(b.plugs==='iridium'?.5:0)-H.knock,km=diesel?20:F.oct-onReq;
   let retard=0;if(!diesel&&km<0&&b.knockProt)retard=Math.min(12,-km*.9);
   const timingEff=diesel?0:clamp(tim-retard,-14,6);
   // indicated efficiency
-  const g=1.33,etaO=1-1/Math.pow(e.cr,g-1),etaI=(diesel?.44*(1-1/Math.pow(e.cr,.26))/(1-1/Math.pow(17,.26))*({stock:1,cp3:1.02,race:1.035}[b.crp]||1):etaO*.71*(1-Math.pow(timingEff/14,2)*.6+(timingEff>0?0:timingEff*.006)))*(b.coils==='race'&&!diesel?1.008:1)*(b.plugs==='iridium'&&!diesel?1.004:1),lamF=diesel?1:(lam<1?1-.9*Math.pow(lam-.89,2)*(lam<.89?1.8:1):Math.max(.6,1.02/lam-.02));
-  const qin=mf*F.lhv*1e6*(diesel?1:Math.min(1,1/lam)),Wi=qin*etaI*lamF;let imep=Wi/(Vd*N/120)/1e5*(b.fRings?.95:1)*(b.fGasket?.955:1)*(b.fPlugs&&!diesel?1-(.02+.07*thrE*(1+.6*boost)):1)*(b.fChain?.98:1)*(b.fInj?(diesel?.85:.885):1)*(b.fWg==='shut'&&turbo&&boost>b.boost*1.25+.05?.72:1);
+  const g=1.33,etaO=1-1/Math.pow(e.cr,g-1),etaI=(diesel?.44*(1-1/Math.pow(e.cr,.26))/(1-1/Math.pow(17,.26))*({stock:1,cp3:1.02,race:1.035}[b.crp]||1):etaO*.71*(1-Math.pow(timingEff/14,2)*.6+(timingEff>0?0:timingEff*.006)))*(b.coils==='race'&&!diesel?1.008:1)*(b.plugs==='iridium'&&!diesel?1.004:1)*H.eta*(H.mag?(N<.35*red?.97:.99):1),lamF=diesel?1:(lam<1?1-.9*Math.pow(lam-.89,2)*(lam<.89?1.8:1):Math.max(.6,1.02/lam-.02));
+  const qin=mf*F.lhv*1e6*(diesel?1:Math.min(1,1/lam)),Wi=qin*etaI*lamF;let imep=Wi/(Vd*N/120)/1e5*(b.fRings?.95:1)*(b.fGasket?.955:1)*(b.fPlugs&&!diesel?1-(.02+.07*thrE*(1+.6*boost))*(b.twinSpark?.5:1):1)*(b.fChain?.98:1)*(b.fInj?(diesel?.85:.885):1)*(b.fWg==='shut'&&turbo&&boost>b.boost*1.25+.05?.72:1);
   // nitrous shot
   let nosW=0;if(b.nos!=='none'&&o.nos&&N>=b.nosRpm){nosW=b.shot*745.7*(b.nos==='dry'?.9:1)*(b.nosHeat?1:.9);imep+=nosW/(Vd*N/120)/1e5}
   // friction and pumping
-  const fmep=(.6+.09*N/1000+.025*Math.pow(N/1000,2))*(diesel?1.25:1)*(b.pistons==='forged'?.98:1)-(b.oil==='dry'?.05:0)-(b.bearings==='coated'?.015:0)-(b.balDel&&(b.base==='I4'||b.base==='I3')?.02:0)+({'0w20':-.02,'5w30':0,'10w60':.025}[b.oilVisc]||0)-(b.windage?.014*Math.min(1.3,N/red):0)-(b.rockers?.01:0)-(b.ewp?.012:0)+(b.fRings?.035:0)+(b.fInj?.01:0)+(turbo?Math.max(0,boost*.12*(b.ar<.7?1.4:1)):0)+(!diesel?(1-thrE)*.9:0);
+  const fmep=(.6+.09*N/1000+.025*Math.pow(N/1000,2))*(diesel?1.25:1)*(b.pistons==='forged'?.98:1)-(b.oil==='dry'?.05:0)-(b.bearings==='coated'?.015:0)-(b.balDel&&(b.base==='I4'||b.base==='I3')?.02:0)+({'0w20':-.02,'5w30':0,'10w60':.025}[b.oilVisc]||0)-(b.windage?.014*Math.min(1.3,N/red):0)-(b.rockers?.01:0)-(b.ewp?.012:0)+(b.fRings?.035:0)+(b.fInj?.01:0)+H.fmep-(b.damper?.003:0)-(cdaOn?(1-thrE)*.35:0)+(turbo?Math.max(0,boost*.12*(b.ar<.7?1.4:1)):0)+(!diesel?(1-thrE)*.9:0);
   // valve float above spring limit
-  const vf=red+({stock:500,uprated:1400,race:2800}[b.springs]||500)+(b.valvetrain==='titanium'?900:0)+(b.rockers?300:0);let floatK=N>vf?Math.max(.3,1-(N-vf)/1500):1;
-  const tqH=b.hybrid==='48v'&&thr>0?45*thr*Math.max(0,1-N/3200):0,bmep=Math.max(-3,(imep*floatK-fmep)),torque=bmep*1e5*Vd/(4*Math.PI)+tqH,pw=torque*2*Math.PI*N/60-scLoss;
+  const vf=red+({stock:500,uprated:1400,race:2800}[b.springs]||500)+(b.valvetrain==='titanium'?900:0)+(b.rockers?300:0)+H.vf;let floatK=N>vf?Math.max(.3,1-(N-vf)/1500):1;
+  const tqH=b.hybrid==='48v'&&thr>0?45*thr*Math.max(0,1-N/3200):b.hybrid==='full'&&thr>0?115*thr*Math.max(0,1-N/4200):0,bmep=Math.max(-3,(imep*floatK-fmep)),torque=bmep*1e5*Vd/(4*Math.PI)+tqH,pw=torque*2*Math.PI*N/60-scLoss;
   // stresses & temperatures
-  const pmax=diesel?5.2*imep+45:4.6*imep+22,pLim={cast:100,hyper:115,forged:178,billet:240}[b.pistons]*(diesel?1.75:1)*(b.squirters?1.08:1)*({stock:1,sleeved:1.1,billet:1.22}[b.block]||1),rpmLim=red+({stock:600,forged:1900,billet:3200}[b.rods]||600)+({cast:0,forged:300,billet:600}[b.crank]||0)+({wet:0,baffled:200,dry:450}[b.oil]||0)+(b.bearings==='coated'?250:0)+(b.girdle?300:0)+({'0w20':-150,'5w30':0,'10w60':150}[b.oilVisc]||0)+(b.block==='billet'?200:0),
+  const pmax=diesel?5.2*imep+45:4.6*imep+22,pLim={cast:100,hyper:115,forged:178,billet:240}[b.pistons]*(diesel?1.75:1)*(b.squirters?1.08:1)*({stock:1,sleeved:1.1,billet:1.22}[b.block]||1),rpmLim=red+({stock:600,forged:1900,billet:3200}[b.rods]||600)+({cast:0,forged:300,billet:600}[b.crank]||0)+({wet:0,baffled:200,dry:450}[b.oil]||0)+(b.bearings==='coated'?250:0)+(b.girdle?300:0)+(b.damper?250:0)+({'0w20':-150,'5w30':0,'10w60':150}[b.oilVisc]||0)+(b.block==='billet'?200:0),
     torqLim=(diesel?2.6:1)*({stock:1,forged:1.9,billet:2.7}[b.rods])*Vd*1000*({cast:1,forged:1.35,billet:1.7}[b.crank])*150*(b.girdle?1.08:1)*({stock:1,sleeved:1.05,billet:1.15}[b.block]||1),gLim={stock:1.1,mls:2.6}[b.gasket]*(b.studs?1.35:1)*(b.fGasket?.55:1);
   const egt=(diesel?430+390*clamp(1.6-lam,0,1.2)*thrE+boost*40:620+260*thrE*Math.min(1.2,N/red+.2)+retard*9+Math.max(0,lam-.88)*900+boost*55-(b.ic==='race'?15:0)+(o.als?180:0)+(b.fPlugs?45*thrE:0))+(b.fChain?15:0);
   const st={piston:pmax/pLim,rod:Math.max(N/rpmLim,(torque/Math.max(1,torqLim))*.9),gasket:boost/gLim*(b.bc==='manual'?1.06:1),valves:N/vf*.95*(b.fChain?1.08:1),heat:(egt-200)/(diesel?560:800)*(b.fGasket?1.3:1)*({stock:1,alu:.93,race:.86}[b.rad]||1)*(b.oilCooler?.94:1)*(b.squirters?.97:1)*(b.ewp?.97:1)*({'0w20':1.02,'5w30':1,'10w60':.98}[b.oilVisc]||1),knock:diesel?0:(km<0&&!b.knockProt?1.1+(-km)*.05:km<0?.75:clamp(.6-km/20,0,.75)),lean:lean>1.02?.8+(lean-1)*2:0};
   const risk=Math.max(...Object.values(st));
-  return{N,torque:Math.max(0,torque),hp:Math.max(0,pw)/745.7,kw:Math.max(0,pw)/1000,boost,ve,lam,egt,km,retard,mf:mf*3600,mair,imep,bmep,pmax,st,risk,spool,Tc,scLoss:scLoss/745.7,lean,nosW,red,vf,bsfc:pw>0?mf*3600/(pw/1000)*1000:0}}
+  return{N,torque:Math.max(0,torque),hp:Math.max(0,pw)/745.7,kw:Math.max(0,pw)/1000,boost,ve,lam,egt,km,retard,mf:mf*3600*(cdaOn?.85:1),cda:cdaOn,mair,imep,bmep,pmax,st,risk,spool,Tc,scLoss:scLoss/745.7,lean,nosW,red,vf,bsfc:pw>0?mf*3600/(pw/1000)*1000:0}}
 function gCurve(b,o={}){const red=gRedline(b),pts=[];for(let N=1000;N<=red;N+=100)pts.push(gModel(b,N,1,o));return pts}
 function gPeak(c){const p=c.reduce((m,x)=>x.hp>m.hp?x:m,c[0]),t=c.reduce((m,x)=>x.torque>m.torque?x:m,c[0]),bo=Math.max(...c.map(x=>x.boost)),risk=Math.max(...c.map(x=>x.risk));return{p,t,bo,risk,sp:c.find(x=>x.boost>=bo*.9&&bo>.05)}}
 
@@ -10250,7 +10283,7 @@ const GOPT={
   nos:[['none'],['dry'],['wet'],['direct']],scColor:[['chrome'],['black']],
   head:[['stock'],['port'],['cnc'],['bigvalve']],manifold:[['stock'],['short'],['long'],['vis']],tb:[['stock'],['big']],cat:[['stock'],['hiflow'],['race']],xpipe:[['none'],['h'],['x']],
   wg:[['internal'],['external']],bc:[['stock'],['manual'],['ebc']],chra:[['journal'],['ball']],wheel:[['cast'],['billet']],fuelSys:[['stock'],['return']],di:[['port'],['dual']],coils:[['stock'],['race']],
-  flywheel:[['stock'],['light'],['ultra']],oil:[['wet'],['baffled'],['dry']],rad:[['stock'],['alu'],['race']],bearings:[['stock'],['coated']],hybrid:[['none'],['48v']],map:[['eco'],['stock'],['sport'],['race']],crp:[['stock'],['cp3'],['race']],egr:[['on'],['off']],dpf:[['on'],['off']],valvetrain:[['stock'],['titanium']]};
+  flywheel:[['stock'],['light'],['ultra']],oil:[['wet'],['baffled'],['dry']],rad:[['stock'],['alu'],['race']],bearings:[['stock'],['coated']],hybrid:[['none'],['48v'],['full']],map:[['eco'],['stock'],['sport'],['race']],crp:[['stock'],['cp3'],['race']],egr:[['on'],['off']],dpf:[['on'],['off']],valvetrain:[['stock'],['titanium']]};
 const GCOL=['#b3121b','#0f1012','#c9ced6','#1d4ed8','#d4a017','#f2f3f5','#0f7a3e','#ff6a00','#7c3aed'];
 const GPRE={
   stock:{},street:{plugs:'iridium',exhValve:'auto',intake:'cold',exhSys:'sport',cam:'street',fuel:'98',timing:1,head:'port',tb:'big',cat:'hiflow',map:'sport',coils:'race'},
@@ -10345,18 +10378,19 @@ function gPane(){
   $('.gtabs').hidden=!!GS.spec;$$('.gar-results,.gar-presets').forEach(x=>x.hidden=!!GS.spec);if(GS.spec){gPaneSpec();return}$('#garage').classList.remove('specmode');
   const b=GS.b,e=gEng(b),k=GS.tab,turbo=['t1','twin','tscroll','vgt','seq','etb','tc'].includes(b.ind),sc=['roots','screw','cent','tc'].includes(b.ind);let h='';
   if(k==='engine'){h+=gH('engine')+`<p class="gnote">${esc(gT('engineNote'))}</p>`+gSlider('boreK',-6,8,.5,'mm',1,v=>`${fmt(gEng(b).bore,1)} mm`)+gSlider('strokeK',-6,12,.5,'mm',1,v=>`${fmt(gEng(b).stroke,1)} mm`)+gSlider('cr',b.diesel?14:8,b.diesel?22:14,.1,':1',1,v=>`${fmt(gEng(b).cr,1)} : 1`)+
-    `<div class="gdisp"><span>${esc(gT('disp'))}</span><b dir="ltr">${fmt(gDisp(b),2)} L</b></div>`+gSlider('limiter',3000,12000,100,'rpm',0,v=>v?`${fmt(v)} rpm`:`${esc(gT('auto'))} (${fmt(gRedline({...b,limiter:0}))})`)}
+    `<div class="gdisp"><span>${esc(gT('disp'))}</span><b dir="ltr">${fmt(gDisp(b),2)} L</b></div>`+gSlider('limiter',3000,12000,100,'rpm',0,v=>v?`${fmt(v)} rpm`:`${esc(gT('auto'))} (${fmt(gRedline({...b,limiter:0}))})`)+gPaneCrank(b)}
   if(k==='ind'){h+=gH('ind')+gCards('ind',GOPT.ind,2);
     if(turbo)h+=gH('turbo')+gCards('tsize',GOPT.tsize,4)+gSlider('boost',.2,b.diesel?3:3.5,.05,'bar',2,v=>`${fmt(v,2)} bar · ${fmt(v*14.5,0)} psi`)+gSlider('ar',.48,1.32,.02,'A/R',2)+gH('bov')+gCards('bov',GOPT.bov,4)+gToggle('als');
     if(sc&&b.ind!=='tc'||b.ind==='tc')h+=gH('sc')+gSlider('sc',.2,1.6,.05,'bar',2,v=>`${fmt(v,2)} bar · ${fmt(v*14.5,0)} psi`)+(['roots','screw'].includes(b.ind)?gCards('scColor',GOPT.scColor,2):'');
+    if(turbo&&HOTV.has(b.base)&&window.__hotv3d)h+=gH('turboPos')+gCards('turboPos',[['side'],['hotv']],2);if(b.base==='W16'&&b.ind==='twin')h+=gH('stage')+gCards('stage',[['all'],['seq']],2);
     if(turbo)h+=gH('turboHw')+gCards('wg',GOPT.wg,2)+gCards('bc',GOPT.bc,3)+gCards('chra',GOPT.chra,2)+gCards('wheel',GOPT.wheel,2);
     if(turbo||sc)h+=gH('ic')+gCards('ic',GOPT.ic,2)+(b.diesel?'':gToggle('wmi'))}
-  if(k==='air'){const twoBank=GBASE[b.base].lay!=='I'&&!GBASE[b.base].vr;h+=gH('intake')+gCards('intake',GOPT.intake,2)+(b.intake==='itb'?'':gH('manifold')+gCards('manifold',GOPT.manifold,2)+gCards('tb',GOPT.tb,2))+gH('head')+gCards('head',GOPT.head,2)+gH('exh')+gCards('exh',GOPT.exh,2)+gCards('wrap',GOPT.wrap,3)+gCards('exhSys',GOPT.exhSys,3)+gH('exhValve')+gCards('exhValve',GOPT.exhValve,2)+gH('cat')+gCards('cat',GOPT.cat,3)+(twoBank?gCards('xpipe',GOPT.xpipe,3):'')+gH('cam')+gCards('cam',GOPT.cam,2)+(b.cam==='custom'?gSlider('camDur',200,320,2,'°',0)+gSlider('camLift',.8,1.5,.01,'×',2):'')+gSlider('camAdv',-6,6,.5,'°',1,v=>v?`${v>0?'+':''}${fmt(v,1)}° ${esc(gT(v>0?'advC':'retC'))}`:esc(gT('zeroC')))+gToggle('vvt')+gToggle('vvl')+(GBASE[b.base].lay==='B'?gToggle('eqlen'):'')+(b.diesel?gH('dsl')+gCards('crp',GOPT.crp,3)+gCards('egr',GOPT.egr,2)+gCards('dpf',GOPT.dpf,2):'')}
-  if(k==='ecu'){h+=gH('ecuMap')+`<div class="gcards c2">${GOPT.map.map(([v])=>`<button type="button" class="gcard${b.map===v?' on':''}" data-gk="map" data-gv="${v}"><b>${esc(gT('o.map.'+v))}</b><small>${esc(gT('od.map.'+v))}</small></button>`).join('')}</div>`+gToggle('flat')+(turbo||sc?gToggle('bbg'):'')+gH('fuel')+(b.diesel?`<p class="gnote">${esc(gT('dieselFuel'))}</p>`+gSlider('dfuel',80,150,1,'%',0):gCards('fuel',GOPT.fuel,3))+gSlider('inj',200,2400,10,'cc/min',0)+gCards('pump',GOPT.pump,3)+gCards('fuelSys',GOPT.fuelSys,2)+(b.diesel?'':gCards('di',GOPT.di,2)+gH('coils')+gCards('coils',GOPT.coils,2)+gCards('plugs',GOPT.plugs,3))+gH('trac')+gCards('trac',GOPT.trac,3)+
-    gH('map')+(b.diesel?'':gSlider('lam',.72,1.05,.01,'λ',2,v=>`λ ${fmt(v,2)} · AFR ${fmt(v*GFUEL[b.fuel].afr,1)}`)+gSlider('timing',-10,6,.5,'°',1,v=>`${v>0?'+':''}${fmt(v,1)}°`)+gToggle('knockProt'))+
+  if(k==='air'){const twoBank=GBASE[b.base].lay!=='I'&&!GBASE[b.base].vr;const HW=gHw(b);h+=gH('intake')+gCards('intake',GOPT.intake,2)+(!b.diesel&&b.ind==='na'?gH('carb')+gCards('carb',[['efi'],['carb1'],['weber'],['carb4']],2):'')+(b.intake==='itb'||HW.carb==='weber'?'':gH('manifold')+gCards('manifold',GOPT.manifold,2)+(HW.carb?'':gCards('tb',GOPT.tb,2)))+gH('head')+gCards('head',GOPT.head,2)+gH('exh')+gCards('exh',GOPT.exh,2)+gCards('wrap',GOPT.wrap,3)+gCards('exhSys',GOPT.exhSys,3)+gH('exhValve')+gCards('exhValve',GOPT.exhValve,2)+gH('cat')+gCards('cat',GOPT.cat,3)+(twoBank?gCards('xpipe',GOPT.xpipe,3):'')+gH('cam')+gCards('cam',GOPT.cam,2)+(b.cam==='custom'?gSlider('camDur',200,320,2,'°',0)+gSlider('camLift',.8,1.5,.01,'×',2):'')+gSlider('camAdv',-6,6,.5,'°',1,v=>v?`${v>0?'+':''}${fmt(v,1)}° ${esc(gT(v>0?'advC':'retC'))}`:esc(gT('zeroC')))+gToggle('vvt')+gToggle('vvl')+(GBASE[b.base].lay==='B'?gToggle('eqlen'):'')+gH('vlay')+gCards('cams',[['ohv'],['sohc'],['dohc']],3)+gCards('vpc',[[2],[3],[4],[5]],4)+(b.diesel?'':gH('cycle')+gCards('cycle',gForced(b)?[['otto'],['atkinson'],['miller']]:[['otto'],['atkinson']],gForced(b)?3:2))+(b.diesel?gH('dsl')+gCards('crp',GOPT.crp,3)+gCards('dpump',[['cr'],['mech']],2)+gCards('nozzle',[['stock'],['big']],2)+gCards('egr',GOPT.egr,2)+gCards('dpf',GOPT.dpf,2)+gToggle('scr')+gToggle('swirlDel')+gH('glow')+gCards('glow',[['stock'],['ceramic']],2):'')}
+  if(k==='ecu'){h+=gH('ecuMap')+`<div class="gcards c2">${GOPT.map.map(([v])=>`<button type="button" class="gcard${b.map===v?' on':''}" data-gk="map" data-gv="${v}"><b>${esc(gT('o.map.'+v))}</b><small>${esc(gT('od.map.'+v))}</small></button>`).join('')}</div>`+gToggle('flat')+(turbo||sc?gToggle('bbg'):'')+(GBASE[b.base].n>=8?gToggle('cda'):'')+gH('fuel')+(b.diesel?`<p class="gnote">${esc(gT('dieselFuel'))}</p>`+gSlider('dfuel',80,150,1,'%',0):gCards('fuel',GOPT.fuel,3)+(gHw(b).carb?'':gToggle('flex')))+(gHw(b).carb?`<p class="gnote">${esc(gT('carbNote'))}</p>`:gSlider('inj',200,2400,10,'cc/min',0))+gCards('pump',GOPT.pump,3)+gCards('fuelSys',GOPT.fuelSys,2)+(b.diesel?'':(gHw(b).carb?'':gCards('di',GOPT.di,2))+gH('coils')+gCards('coils',GOPT.coils,2)+gCards('plugs',GOPT.plugs,3)+gToggle('twinSpark')+(b.base==='I1'?gCards('ign1',[['coil'],['magneto']],2):''))+gH('trac')+gCards('trac',GOPT.trac,3)+
+    gH('map')+(b.diesel||gHw(b).carb?'':gSlider('lam',.72,1.05,.01,'λ',2,v=>`λ ${fmt(v,2)} · AFR ${fmt(v*GFUEL[b.fuel].afr,1)}`)+gSlider('timing',-10,6,.5,'°',1,v=>`${v>0?'+':''}${fmt(v,1)}°`)+gToggle('knockProt'))+
     gH('lim')+`<div class="gcards c3">${GLIM.map(([v])=>`<button type="button" class="gcard${b.lim===v?' on':''}" data-gk="lim" data-gv="${v}"><b>${esc(gT('o.lim.'+v))}</b><small>${esc(gT('od.lim.'+v))}</small></button>`).join('')}</div>`+
     gSlider('launch',1500,7000,100,'rpm',0)+(b.diesel?'':gH('pops')+gCards('pops',GOPT.pops,3))}
-  if(k==='int'){h+=`<p class="gnote">${esc(gT('intNote'))}</p>`+gH('pistons')+gCards('pistons',GOPT.pistons,2)+gH('rods')+gCards('rods',GOPT.rods,3)+gH('crank')+gCards('crank',GOPT.crank,3)+gH('springs')+gCards('springs',GOPT.springs,3)+gCards('valvetrain',GOPT.valvetrain,2)+gToggle('rockers')+gH('gasket')+gCards('gasket',GOPT.gasket,2)+gToggle('studs')+gH('bottom')+gCards('bearings',GOPT.bearings,2)+gToggle('squirters')+(b.base==='I4'||b.base==='I3'?gToggle('balDel'):'')+gH('block')+gCards('block',GOPT.block,3)+gToggle('girdle')+gToggle('windage')+gH('flywheel')+gCards('flywheel',GOPT.flywheel,3)+gH('oil')+gCards('oil',GOPT.oil,3)+gCards('oilVisc',GOPT.oilVisc,3)+gToggle('oilCooler')+gH('rad')+gCards('rad',GOPT.rad,3)+gToggle('ewp')+gH('hybrid')+gCards('hybrid',GOPT.hybrid,2)}
+  if(k==='int'){h+=`<p class="gnote">${esc(gT('intNote'))}</p>`+gH('pistons')+gCards('pistons',GOPT.pistons,2)+gH('rods')+gCards('rods',GOPT.rods,3)+gH('crank')+gCards('crank',GOPT.crank,3)+gH('springs')+gCards('springs',GOPT.springs,3)+gCards('valvetrain',GOPT.valvetrain,2)+gToggle('rockers')+gH('gasket')+gCards('gasket',GOPT.gasket,2)+gToggle('studs')+gH('bottom')+gCards('bearings',GOPT.bearings,2)+gToggle('squirters')+(b.base==='I4'||b.base==='I3'?gToggle('balDel'):'')+gH('block')+gCards('block',GOPT.block,3)+gToggle('girdle')+gToggle('windage')+gH('flywheel')+gCards('flywheel',GOPT.flywheel,3)+gH('oil')+gCards('oil',GOPT.oil,3)+gCards('oilVisc',GOPT.oilVisc,3)+gToggle('oilCooler')+gToggle('catchCan')+gH('mounts')+gCards('mounts',[['rubber'],['poly'],['solid']],3)+gToggle('damper')+gH('rad')+gCards('rad',GOPT.rad,3)+gToggle('ewp')+gH('hybrid')+gCards('hybrid',GOPT.hybrid,2)}
   if(k==='gear'){const G=GBOX[b.gbox]||GBOX.manual;h+=gH('gbox')+`<div class="gcards c2">${gbCompat(b).map(v=>`<button type="button" class="gcard${b.gbox===v?' on':''}" data-gk="gbox" data-gv="${v}"><b>${esc(gT('gb.o.'+v))}</b><small>${esc(gT('gb.d.'+v))}</small></button>`).join('')}</div>`+
     gSlider('fdK',.7,1.4,.01,'×',2,v=>`${fmt(gbFd(b),2)} : 1`)+(G.mass?'':gSlider('mass',700,3200,10,'kg',0))+(!G.auto&&!G.cont?gToggle('autoShift'):'')+
     gH('gbTable')+`<table class="gbt"><thead><tr><th>${esc(gT('gb.gear'))}</th><th>${esc(gT('gb.ratio'))}</th><th>${esc(gT('gb.vmax'))}</th></tr></thead><tbody>${gbTable(b).map(([g2,q,vm])=>`<tr><td>${g2}</td><td dir="ltr">${fmt(q,2)}</td><td dir="ltr">${fmt(vm,0)} km/h</td></tr>`).join('')}</tbody></table><p class="gnote">${esc(gT('gb.how'))}</p>`}
@@ -10365,19 +10399,19 @@ function gPane(){
   if(k==='look'){h+=gH('color')+`<div class="gsw">${GCOL.map(c=>`<button type="button" class="gswc${b.color===c?' on':''}" data-gcol="${c}" style="--c:${c}" aria-label="${c}"></button>`).join('')}</div>`+gH('cover')+`<div class="gsw">${GCOL.map(c=>`<button type="button" class="gswc${b.cover===c?' on':''}" data-gcov="${c}" style="--c:${c}" aria-label="${c}"></button>`).join('')}</div>`+gToggle('carbonPlenum')}
   $('#gPane').innerHTML=h;
 }
-function gStructKey(b){return JSON.stringify([b.base,b.diesel,b.ind,b.tsize,b.ic,b.intake,b.exh,b.nos!=='none',b.rods,b.carbonPlenum,b.scColor,b.bov==='none',b.exhSys,b.gbox,b.cat,b.xpipe,b.wg,b.wmi,b.oil,b.oilCooler,b.hybrid,b.manifold,b.tb,b.wheel,b.head,b.dpf,b.wrap,b.exhValve,b.ewp,b.nosPurge])}
+function gStructKey(b){return JSON.stringify([b.base,b.diesel,b.ind,b.tsize,b.ic,b.intake,b.exh,b.nos!=='none',b.rods,b.carbonPlenum,b.scColor,b.bov==='none',b.exhSys,b.gbox,b.cat,b.xpipe,b.wg,b.wmi,b.oil,b.oilCooler,b.hybrid,b.manifold,b.tb,b.wheel,b.head,b.dpf,b.wrap,b.exhValve,b.ewp,b.nosPurge,gHw(b).carb,b.vpc,b.cams,b.catchCan,b.v8crank,gHw(b).hotv,b.diesel&&b.dpump])}
 function gApply(force){
   if(GS.spec)return gApplySpec();
   $('#garage').classList.remove('noshift');gsxHudReset();
-  const b=GS.b,key=gStructKey(b);
-  if(G3.R&&(force||key!==GS.built)){GS.built=key;const ck=g3Build({base:b.base,diesel:b.diesel,ind:b.ind,tsize:b.tsize,ic:b.ic,intake:b.intake,exh:b.exh,nos:b.nos,rods:b.rods,color:b.color,cover:b.cover,carbonPlenum:b.carbonPlenum,scColor:b.scColor,bov:b.bov,gbox:b.gbox,exhD:b.exhSys==='straight'?.19:b.exhSys==='sport'?.17:.15,cat:b.cat,xpipe:b.xpipe,wg:b.wg,wmi:b.wmi,oil:b.oil,oilCooler:b.oilCooler,hybrid:b.hybrid,manifold:b.manifold,tb:b.tb,wheel:b.wheel,head:b.head,dpf:b.dpf,wrap:b.wrap,exhValve:b.exhValve,ewp:b.ewp,nosPurge:b.nosPurge});GS.ck=ck;g3View(GS.view)}
+  gNorm(GS.b);const b=GS.b,key=gStructKey(b);
+  if(G3.R&&(force||key!==GS.built)){GS.built=key;const HW=gHw(b);const ck=g3Build({base:gCrankBase(b),diesel:b.diesel,carb:HW.carb,vpc:b.vpc,cams:b.cams,catchCan:b.catchCan,hotv:HW.hotv,dpump:b.diesel?b.dpump:'cr',ind:b.ind,tsize:b.tsize,ic:b.ic,intake:b.intake,exh:b.exh,nos:b.nos,rods:b.rods,color:b.color,cover:b.cover,carbonPlenum:b.carbonPlenum,scColor:b.scColor,bov:b.bov,gbox:b.gbox,exhD:b.exhSys==='straight'?.19:b.exhSys==='sport'?.17:.15,cat:b.cat,xpipe:b.xpipe,wg:b.wg,wmi:b.wmi,oil:b.oil,oilCooler:b.oilCooler,hybrid:b.hybrid==='full'?'48v':b.hybrid,hybFull:b.hybrid==='full',manifold:b.manifold,tb:b.tb,wheel:b.wheel,head:b.head,dpf:b.dpf,wrap:b.wrap,exhValve:b.exhValve,ewp:b.ewp,nosPurge:b.nosPurge});GS.ck=ck;g3View(GS.view)}
   if(G3.R)g3Colors(b.color,b.cover);
   GS.stockCurve=gCurve({...GDEF(),base:b.base,diesel:b.diesel,ind:b.diesel?'vgt':'na',fuel:b.diesel?'diesel':'95'});GS.curve=gCurve(b);
   $$('[data-gbase]').forEach(x=>x.classList.toggle('on',x.dataset.gbase===b.base));const dz=$('#gDiesel');dz.setAttribute('aria-pressed',b.diesel);dz.classList.toggle('on',b.diesel);dz.disabled=!GDIESEL[b.base];
   gSummary();gChart();gHud();
 }
 function gHud(){const b=GS.b,e=gEng(b),ck=GS.ck;$('#gName').textContent=gT('lay.'+b.base)+(b.diesel?' · '+gT('diesel'):'');
-  const indT=b.ind==='na'?gT('o.ind.na'):gT('o.ind.'+b.ind);$('#gSpec').innerHTML=`<bdi dir="ltr">${fmt(gDisp(b),1)} L · DOHC ${GBASE[b.base].n*4}V</bdi> · ${esc(indT)}`;
+  const indT=b.ind==='na'?gT('o.ind.na'):gT('o.ind.'+b.ind);$('#gSpec').innerHTML=`<bdi dir="ltr">${fmt(gDisp(b),1)} L · ${({ohv:'OHV',sohc:'SOHC',dohc:'DOHC'})[b.cams]||'DOHC'} ${GBASE[b.base].n*(b.vpc||4)}V${b.twinSpark&&!b.diesel?' · twin-spark':''}</bdi> · ${esc(indT)}`;
   if(ck)$('#gFire').innerHTML=esc(gT('fire'))+' <bdi dir="ltr">'+ck.order.join('-')+'</bdi>';gCelHud()}
 function gSummary(){
   const b=GS.b,c=GS.curve,pk=gPeak(c),sp=gPeak(GS.stockCurve),e=gEng(b),red=gRedline(b),diesel=b.diesel;
@@ -10385,10 +10419,10 @@ function gSummary(){
   $('#gStats').innerHTML=[[gT('k.hp'),fmt(pk.p.hp,0)+' hp',d(pk.p.hp,sp.p.hp),`${fmt(pk.p.kw,0)} kW · ${fmt(pk.p.N)} rpm`],[gT('k.nm'),fmt(pk.t.torque,0)+' N·m',d(pk.t.torque,sp.t.torque),`${fmt(pk.t.torque*.7376,0)} lb·ft · ${fmt(pk.t.N)} rpm`],
     [gT('k.boost'),fmt(pk.bo,2)+' bar','',pk.bo>.05?`${fmt(pk.bo*14.5,1)} psi${pk.sp?' · '+gT('k.spool')+' '+fmt(pk.sp.N)+' rpm':''}`:gT('k.na')],[gT('k.red'),fmt(red)+' rpm','',`${gT('k.piston')} ${fmt(2*e.stroke/1000*red/60,1)} m/s`],
     [gT('k.bsfc'),fmt(pk.p.bsfc,0)+' g/kWh','',`${gT('k.fuel')} ${fmt(pk.p.mf,1)} kg/h`],[gT('k.knock'),diesel?'—':(pk.p.km>=0?'+':'')+fmt(Math.min(...c.map(x=>x.km)),1),'',diesel?gT('k.dieselK'):Math.min(...c.map(x=>x.km))<0?(b.knockProt?gT('k.retard'):gT('k.danger')):gT('k.safe')]]
-    .map(([a,v,dd,s])=>`<div class="gst"><span>${esc(a)}</span><b dir="ltr">${v} ${dd}</b><small dir="auto">${esc(s)}</small></div>`).join('');
+    .map(([a,v,dd,s])=>`<div class="gst"><span>${esc(a)}</span><b dir="ltr">${v} ${dd}</b><small dir="auto">${esc(s)}</small></div>`).join('')+gEmisTile(b);
   const worst={};for(const x of c)for(const[k,v]of Object.entries(x.st))worst[k]=Math.max(worst[k]||0,v);
   $('#gHealth').innerHTML=Object.entries(worst).filter(([k])=>!(diesel&&k==='knock')).map(([k,v])=>`<div class="ghb"><span>${esc(gT('st.'+k))}</span><i><u style="width:${clamp(v*100,2,100)}%;background:${v<.75?'#3ddc97':v<.95?'#ffc04d':'#ff4d4d'}"></u></i><b dir="ltr">${fmt(v*100,0)}%</b></div>`).join('');
-  const w=[];if(worst.knock>1)w.push('wKnock');if(worst.lean>.8)w.push('wLean');if(worst.gasket>1)w.push('wGasket');if(worst.piston>1)w.push('wPiston');if(worst.rod>1)w.push('wRod');if(worst.valves>1)w.push('wValve');if(worst.heat>1)w.push('wHeat');
+  const w=[];if(worst.knock>1)w.push('wKnock');if(worst.lean>.8)w.push('wLean');if(worst.gasket>1)w.push('wGasket');if(worst.piston>1)w.push('wPiston');if(worst.rod>1)w.push('wRod');if(worst.valves>1)w.push('wValve');if(worst.heat>1)w.push('wHeat');if(gHw(b).flexLean)w.push('wFlex');
   const fw=gFaultWarn(b);$('#gWarn').innerHTML=w.length||fw?w.map(k=>`<p>⚠ ${esc(gT(k))}</p>`).join('')+fw:`<p class="ok">✓ ${esc(gT('wOk'))}</p>`;
   $('#gSpecs').innerHTML=[[gT('sp.lay'),gT('lay.'+b.base)],[gT('sp.bs'),`${fmt(e.bore,1)} × ${fmt(e.stroke,1)} mm`],[gT('disp'),`${fmt(gDisp(b)*1000,0)} cm³`],[gT('sp.cr'),`${fmt(e.cr,1)} : 1`],[gT('fire'),GS.ck?GS.ck.order.join('-'):'—'],[gT('sp.ratio'),fmt(e.bore/e.stroke,2)+(e.bore>e.stroke?' ('+gT('sp.over')+')':' ('+gT('sp.under')+')')],[gT('sp.crank'),GS.ck?(GS.ck.split?gT('sp.split'):gT('sp.shared'))+' · '+(GBASE[b.base].lay==='V'?GBASE[b.base].bank+'°':GBASE[b.base].lay==='B'?'180°':'—'):'']]
     .map(([a,v])=>`<div><dt>${esc(a)}</dt><dd dir="ltr">${esc(v)}</dd></div>`).join('');
@@ -10433,7 +10467,7 @@ function gTick(dt){
   // 3D frame
   const flame=(b.diesel?0:(GS.pops*(b.pops==='loud'?1:b.pops==='mild'?.5:.25)+(GS.cut&&b.pops!=='off'?.6:0)+(b.als&&run&&!thr?.3*(Math.random()<.12?1:0):0)))*((Math.random()<.5)?1:0);
   g3Frame(dt,{rpm:GS.rpm,run:run||!!GS.dyno,thr,load:thr?1:.15,boost:GS.boostNow,egt:GS.egt,slow:GS.slow,camDur:b.cam==='custom'?b.camDur:{stock:236,street:256,race:284}[b.cam],camLift:b.cam==='custom'?b.camLift:{stock:1,street:1.12,race:1.25}[b.cam],
-    explode:GS.explode,auto:GS.auto&&!GS.held.gas,labels:GS.labels,phases:GS.phases,flame,nos:GS.nosOn&&thr,purge:b.nosPurge&&b.nos!=='none'&&GS.t-(GS.purgeT??-9)<.55,cutCyl:GS.cut,wg:clamp((GS.boostNow-b.boost*.82)/(b.boost*.18+.01),0,1),bov:(GS.t-(GS.bovT??-9))<.4?1:0,gb:gGbState(b),smoke:gSmoke(b,run||!!GS.dyno,thr,m)});
+    explode:GS.explode,auto:GS.auto&&!GS.held.gas,labels:GS.labels,phases:GS.phases,flame,nos:GS.nosOn&&thr,purge:b.nosPurge&&b.nos!=='none'&&GS.t-(GS.purgeT??-9)<.55,cutCyl:GS.cut,wg:clamp((GS.boostNow-b.boost*.82)/(b.boost*.18+.01),0,1),bov:(GS.t-(GS.bovT??-9))<.4?1:0,gb:gGbState(b),smoke:gSmoke(b,run||!!GS.dyno,thr,m),mount:{poly:.45,solid:.12}[b.mounts]||1,shake:(b.fVac&&!b.diesel||b.fGasket||b.fPlugs&&!b.diesel?2.2:1)*(b.fRings||b.fInj?1.3:1)*(gHw(b).mag?1.4:1)});
   if(GS.drive&&GS.dr)ecoCar(dt,b,run,thr,m);
   if(GS.drive&&GS.dr&&(!GS.uiD||GS.t-GS.uiD>.1)){GS.uiD=GS.t;ecoHUD();const D=GS.dr,G=GBOX[b.gbox]||GBOX.manual;$('#gSpd').textContent=fmt(D.v*3.6,0);$('#gGear').textContent=G.cont?'D':(D.v<.05&&!GS.held.gas?'N':String(D.gear));$('#g0100').textContent=D.t100?fmt(D.t100,2)+' s':'—';$('#gQm').textContent=D.q?fmt(D.q[0],2)+' s':'—'}
   gTach();
@@ -10467,7 +10501,7 @@ function gBind(){
     if(tg.dataset.gsbox){if(GSX[GS.spec].drive.boxes)GS.b.gbox3=tg.dataset.gsbox;else GS.b.gbox2=tg.dataset.gsbox;GS.dr=null;gApply();gPane();return}
     if(tg.id==='gsxReset'){GS.sb[GS.spec]=null;gApply();gPane();return}
     if(tg.id==='gsxDrive'){const db=$('#gDrive');if(!GS.drive)db.click();const w=$('#g3wrap');if(w&&w.getBoundingClientRect().top<0||w.getBoundingClientRect().bottom>innerHeight)w.scrollIntoView({behavior:'smooth',block:'center'});return}
-    if(tg.dataset.gk){const k=tg.dataset.gk,v=tg.dataset.gv;b[k]=isNaN(+v)||k==='fuel'?v:+v;if(k==='gbox'){GS.dr=null;GS.cvtRs=null}gApply();gPane();return}
+    if(tg.dataset.gk){const k=tg.dataset.gk,v=tg.dataset.gv;b[k]=isNaN(+v)||k==='fuel'?v:+v;if(k==='carb'&&v!=='efi'&&b.intake==='itb')b.intake='stock';if(k==='intake'&&v==='itb'&&b.carb==='weber')b.carb='efi';if(k==='gbox'){GS.dr=null;GS.cvtRs=null}gApply();gPane();return}
     if(tg.id==='gDrive'){GS.drive=!GS.drive;GS.dr=null;tg.setAttribute('aria-pressed',GS.drive);$('#garage').classList.toggle('driving',GS.drive);if(GS.spec)$('#garage').classList.toggle('noshift',!gsxCanShift(GS.spec));if(!GS.drive)gsxHudReset();if(GS.drive&&GS.eng!=='run'&&!GS.blown&&gCanStart()){GS.eng='run';GS.rpm=Math.max(GS.rpm,gKick());$('#gStart').setAttribute('aria-pressed','true');$('span',$('#gStart')).textContent=gT('stop')}return}
     if(tg.id==='gUp'){(GS.spec?gsxShift:gbShift)(1);return}if(tg.id==='gDn'){(GS.spec?gsxShift:gbShift)(-1);return}
     if(tg.dataset.gcol){b.color=tg.dataset.gcol;gApply();gPane();return}if(tg.dataset.gcov){b.cover=tg.dataset.gcov;gApply();gPane();return}
@@ -10593,7 +10627,7 @@ const ECO_F={'95':[.745,3.09],'98':[.745,3.09],race:[.72,3.1],e85:[.785,1.93],me
 function ecoState(){const D=GS.dr;if(!D.eco)D.eco={kg:0,L:0,km:0,kwh:0,h2:0,co2:0,flow:0,kind:'L'};return D.eco}
 function ecoCar(dt,b,run,thr,m){const D=GS.dr,E=ecoState(),f=b.diesel?'diesel':b.fuel,F=ECO_F[f]||ECO_F['95'],idle=(b.diesel?GDIESEL[b.base]:GENG[b.base]).idle;
   // fuel cut on the overrun (lift-off above idle while rolling); a 48 V hybrid also stops the engine at rest
-  let kgh=run&&m?m.mf:0;if(!thr&&D.v>1&&GS.rpm>idle*1.25)kgh=0;if(b.hybrid==='48v'&&D.v<.5&&!thr)kgh=0;
+  let kgh=run&&m?m.mf:0;if(!thr&&D.v>1&&GS.rpm>idle*1.25)kgh=0;if((b.hybrid==='48v'&&D.v<.5||b.hybrid==='full')&&!thr)kgh=0;
   const G=GBOX[b.gbox]||{};E.tank=G.mass?400:b.diesel?70:60;E.kind='L';E.fuel=f;E.cat=b.cat==='race'||b.diesel&&(b.dpf==='off'||b.egr==='off');
   E.flow=kgh;E.kg+=kgh/3600*dt;E.L=E.kg/F[0];E.co2=E.kg*F[1];E.km+=D.v*dt/1000;E.v=D.v*3.6}
 function ecoSpec(dt,run,thr){const id=GS.spec,d=GSX[id].drive,D=GS.dr,R=GS.specR||{},E=ecoState(),s=gsxSum(id);E.v=D.v*3.6;E.km+=Math.max(0,D.v)*dt/1000;const on=run&&GS.rpm>0;
@@ -11515,6 +11549,90 @@ A('fuelcell',[
  F('fPoison',L3('Catalyst poisoning (CO)','تسمم المحفز (CO)','उत्प्रेरक विषाक्तता (CO)'),L3('Impure hydrogen coats the platinum: lower voltage everywhere. Clean fuel or an air bleed is needed.','الهيدروجين غير النقي يغطي البلاتين: جهد أقل في كل مكان. يلزم وقود نظيف أو حقن هواء.','अशुद्ध हाइड्रोजन प्लैटिनम ढकता है: हर जगह कम वोल्टेज। साफ़ ईंधन या एयर ब्लीड चाहिए।'),{pw:.85,ef:.9,gauge:{cellV:-.1}})]);
 })();
 
+/* EngineLab — more car hardware: carburettors, valvetrain layout (2–5 valves, OHV/SOHC/DOHC), Atkinson / Miller cycle,
+   twin-spark heads, oil catch can, engine mounts, fluid damper, flex-fuel sensor, cylinder deactivation, V8 crank choice,
+   hot-V turbos, W16 sequential staging, full hybrid, diesel extras (mechanical pump, nozzles, glow plugs, AdBlue SCR,
+   swirl-flap delete) and a magneto for the single. Each one changes the physics; the visible ones change the 3D model. */
+const HOTV=new Set(['V6','V8','V8F','V10','V12']);
+const gForced=b=>['t1','twin','tscroll','vgt','seq','etb','tc','roots','screw','cent'].includes(b.ind);
+// what each fitted part does to the model (only the parts that can actually work on this engine count)
+function gHw(b){const P=!b.diesel,NA=b.ind==='na',forced=gForced(b),n=GBASE[b.base].n;
+  const carb=P&&NA&&b.carb&&b.carb!=='efi'?b.carb:null;
+  const vpc={2:[-.05,-.12,-250],3:[-.025,-.06,-120],4:[0,0,0],5:[.01,.03,-100]}[b.vpc]||[0,0,0];
+  const cams={ohv:[-.02,-.05,-550,-.012],sohc:[-.01,-.025,-300,-.005],dohc:[0,0,0,0]}[b.cams]||[0,0,0,0];
+  const cb={carb1:[-.02,-.03,.985,1.5],weber:[.045,.04,.99,2.6],carb4:[.02,.02,.985,1.9]}[carb]||[0,0,1,1];
+  const cyc=P?(b.cycle==='miller'&&!forced?'otto':(b.cycle||'otto')):'otto';
+  const flat=(b.base==='V8'&&b.v8crank==='flat')?1:(b.base==='V8F'&&b.v8crank==='cross')?-1:0;
+  return{carb,cyc,cda:!!b.cda&&n>=8,hotv:b.turboPos==='hotv'&&gTurbo(b)&&HOTV.has(b.base),stage:b.stage==='seq'&&b.base==='W16'&&b.ind==='twin',mag:b.ign1==='magneto'&&b.base==='I1'&&P,
+    ve:vpc[0]+cams[0]+cb[0]+(cyc==='atkinson'?-.1:cyc==='miller'?-.08:0)+flat*.015,npk:vpc[1]+cams[1]+cb[1]+flat*.03,vf:vpc[2]+cams[2],fmep:cams[3]+(b.vpc===5?.005:0),
+    eta:cb[2]*(b.twinSpark&&P?1.012:1)*(cyc==='atkinson'?1.09:cyc==='miller'?1.07:1)*(b.diesel&&b.dpump==='mech'?.96:1)*(b.diesel&&b.nozzle==='big'?.99:1),
+    knock:(b.twinSpark&&P?1.5:0)+(b.catchCan?(b.di==='dual'||forced?.6:.3):0)+(cyc==='atkinson'?3:cyc==='miller'?4:0),
+    flexLean:P&&(b.fuel==='e85'||b.fuel==='meth')&&(!!carb||(!b.flex&&b.map!=='race')),intake:cb[3],flat}}
+// options that cannot exist on this engine go back to stock, so nothing hidden stays switched on
+function gNorm(b){const P=!b.diesel,n=GBASE[b.base].n;
+  if(!(P&&b.ind==='na'))b.carb='efi';if(b.carb==='weber'&&b.intake==='itb')b.intake='stock';
+  if(!(HOTV.has(b.base)&&gTurbo(b)&&window.__hotv3d))b.turboPos='side';if(!(b.base==='W16'&&b.ind==='twin'))b.stage='all';if(n<8)b.cda=false;
+  if(b.base!=='V8'&&b.base!=='V8F')b.v8crank='';if(b.v8crank===(b.base==='V8F'?'flat':'cross'))b.v8crank='';
+  if(!P){b.cycle='otto';b.twinSpark=false;b.flex=false;b.ign1='coil'}else{b.dpump='cr';b.glow='stock';b.scr=false;b.swirlDel=false;b.nozzle='stock'}
+  if(b.cycle==='miller'&&!gForced(b))b.cycle='otto';if(b.base!=='I1')b.ign1='coil'}
+const gCrankBase=b=>b.base==='V8'&&b.v8crank==='flat'?'V8F':b.base==='V8F'&&b.v8crank==='cross'?'V8':b.base;
+function gPaneCrank(b){if(b.base!=='V8'&&b.base!=='V8F')return'';const cur=b.v8crank||(b.base==='V8F'?'flat':'cross');
+  return gH('crankT')+`<div class="gcards c2">${['cross','flat'].map(v=>`<button type="button" class="gcard${cur===v?' on':''}" data-gk="v8crank" data-gv="${v}"><b>${esc(gT('o.v8crank.'+v))}</b><small>${esc(gT('od.v8crank.'+v))}</small></button>`).join('')}</div>`}
+// emissions class from the hardware (simplified Euro rules) — shown in the results
+function gEmisTile(b){const H=gHw(b),c=GS.curve||[],lean=c.some(x=>x.lean>1.02);let cls,ok,why;
+  if(b.diesel){const dpf=b.dpf==='on',egr=b.egr==='on',scr=!!b.scr,mech=b.dpump==='mech';
+    if(!dpf){cls='✗';ok=0;why='dpfOff'}else if(mech){cls='Euro 2';ok=0;why='mech'}else if(scr){cls='Euro 6';ok=1;why='scr'}else if(egr){cls='Euro 5';ok=1;why='egr'}else{cls='✗';ok=0;why='egrOff'}}
+  else{if(H.carb){cls='pre-Euro';ok=0;why='carb'}else if(b.cat==='race'){cls='✗';ok=0;why='noCat'}else if(b.fInj||b.fVac||b.fMaf||b.fPlugs||lean||H.flexLean){cls='✗';ok=0;why='fault'}else if(b.cat==='hiflow'){cls='Euro 5';ok=1;why='hiflow'}else{cls='Euro 6';ok=1;why='cat'}}
+  return`<div class="gst wide ${ok?'eok':'ebad'}"><span>${esc(gT('k.emis'))}</span><b dir="ltr">${esc(cls)} ${ok?'✓':'⚠'}</b><small dir="auto">${esc(gT('em.'+why))}</small></div>`}
+
+/* ---------- strings ---------- */
+(function(){
+const T={
+ h:{carb:['Fuel delivery','تغذية الوقود','ईंधन आपूर्ति'],vlay:['Valvetrain layout','تصميم الصمامات','वाल्वट्रेन लेआउट'],cycle:['Engine cycle','دورة المحرك','इंजन चक्र'],mounts:['Mounts & damper','المساند والمخمّد','माउंट व डैम्पर'],crankT:['Crankshaft type','نوع عمود المرفق','क्रैंकशाफ़्ट प्रकार'],turboPos:['Turbo position','موضع التوربو','टर्बो की जगह'],stage:['Turbo staging','مراحل التوربو','टर्बो स्टेजिंग'],glow:['Cold start','التشغيل البارد','कोल्ड स्टार्ट']},
+ o:{carb:{efi:['Fuel injection (stock)','حقن الوقود (وكالة)','फ़्यूल इंजेक्शन (स्टॉक)'],carb1:['Single carburettor','كاربريتر واحد','सिंगल कार्बोरेटर'],weber:['Twin side-draft Webers','ويبر جانبيان مزدوجان','ट्विन साइड-ड्राफ़्ट वेबर'],carb4:['4-barrel carburettor','كاربريتر رباعي الفتحات','4-बैरल कार्बोरेटर']},
+  cams:{ohv:['Pushrod (OHV)','قضبان دفع (OHV)','पुशरॉड (OHV)'],sohc:['Single cam (SOHC)','كامة واحدة (SOHC)','सिंगल कैम (SOHC)'],dohc:['Twin cam (DOHC)','كامتان (DOHC)','ट्विन कैम (DOHC)']},
+  vpc:{2:['2 valves','صمامان','2 वाल्व'],3:['3 valves','3 صمامات','3 वाल्व'],4:['4 valves','4 صمامات','4 वाल्व'],5:['5 valves','5 صمامات','5 वाल्व']},
+  cycle:{otto:['Otto (stock)','أوتو (وكالة)','ओटो (स्टॉक)'],atkinson:['Atkinson cycle','دورة أتكنسون','एटकिंसन चक्र'],miller:['Miller cycle','دورة ميلر','मिलर चक्र']},
+  mounts:{rubber:['Rubber (stock)','مطاط (وكالة)','रबर (स्टॉक)'],poly:['Polyurethane','بولي يوريثان','पॉलीयूरेथेन'],solid:['Solid','صلبة','सॉलिड']},
+  v8crank:{cross:['Cross-plane','مستويان متعامدان','क्रॉस-प्लेन'],flat:['Flat-plane','مستوٍ واحد','फ़्लैट-प्लेन']},
+  turboPos:{side:['Outside the V (stock)','خارج الـV (وكالة)','V के बाहर (स्टॉक)'],hotv:['Hot-V (inside the V)','Hot-V (داخل الـV)','हॉट-V (V के अंदर)']},
+  stage:{all:['All four together','الأربعة معاً','चारों एक साथ'],seq:['Sequential 2 + 2','تتابعي 2 + 2','क्रमिक 2 + 2']},
+  dpump:{cr:['Common rail (stock)','سكة مشتركة (وكالة)','कॉमन रेल (स्टॉक)'],mech:['Mechanical injection pump','مضخة حقن ميكانيكية','मैकेनिकल इंजेक्शन पंप']},
+  nozzle:{stock:['Stock nozzles','فوهات وكالة','स्टॉक नोज़ल'],big:['Bigger nozzles (+30 %)','فوهات أكبر (+30 %)','बड़े नोज़ल (+30 %)']},
+  glow:{stock:['Steel glow plugs','شمعات توهج فولاذية','स्टील ग्लो प्लग'],ceramic:['Ceramic glow plugs','شمعات توهج سيراميكية','सिरेमिक ग्लो प्लग']},
+  ign1:{coil:['Battery & coil (stock)','بطارية وملف (وكالة)','बैटरी व कॉइल (स्टॉक)'],magneto:['Magneto','مغناطيس (ماغنيتو)','मैग्नेटो']},
+  hybrid:{full:['Full hybrid','هجين كامل','फ़ुल हाइब्रिड']}},
+ od:{carb:{efi:['The ECU meters fuel exactly for every condition.','الكمبيوتر يقيس الوقود بدقة لكل حالة.','ECU हर स्थिति में ईंधन सटीक मापता है।'],carb1:['One downdraft carb on the manifold: simple and cheap, but less precise and less top-end flow.','كاربريتر واحد فوق المشعب: بسيط ورخيص لكنه أقل دقة وتدفقاً في الأعلى.','मैनिफ़ोल्ड पर एक डाउनड्राफ़्ट कार्ब: सरल व सस्ता, पर कम सटीक और ऊपर कम प्रवाह।'],weber:['One choke per cylinder on short runners: a sharp throttle, big top end and the famous intake howl.','فتحة لكل أسطوانة على مجارٍ قصيرة: استجابة حادة وقوة عليا وعواء السحب الشهير.','हर सिलेंडर के लिए एक चोक, छोटे रनर: तेज़ थ्रॉटल, ऊपर ज़्यादा पावर और मशहूर इनटेक गर्जना।'],carb4:['Two primaries for cruising, two secondaries open at full throttle: the classic V8 setup.','فتحتان أساسيتان للسير وفتحتان ثانويتان تُفتحان بالدعسة الكاملة: إعداد V8 الكلاسيكي.','क्रूज़ के लिए दो प्राइमरी, फ़ुल थ्रॉटल पर दो सेकेंडरी खुलते हैं: क्लासिक V8 सेटअप।']},
+  cams:{ohv:['One cam in the block works the valves through pushrods and rockers: compact and torquey, but heavy valvetrain floats early.','كامة واحدة في البلوك تحرك الصمامات بقضبان وأذرع: مدمج وعزمه جيد لكن الصمامات الثقيلة تطفو مبكراً.','ब्लॉक में एक कैम पुशरॉड व रॉकर से वाल्व चलाता है: कॉम्पैक्ट, अच्छा टॉर्क, पर भारी वाल्वट्रेन जल्दी फ़्लोट।'],sohc:['One cam per head opens both rows of valves with rockers.','كامة واحدة لكل رأس تفتح صفّي الصمامات بالأذرع.','हर हेड में एक कैम रॉकर से दोनों कतारों के वाल्व खोलता है।'],dohc:['Separate intake and exhaust cams right on the valves: best for high rpm.','كامتا سحب وعادم فوق الصمامات مباشرة: الأفضل للدوران العالي.','अलग इनटेक व एग्ज़ॉस्ट कैम सीधे वाल्व पर: ऊँचे rpm के लिए सबसे अच्छा।']},
+  vpc:{2:['Big, heavy valves: good low-end, they float sooner.','صمامات كبيرة وثقيلة: عزم سفلي جيد وتطفو أبكر.','बड़े भारी वाल्व: नीचे अच्छा, जल्दी फ़्लोट।'],3:['Two intake, one exhaust.','اثنان للسحب وواحد للعادم.','दो इनटेक, एक एग्ज़ॉस्ट।'],4:['Two intake, two exhaust: the modern standard.','اثنان للسحب واثنان للعادم: المعيار الحديث.','दो इनटेक, दो एग्ज़ॉस्ट: आधुनिक मानक।'],5:['Three intake, two exhaust: a little more flow, more friction.','ثلاثة للسحب واثنان للعادم: تدفق أكثر قليلاً واحتكاك أكبر.','तीन इनटेक, दो एग्ज़ॉस्ट: थोड़ा ज़्यादा प्रवाह, ज़्यादा घर्षण।']},
+  cycle:{otto:['Intake valve closes near the bottom: full charge, normal compression.','صمام السحب يُغلق قرب القاع: شحنة كاملة وانضغاط عادي.','इनटेक वाल्व नीचे के पास बंद: पूरा चार्ज, सामान्य कम्प्रेशन।'],atkinson:['The intake valve closes late and pushes some charge back: less power but a longer expansion: best efficiency (hybrids use it).','صمام السحب يُغلق متأخراً ويعيد جزءاً من الشحنة: قوة أقل لكن تمدد أطول وأفضل كفاءة (تستخدمه الهجينة).','इनटेक वाल्व देर से बंद होकर कुछ चार्ज लौटाता है: कम पावर पर लंबा फैलाव, सबसे अच्छी दक्षता (हाइब्रिड इस्तेमाल करते हैं)।'],miller:['Atkinson timing plus boost to refill the cylinder: efficient and knock-resistant.','توقيت أتكنسون مع بوست لإعادة ملء الأسطوانة: كفء ومقاوم للطرق.','एटकिंसन टाइमिंग और सिलेंडर फिर भरने को बूस्ट: कुशल व नॉक-प्रतिरोधी।']},
+  mounts:{rubber:['Soak up vibration; the engine rocks a lot under torque.','تمتص الاهتزاز؛ المحرك يتمايل كثيراً مع العزم.','कंपन सोखते हैं; टॉर्क पर इंजन काफ़ी हिलता है।'],poly:['Stiffer: sharper shifts, a bit more vibration.','أقسى: تبديل أحد واهتزاز أكثر قليلاً.','सख़्त: तेज़ शिफ़्ट, थोड़ा ज़्यादा कंपन।'],solid:['No movement at all: fastest shifts, harsh and loud in the cabin.','بلا حركة: أسرع تبديل وقاسٍ وصاخب في المقصورة.','बिल्कुल हलचल नहीं: सबसे तेज़ शिफ़्ट, केबिन में कठोर व तेज़।']},
+  v8crank:{cross:['Pins at 90°: smooth, with the uneven V8 burble.','المسامير بزاوية 90°: ناعم مع هدير V8 غير المتساوي.','पिन 90° पर: चिकना, असमान V8 गड़गड़ाहट।'],flat:['Pins at 180°: lighter, revs higher, even pulses per bank and a scream (Ferrari style).','المسامير بزاوية 180°: أخف ويدور أعلى ونبضات متساوية وصرخة (أسلوب فيراري).','पिन 180° पर: हल्का, ऊँचे रेव, बराबर पल्स और चीख़ (फ़ेरारी शैली)।']},
+  turboPos:{side:['Turbos hang outside the banks on long exhaust pipes.','التوربوات خارج الضفتين على أنابيب عادم طويلة.','टर्बो बैंकों के बाहर लंबे पाइपों पर।'],hotv:['Exhaust ports face the valley and the turbos sit inside the V: short pipes, quicker spool, more heat.','منافذ العادم نحو الوادي والتوربوات داخل الـV: أنابيب قصيرة واستجابة أسرع وحرارة أكثر.','एग्ज़ॉस्ट पोर्ट घाटी की ओर, टर्बो V के अंदर: छोटे पाइप, तेज़ स्पूल, ज़्यादा गर्मी।']},
+  stage:{all:['Four turbos share the exhaust from the start.','أربعة توربوات تتقاسم العادم من البداية.','चार टर्बो शुरू से एग्ज़ॉस्ट बाँटते हैं।'],seq:['Two turbos at low rpm, the other two join near 3,800 rpm (Bugatti): far less lag.','توربوان بالدوران المنخفض والآخران ينضمان قرب ٣٨٠٠ (بوغاتي): تأخير أقل بكثير.','कम rpm पर दो टर्बो, बाकी दो लगभग 3,800 पर जुड़ते हैं (बुगाटी): बहुत कम लैग।']},
+  dpump:{cr:['Electronic injectors at very high pressure: clean and quiet.','بخاخات إلكترونية بضغط عالٍ جداً: نظيف وهادئ.','बहुत ऊँचे दबाव पर इलेक्ट्रॉनिक इंजेक्टर: साफ़ व शांत।'],mech:['An old-school rotary/inline pump: tough and tunable, but smoky, loud and less efficient.','مضخة دوّارة/خطية تقليدية: متينة وقابلة للضبط لكنها مدخّنة وصاخبة وأقل كفاءة.','पुराना रोटरी/इनलाइन पंप: मज़बूत व ट्यून योग्य, पर धुआँदार, तेज़ व कम कुशल।']},
+  nozzle:{stock:['Sized for the stock fuelling.','بحجم التغذية الأصلية.','स्टॉक ईंधन के लिए।'],big:['More fuel per stroke: more power with boost, more smoke at low rpm.','وقود أكثر لكل شوط: قوة أكثر مع البوست ودخان أكثر بالدوران المنخفض.','हर स्ट्रोक में ज़्यादा ईंधन: बूस्ट के साथ ज़्यादा पावर, कम rpm पर ज़्यादा धुआँ।']},
+  glow:{stock:['Heat the chamber for a few seconds before cranking.','تسخّن الغرفة بضع ثوانٍ قبل التشغيل.','स्टार्ट से पहले कुछ सेकंड चैंबर गर्म करते हैं।'],ceramic:['Reach 1,000 °C in 2 seconds: instant starts and much less white smoke when cold.','تصل إلى ١٠٠٠ °C في ثانيتين: تشغيل فوري ودخان أبيض أقل بكثير وهو بارد.','2 सेकंड में 1,000 °C: तुरंत स्टार्ट, ठंड में बहुत कम सफ़ेद धुआँ।']},
+  ign1:{coil:['A battery feeds an ignition coil: strong spark at any speed.','بطارية تغذي ملف الإشعال: شرارة قوية بأي سرعة.','बैटरी इग्निशन कॉइल चलाती है: हर गति पर तेज़ स्पार्क।'],magneto:['The flywheel magnet makes its own spark, no battery: weak at low rpm (hard starts, misfires), fine when revving.','مغناطيس الحدّافة يولّد الشرارة بلا بطارية: ضعيفة بالدوران المنخفض (تشغيل صعب واحتراق متقطع) وجيدة مع الدوران.','फ़्लाईव्हील चुंबक खुद स्पार्क बनाता है, बैटरी नहीं: कम rpm पर कमज़ोर (मुश्किल स्टार्ट, मिसफ़ायर), रेव पर ठीक।']},
+  hybrid:{full:['A big motor and battery: strong torque low down, the engine switches off when you lift off.','محرك وبطارية كبيران: عزم قوي في الأسفل والمحرك ينطفئ عند رفع القدم.','बड़ी मोटर व बैटरी: नीचे ज़बरदस्त टॉर्क, पैर उठाते ही इंजन बंद।']}},
+ s:{twinSpark:['Twin-spark head','رأس بشمعتين','ट्विन-स्पार्क हेड'],catchCan:['Oil catch can','علبة تجميع الزيت','ऑयल कैच कैन'],damper:['Fluid crank damper','مخمّد مرفق سائل','फ़्लूइड क्रैंक डैम्पर'],flex:['Flex-fuel sensor','حساس الوقود المرن','फ़्लेक्स-फ़्यूल सेंसर'],cda:['Cylinder deactivation','إيقاف الأسطوانات','सिलेंडर डीएक्टिवेशन'],scr:['AdBlue (SCR)','أدبلو (SCR)','एडब्लू (SCR)'],swirlDel:['Swirl-flap delete','إزالة صمامات الدوامة','स्वर्ल-फ़्लैप हटाना']},
+ sd:{twinSpark:['Two plugs per cylinder burn the mixture faster: more efficiency, more knock margin, fewer misfires.','شمعتان لكل أسطوانة تحرقان الخليط أسرع: كفاءة وهامش طرق أكبر واحتراق متقطع أقل.','हर सिलेंडर में दो प्लग मिश्रण तेज़ जलाते हैं: ज़्यादा दक्षता, नॉक मार्जिन, कम मिसफ़ायर।'],catchCan:['Traps oil mist from the crankcase vent before it reaches the intake: cleaner valves and a little knock margin.','يحبس رذاذ الزيت من تهوية علبة المرفق قبل وصوله للسحب: صمامات أنظف وهامش طرق أكبر قليلاً.','क्रैंककेस वेंट की तेल धुंध इनटेक तक पहुँचने से पहले रोकता है: साफ़ वाल्व, थोड़ा नॉक मार्जिन।'],damper:['Silicone fluid soaks up crankshaft twisting: the bottom end survives higher rpm.','سائل السيليكون يمتص التواء عمود المرفق: الجزء السفلي يتحمل دوراناً أعلى.','सिलिकॉन तरल क्रैंकशाफ़्ट का मरोड़ सोखता है: बॉटम एंड ऊँचे rpm सहता है।'],
+  flex:['Measures the ethanol content and adjusts fuel and timing. Without it (or a race map), E85 and methanol run dangerously lean.','يقيس نسبة الإيثانول ويضبط الوقود والتوقيت. بدونه (أو خريطة سباق) يعمل E85 والميثانول بخليط فقير خطير.','इथेनॉल मात्रा मापकर ईंधन व टाइमिंग बदलता है। इसके (या रेस मैप के) बिना E85 व मेथनॉल ख़तरनाक लीन चलते हैं।'],cda:['At light load half the cylinders close their valves: less pumping loss and fuel, and it sounds like half an engine.','عند الحمل الخفيف تُغلق نصف الأسطوانات صماماتها: فقد ضخ ووقود أقل وصوت نصف محرك.','हल्के लोड पर आधे सिलेंडर वाल्व बंद करते हैं: कम पंपिंग हानि व ईंधन, आवाज़ आधे इंजन जैसी।'],
+  scr:['Urea spray turns 90 % of the NOx into nitrogen and water: Euro 6 with the DPF.','رذاذ اليوريا يحوّل 90 % من NOx إلى نيتروجين وماء: يورو 6 مع فلتر الجزيئات.','यूरिया स्प्रे 90 % NOx को नाइट्रोजन व पानी में बदलता है: DPF के साथ यूरो 6।'],swirlDel:['Removes the flaps that swirl the air at low rpm: no risk of a flap breaking into the engine, a little more top-end flow, a little more smoke low down.','يزيل الصمامات التي تدوّم الهواء بالدوران المنخفض: لا خطر من انكسارها داخل المحرك وتدفق أعلى قليلاً ودخان أكثر في الأسفل.','कम rpm पर हवा घुमाने वाले फ़्लैप हटाता है: फ़्लैप टूटकर इंजन में जाने का ख़तरा नहीं, ऊपर थोड़ा ज़्यादा प्रवाह, नीचे थोड़ा ज़्यादा धुआँ।']},
+ k:{emis:['Emissions','الانبعاثات','उत्सर्जन']},
+ em:{cat:['Catalyst working: passes Euro 6.','المحفّز يعمل: يجتاز يورو 6.','कैटेलिस्ट काम कर रहा: यूरो 6 पास।'],hiflow:['High-flow cat: a little more HC and NOx.','محفّز عالي التدفق: HC وNOx أكثر قليلاً.','हाई-फ़्लो कैट: थोड़ा ज़्यादा HC व NOx।'],noCat:['No catalyst: fails every test.','بدون محفّز: يرسب في كل الفحوص.','कैटेलिस्ट नहीं: हर टेस्ट में फ़ेल।'],fault:['A fault or a lean/rich mixture pushes emissions over the limit.','عطل أو خليط فقير/غني يرفع الانبعاثات فوق الحد.','खराबी या लीन/रिच मिश्रण उत्सर्जन सीमा से ऊपर।'],carb:['Carburettors cannot hold λ = 1 for a catalyst.','الكاربريتر لا يثبت λ = 1 للمحفّز.','कार्बोरेटर कैटेलिस्ट के लिए λ = 1 नहीं रख सकते।'],
+  scr:['DPF + AdBlue: soot and NOx both under the limit.','فلتر جزيئات + أدبلو: السخام وNOx تحت الحد.','DPF + एडब्लू: कालिख व NOx दोनों सीमा में।'],egr:['DPF + EGR, no SCR: fit AdBlue for Euro 6.','فلتر جزيئات + EGR بدون SCR: ركّب أدبلو ليورو 6.','DPF + EGR, SCR नहीं: यूरो 6 के लिए एडब्लू लगाएँ।'],dpfOff:['DPF removed: soot far over the limit.','فلتر الجزيئات مُزال: السخام فوق الحد بكثير.','DPF हटा: कालिख सीमा से बहुत ऊपर।'],egrOff:['EGR off without SCR: NOx far over the limit.','EGR مطفأ بدون SCR: NOx فوق الحد بكثير.','SCR के बिना EGR बंद: NOx सीमा से बहुत ऊपर।'],mech:['A mechanical pump cannot meet modern limits.','المضخة الميكانيكية لا تحقق الحدود الحديثة.','मैकेनिकल पंप आधुनिक सीमाएँ पूरी नहीं कर सकता।']},
+ X:{carbNote:['The carburettor jets meter the fuel: injector size, lambda and direct injection do not apply.','فتحات الكاربريتر تقيس الوقود: حجم البخاخ ولامدا والحقن المباشر لا تنطبق.','कार्बोरेटर जेट ईंधन मापते हैं: इंजेक्टर आकार, लैम्ब्डा व डायरेक्ट इंजेक्शन लागू नहीं।'],wFlex:['E85 / methanol without a flex-fuel sensor or a race map: the engine runs dangerously lean.','E85 / ميثانول بدون حساس وقود مرن أو خريطة سباق: المحرك يعمل بخليط فقير خطير.','फ़्लेक्स-फ़्यूल सेंसर या रेस मैप के बिना E85 / मेथनॉल: इंजन ख़तरनाक लीन।'],cdaOn:['half the cylinders','نصف الأسطوانات','आधे सिलेंडर']}};
+const P={carb:['Carburettor','كاربريتر','कार्बोरेटर','Mixes fuel into the air through jets as it rushes through a venturi.','يخلط الوقود بالهواء عبر فتحات أثناء مروره بالفنتوري.','वेंचुरी से गुज़रती हवा में जेट से ईंधन मिलाता है।'],weber:['Side-draft Weber carb','كاربريتر ويبر جانبي','साइड-ड्राफ़्ट वेबर कार्ब','A twin-choke carburettor feeding two cylinders through short runners.','كاربريتر مزدوج يغذي أسطوانتين عبر مجارٍ قصيرة.','दो सिलेंडरों को छोटे रनर से खिलाने वाला ट्विन-चोक कार्बोरेटर।'],airCleaner:['Air cleaner','منظف الهواء','एयर क्लीनर','A round filter housing on top of the carburettor.','غلاف فلتر دائري فوق الكاربريتر.','कार्बोरेटर के ऊपर गोल फ़िल्टर हाउसिंग।'],
+  catchCan:['Oil catch can','علبة تجميع الزيت','ऑयल कैच कैन','Collects oil mist from the crankcase breather.','تجمع رذاذ الزيت من تهوية علبة المرفق.','क्रैंककेस ब्रीदर से तेल धुंध इकट्ठा करता है।'],pushrod:['Pushrod','قضيب الدفع','पुशरॉड','Carries the cam movement from the block up to the rocker arm.','ينقل حركة الكامة من البلوك إلى ذراع التأرجح.','कैम की गति ब्लॉक से रॉकर तक ले जाता है।'],rocker:['Rocker arm','ذراع التأرجح','रॉकर आर्म','A lever that turns the cam or pushrod lift into valve opening.','رافعة تحوّل رفع الكامة أو القضيب إلى فتح الصمام.','लीवर जो कैम या पुशरॉड की उठान को वाल्व खुलने में बदलता है।'],
+  injPump:['Mechanical injection pump','مضخة حقن ميكانيكية','मैकेनिकल इंजेक्शन पंप','Gear-driven pump that times and meters diesel to each injector.','مضخة بالتروس تضبط توقيت وكمية الديزل لكل بخاخ.','गियर-चालित पंप जो हर इंजेक्टर को डीज़ल का समय व मात्रा देता है।']};
+const L={en:0,ar:1,hi:2};
+for(const l in L){const g=I18N[l]&&I18N[l].gar;if(!g)continue;const i=L[l];
+  for(const sec of['h','s','sd','k','em']){g[sec]=g[sec]||{};for(const k in T[sec])g[sec][k]=T[sec][k][i]}
+  for(const sec of['o','od']){g[sec]=g[sec]||{};for(const key in T[sec]){g[sec][key]=g[sec][key]||{};for(const v in T[sec][key])g[sec][key][v]=T[sec][key][v][i]}}
+  for(const k in T.X)g[k]=T.X[k][i];g.p=g.p||{};g.pd=g.pd||{};for(const k in P){g.p[k]=P[k][i];g.pd[k]=P[k][i+3]}}
+})();
+
 /* EngineLab — garage panel made easier: search every part, collapsible sections that show the current choice,
    a "changed" marker on sections and tabs, and a strip of everything you modified (tap to jump, × to undo). */
 const GUI_T={q:['Search parts and settings…','ابحث في القطع والإعدادات…','पार्ट्स व सेटिंग खोजें…'],mods:['Changed','المعدّل','बदला गया'],none:['Nothing changed yet: this is the stock engine.','لم يتغيّر شيء بعد: هذا المحرك الأصلي.','अभी कुछ नहीं बदला: यह स्टॉक इंजन है।'],
@@ -11913,17 +12031,17 @@ function sndProfile(){
   if(!$('#garage').hidden&&GS.ck){const b=GS.b,ck=GS.ck,map={I3:'inline3',I4:'inline4',I5:'inline5',I6:'inline6',V6:'v6',V8:'v8',V8F:'v8',V10:'v10',V12:'v12',B4:'boxer',B6:'flat6',VR6:'vr6',W12:'w12',W16:'w16',I1:'petrol'},sid=b.diesel?'diesel':map[b.base],o={...SPROF[sid]},red=gRedline(b),m=GS.m||{bmep:2};
     const turbo=['t1','twin','tscroll','vgt','seq','etb','tc'].includes(b.ind),scT=['roots','screw','tc'].includes(b.ind)||b.ind==='cent';
     const twoB=ck.banks.length>1,merge=twoB&&b.xpipe==='x',eq=b.eqlen&&GBASE[b.base].lay==='B';
-    let fires=ck.cyl.map(c=>[((c.phi%720)+720)%720,twoB&&!merge?c.bank:0,b.exh==='headers'?0:(c.k%3)*.15]);if(sid==='boxer'&&!eq&&o.fires)fires=fires.map((f,i)=>[f[0],f[1],(o.fires[i]||[])[2]??f[2]]);if(eq)fires=fires.map(f=>[f[0],f[1],0]);
+    const HW=gHw(b),cdaOn=HW.cda&&GS.m&&GS.m.cda;let fires=ck.cyl.map(c=>[((c.phi%720)+720)%720,twoB&&!merge?c.bank:0,b.exh==='headers'?0:(c.k%3)*.15]);if(cdaOn)fires=fires.slice().sort((p,q)=>p[0]-q[0]).filter((f,i)=>i%2===0);if(sid==='boxer'&&!eq&&o.fires)fires=fires.map((f,i)=>[f[0],f[1],(o.fires[i]||[])[2]??f[2]]);if(eq)fires=fires.map(f=>[f[0],f[1],0]);
     if(b.exh==='headers'){o.hl=(o.hl||.7)*1.2;o.hg=-.72}const ex=b.exhSys,catK={stock:1,hiflow:1.05,race:1.16}[b.cat]||1,vk=b.vvl&&GS.rpm>red*.6?1.08:1,lpK=(ex==='straight'?1.75:ex==='sport'?1.3:1)*(turbo?.82:1)*(b.cat==='race'?1.12:b.cat==='hiflow'?1.04:1)*(b.xpipe==='x'?1.06:1)*vk,gK=(ex==='straight'?1.55:ex==='sport'?1.2:1)*(turbo?.78:1)*catK*(b.diesel&&b.dpf==='off'?1.1:1);
     const camK={stock:0,street:.05,race:.12,custom:clamp((b.camDur-240)/500,0,.15)}[b.cam]||0;
     // valved exhaust: flaps open (loud, bright) or closed (quiet, muffled); "auto" opens above 3,500 rpm or on heavy throttle
     const exT=b.exhValve==='quiet'?0:b.exhValve==='open'?1:b.exhValve==='auto'?(GS.rpm>3500||GS.thr>.7?1:0):-1,nowT=performance.now();if(exT<0)GS.exv=-1;else{if(!(GS.exv>=0))GS.exv=exT;GS.exv+=(exT-GS.exv)*Math.min(1,(nowT-(GS.exvT||nowT))/1000*5)}GS.exvT=nowT;
     const vK=GS.exv>=0?.72+.4*GS.exv:1,vL=GS.exv>=0?.78+.32*GS.exv:1;
     const load=GS.dyno||GS.thr?clamp(m.bmep/12,.25,2):.14;
-    return Object.assign({},o,{id:'gar:'+b.base+(b.diesel?'d':'')+':'+b.exh+':'+ck.order.join('')+(merge?':x':'')+(eq?':eq':''),kind:'pist',cycle:720,fires,evo:130,mA:b.diesel?0:360,rpm:Math.max(60,GS.rpm),load,rmax:red,gain:(SGAIN[sid]||1)*gK*vK,vol:GS.rpm>80?1:0,
-      fire:GS.cut?0:1,lp:(o.lp||1200)*lpK*vL,tg:ex==='straight'?.12:o.tg,rough:((o.rough||.06)+camK+(b.balDel&&(b.base==='I4'||b.base==='I3')?.02:0)+(b.fRings?.02:0)+(b.fInj?.03:0)+(b.fVac&&!b.diesel?.03:0))*(b.coils==='race'?.85:1),mis:camK*.35+(b.fGasket?.07:0)+(b.fVac&&!b.diesel?.03:0),misL:b.fPlugs&&!b.diesel?.22:0,fx:{h:b.fVac&&!b.diesel?(GS.thr?.25:1):0,r:b.fChain?.9*Math.max(0,1-GS.rpm/3400):0,g:0},intake:(o.intake||.15)*(b.intake==='itb'?3:b.intake==='cone'?1.6:1)*(vk>1?1.4:1)*(b.fAir?1.25:1),sp:(o.sp||0)*(b.xpipe==='h'?.5:1),motor:b.hybrid==='48v'&&GS.thr&&GS.rpm<3200?.45:0,scream:turbo&&b.wg==='external'&&GS.thr&&GS.boostNow>b.boost*.85?1:0,turb:(o.turb||.25)+(ex==='straight'?.15:0),
+    return Object.assign({},o,{id:'gar:'+b.base+(b.diesel?'d':'')+':'+b.exh+':'+ck.order.join('')+(merge?':x':'')+(eq?':eq':'')+(cdaOn?':cda':''),kind:'pist',cycle:720,fires,evo:130,mA:b.diesel?0:360,rpm:Math.max(60,GS.rpm),load,rmax:red,gain:(SGAIN[sid]||1)*gK*vK,vol:GS.rpm>80?1:0,
+      fire:GS.cut?0:1,lp:(o.lp||1200)*lpK*vL,tg:ex==='straight'?.12:o.tg,rough:((o.rough||.06)+camK+(b.balDel&&(b.base==='I4'||b.base==='I3')?.02:0)+(b.fRings?.02:0)+(b.fInj?.03:0)+(b.fVac&&!b.diesel?.03:0)+(HW.carb?.015:0))*(b.coils==='race'?.85:1)*(b.twinSpark&&!b.diesel?.9:1),mis:camK*.35+(b.fGasket?.07:0)+(b.fVac&&!b.diesel?.03:0)+(HW.mag&&GS.rpm<1600?.05:0),misL:b.fPlugs&&!b.diesel?.22:0,fx:{h:b.fVac&&!b.diesel?(GS.thr?.25:1):0,r:b.fChain?.9*Math.max(0,1-GS.rpm/3400):0,g:0},intake:(o.intake||.15)*(b.intake==='itb'?3:b.intake==='cone'?1.6:1)*(vk>1?1.4:1)*(b.fAir?1.25:1)*HW.intake,sp:(o.sp||0)*(b.xpipe==='h'?.5:1),motor:b.hybrid==='48v'&&GS.thr&&GS.rpm<3200?.45:b.hybrid==='full'&&GS.thr&&GS.rpm<4200?.75:0,mech:(o.mech||.05)*({poly:1.15,solid:1.4}[b.mounts]||1),scream:turbo&&b.wg==='external'&&GS.thr&&GS.boostNow>b.boost*.85?1:0,turb:(o.turb||.25)+(ex==='straight'?.15:0),
       turbo:turbo?clamp(.35+GS.boostNow*.5,0,1.2):0,blower:scT?clamp(.7+1.2*GS.boostNow,0,2):0,bl:b.ind==='cent'?28:b.ind==='roots'?7.5:12,
-      bovN:GS.bov,bovT:turbo?b.bov:'stock',flI:b.bov==='flutter'?.088+.01*(b.tsize||0):.1+.015*(b.tsize||0),flF:(b.bov==='flutter'?1250:1180)-95*(b.tsize||0),flN:Math.round(5+2.5*Math.min(1.6,GS.bovBoost||b.boost||1)),flE:clamp(.5+.32*(GS.bovBoost||1),.5,1.15),pop:b.diesel?0:GS.pops*(b.pops==='loud'?1:b.pops==='mild'?.5:.15),nos:GS.nosOn&&GS.thr>0,purge:b.nosPurge&&b.nos!=='none'&&GS.t-(GS.purgeT??-9)<.55,knock:b.diesel?.12:0})}
+      bovN:GS.bov,bovT:turbo?b.bov:'stock',flI:b.bov==='flutter'?.088+.01*(b.tsize||0):.1+.015*(b.tsize||0),flF:(b.bov==='flutter'?1250:1180)-95*(b.tsize||0),flN:Math.round(5+2.5*Math.min(1.6,GS.bovBoost||b.boost||1)),flE:clamp(.5+.32*(GS.bovBoost||1),.5,1.15),pop:b.diesel?0:GS.pops*(b.pops==='loud'?1:b.pops==='mild'?.5:.15),nos:GS.nosOn&&GS.thr>0,purge:b.nosPurge&&b.nos!=='none'&&GS.t-(GS.purgeT??-9)<.55,knock:b.diesel?(b.dpump==='mech'?.17:.12):0})}
   if(!$('#labx').hidden&&LX.id){const e=E[LX.id],q=e.params.find(x=>x.k===labSpec(e).key),xm=Math.max(LX.x,q.min),p=lxP(xm),R=lxModel(xm),rf=lxRun();if(q.k==='rpm')p.rpm=Math.max(q.min*.5,LX.x);
     const m=sndFor(e,p,R);if(!m)return null;m.id='lx:'+m.id;m.vol=rf>.03&&(q.k!=='rpm'||LX.x>25)?(m.vol??1):0;if(m.kind==='pist'){m.fire=LX.eng==='start'?0:1;m.rpm=Math.max(80,LX.x)}if(m.kind==='jet'){m.a=Math.max(.05,(R.s||0)*rf)}if(m.kind==='rkt'){m.a*=rf}return m}
   if(!S.id||!S.playing)return{id:'off',kind:'off',vol:0};
