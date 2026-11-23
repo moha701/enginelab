@@ -9592,7 +9592,11 @@ function gDrive(dt,b,thr,run){
   // automatic shifting (auto boxes or the assist toggle)
   if(!G.cont&&G.n>1&&D.shiftT<=0&&(G.auto||b.autoShift)&&run){const ratio=G.r[D.gear-1],N=wN*ratio*fd;
     const up=b.map==='eco'?(thr?red*.62:Math.max(idle*2,1700)):thr?red*.965:Math.max(idle*2.2,1900+1500*thr),dn=thr>.5?red*(b.map==='eco'?.38:.52):idle*1.5;
-    if(N>up&&D.gear<G.n)gbShift(1);else if(N<dn&&D.gear>1&&D.v>1)gbShift(-1)}
+    // shift up early when the next gear already pushes harder (past the power peak, e.g. a small engine that can't reach the redline in this gear)
+    let early=false;if(thr&&D.gear<G.n&&N>red*.6&&b.map!=='eco'){const r2=G.r[D.gear],N2=N*r2/ratio;if(N2>idle*1.6){const f1=gM(Math.max(800,N),1).torque*ratio,f2=gM(Math.max(800,N2),1).torque*r2;early=f2>=f1*1.01}}
+    if((N>up||early)&&D.gear<G.n)gbShift(1);else if(N<dn&&D.gear>1&&D.v>1)gbShift(-1)}
+  // stopped in a high gear (hard braking): the auto box / shift assist drops straight back to 1st so it can pull away again
+  if(!G.cont&&(G.auto||b.autoShift)&&D.v<.8&&D.gear>1&&D.shiftT<=0){D.from=D.gear;D.gear=1}
   // CVT: hold the engine near its best rpm, ratio follows road speed
   if(G.cont){const cv=GS.curve||[];let iM=0;cv.forEach((x,i)=>{if(x.hp>cv[iM].hp)iM=i});const hpN=cv.length?1000+iM*100:red*.8,Nt=thr?Math.min(red*.95,hpN*(.62+.38*thr)):Math.max(idle*1.4,1300);GS.cvtR=Math.max(G.cont[1],Math.min(G.cont[0],wN>5?Nt/(wN*fd):G.cont[0]));
     GS.cvtR=GS.cvtRs=(GS.cvtRs||GS.cvtR)+(GS.cvtR-(GS.cvtRs||GS.cvtR))*Math.min(1,dt*3)}
@@ -9605,27 +9609,28 @@ function gDrive(dt,b,thr,run){
     let N=GS.rpm;const launch=Math.min(red*.8,b.launch||3500);
     if(G.tc){// torque converter: engine can run above road speed up to stall, torque is multiplied
       const stall=Math.max(idle*1.15,(b.diesel?1900:2500)*(.25+.75*thr)+idle*(1-thr)*.2);
-      N+=((Math.max(Nlock,thr?Math.min(stall,red):idle*1.02))-N)*Math.min(1,dt*6);const sr=Math.min(1,Nlock/Math.max(N,1)),mult=1+1.1*Math.max(0,1-sr);
+      N+=((thr?Math.min(red,Math.max(Nlock*1.04,stall+Nlock*.45)):Math.max(Nlock,idle*1.02))-N)*Math.min(1,dt*6);const sr=Math.min(1,Nlock/Math.max(N,1)),mult=1+1.1*Math.max(0,1-sr);
       const T=gM(Math.max(700,N),thr).torque*(thr?1:.0)-(thr?0:gEngBrake(b,N));Tw=T*mult*ratio*fd*G.eff*Math.min(1,.2+sr*2);D.slip=1-sr;GS.rpm=N}
     else if(G.cont&&(wN<120||thr&&wN*G.cont[0]*fd<Math.min(red*.7,launch)*.97)){// launch clutch on the CVT until the belt can hold the rpm
       N+=((thr?Math.max(Nlock,Math.min(red*.7,launch)):idle)-N)*Math.min(1,dt*5);const T=gM(Math.max(700,N),thr).torque*(thr?1:0);Tw=T*G.cont[0]*fd*G.eff*.8;GS.rpm=N;D.slip=1}
-    else if((Nlock<idle*1.05||thr&&Nlock<Math.min(launch,N)*.95&&N>Nlock)&&D.gear<=1+(G.kind==='truck'?3:0)){// clutch slipping off the line
-      const Nt=thr?Math.max(Nlock,launch):idle;N+=(Nt-N)*Math.min(1,dt*6*fly);const T=gM(Math.max(700,N),thr).torque;Tw=(thr?T:T*.12)*ratio*fd*G.eff*(thr?1:.5);GS.rpm=N;D.slip=1-Nlock/Math.max(N,1)}
+    else if(Nlock<idle*1.05||thr&&N>Nlock+40&&((D.eng??1)<1||Nlock<Math.min(launch,idle*2.2)*.97)){// clutch slipping off the line: it bites progressively (about a second), any gear can slip at walking pace
+      const low=D.gear<=1+(G.kind==='truck'?3:0);if(thr)D.eng=Math.min(1,(D.eng||0)+dt*(low?1:.7)/(G.kind==='truck'?2:1.1));else D.eng=0;
+      const Nl=low?launch:Math.min(launch,idle*2.2),Nf=Math.max(Nlock,Math.min(Nl,idle*2.2)),Nt=thr?Math.max(Nlock,Nl-(Nl-Nf)*(D.eng||0)):idle;N+=(Nt-N)*Math.min(1,dt*6*fly);const T=gM(Math.max(700,N),thr).torque;Tw=(thr?T:T*.12)*ratio*fd*G.eff*(thr?1:.5);GS.rpm=N;D.slip=1-Nlock/Math.max(N,1)}
     else{// locked to the road
-      GS.rpm=Nlock;D.slip=0;const T=thr?gM(Math.max(700,Nlock),thr).torque:-gEngBrake(b,Nlock);Tw=T*ratio*fd*G.eff;if(Nlock<idle*.92&&!G.tc){GS.rpm=idle;Tw=0}}
+      const Nw=Math.min(red+30,Nlock*(1+.3*(D.spin||0)*(thr?1:0)));GS.rpm=Nw;D.slip=0;D.eng=1;const T=thr?gM(Math.max(700,Nw),thr).torque:-gEngBrake(b,Nw);Tw=T*ratio*fd*G.eff;if(Nlock<idle*.92&&!G.tc){GS.rpm=idle;Tw=0}}
   }else{GS.rpm=Math.max(0,GS.rpm-dt*1800);Tw=0}
   if(G.mg&&run&&thr)Tw+=thr*240*fd*(1-Math.min(1,D.v/45));// hybrid: MG2 electric boost off the line
   // rev limiter: no drive above the cut
   if(GS.rpm>=red&&thr&&!shifting){GS.cut=true;Tw=Math.min(Tw,0);GS.rpm=Math.min(GS.rpm,red+40)}
   // forces → speed
-  let F=Tw/wr;const grip=1.05*m*9.81*.56,tcK={off:0,low:1,high:2}[b.trac]||0;D.tc=0;
+  let F=Tw/wr;const awd=b.base==='W16'||b.base==='W12',grip=1.05*m*9.81*(awd?.95:.56)+.5*1.2*(awd?.9:.35)*D.v*D.v*(awd?.95:.56),tcK={off:0,low:1,high:2}[b.trac]||0;D.tc=0;
   // traction control: trims torque so the tyres stay near peak grip instead of spinning
   if(F>grip){const ex=Math.min(1,(F-grip)/grip);if(tcK===2){F=grip*.97;D.spin=ex*.12;D.tc=1}else if(tcK===1){F=grip*(.93-.04*ex);D.spin=ex*.45;D.tc=.5}else{D.spin=ex;F=grip*(.86-.1*ex)}}else D.spin=0;
-  const drag=.5*1.2*cda*D.v*D.v+m*9.81*.012+(brake?m*9.81*.95:0)*(D.v>.05?1:0);D.v=Math.max(0,D.v+(F-drag*(D.v>.02||F<drag?1:0))/m*dt);if(D.v<.02&&F<=0)D.v=0;
+  const v0=D.v,drag=.5*1.2*cda*D.v*D.v+m*9.81*.012+(brake?m*9.81*.95:0)*(D.v>.05?1:0);D.v=Math.max(0,D.v+(F-drag*(D.v>.02||F<drag?1:0))/m*dt);if(D.v<.02&&F<=0)D.v=0;
   D.dist+=D.v*dt;D.top=Math.max(D.top,D.v*3.6);
   // performance timers
-  if(D.v<.3&&thr&&!D.t0){D.t0=GS.t;D.dist=0;D.t100=null;D.q=null}
-  if(D.t0&&!D.t100&&D.v*3.6>=100)D.t100=GS.t-D.t0;if(D.t0&&!D.q&&D.dist>=402.3)D.q=[GS.t-D.t0,D.v*3.6];if(D.v<.3&&!thr)D.t0=null;
+  if(v0<.3&&thr&&D.t0==null){D.t0=GS.t-dt;D.dist=0;D.t100=null;D.q=null}
+  if(D.t0!=null&&!D.t100&&D.v*3.6>=100)D.t100=GS.t-D.t0;if(D.t0!=null&&!D.q&&D.dist>=402.3)D.q=[GS.t-D.t0,D.v*3.6];if(D.v<.3&&!thr)D.t0=null;
   return D}
 function gEngBrake(b,N){const e=b.diesel?GDIESEL[b.base]:GENG[b.base];return gDisp(b)*(8+28*N/gRedline(b))*(b.diesel?1.3:1)}
 function gbShift(dir){const b=GS.b,G=GBOX[b.gbox]||GBOX.manual,D=GS.dr;if(!D||G.cont||D.shiftT>0)return;const g=D.gear+dir;if(g<1||g>G.n)return;
@@ -10330,7 +10335,9 @@ function gNum(v,d=0){return fmt(v,d)}
 function gKick(){return GS.spec&&GSPEC[GS.spec]?Math.min(300,gsxIdle(GS.spec)*.6):300}
 function gT(k){return t('gar.'+k)}
 // the factory build of a layout: every time you pick an engine it starts from here, so nothing hidden carries over
-function gStock(base,diesel){const b={...GDEF(),base,diesel:!!(diesel&&GDIESEL[base])};if(b.diesel)b.ind='vgt';if(base==='W16')Object.assign(b,{ind:'twin',boost:1.2,ic:'race'});if(base==='W12')Object.assign(b,{ind:'twin',boost:.8});return b}
+// a realistic car around each engine: a single-cylinder city car is light, a W16 hypercar weighs about 2 tonnes
+const GMASS={I1:850,I3:1100,I4:1300,I5:1450,I6:1550,V6:1600,V8:1750,V8F:1500,V10:1600,V12:1800,B4:1350,B6:1450,VR6:1500,W12:2100,W16:1995};
+function gStock(base,diesel){const b={...GDEF(),base,diesel:!!(diesel&&GDIESEL[base]),mass:(GMASS[base]||1450)+(diesel&&GDIESEL[base]?80:0)};if(b.diesel)b.ind='vgt';if(base==='W16')Object.assign(b,{ind:'twin',boost:1.2,ic:'race'});if(base==='W12')Object.assign(b,{ind:'twin',boost:.8});return b}
 function gFresh(){GS.mys=null;GS.gg={};{const bl=$('#gBlown');if(bl&&bl.classList.contains('lock')){bl.hidden=true;bl.classList.remove('lock')}}if(typeof GUI!=='undefined'){GUI.q='';GUI.open={};const q=$('#gQ');if(q)q.value='';const x=$('#gQx');if(x)x.hidden=true}const pr=$('#gPre');if(pr)pr.value='stock';GS.dr=null;GS.drive=false;GS.eng='off';GS.rpm=0;GS.boostNow=0;GS.tqc=null;GS.bov=0;
   const d=$('#gDrive');if(d)d.setAttribute('aria-pressed','false');const g=$('#garage');if(g)g.classList.remove('driving');const st=$('#gStart');if(st){st.setAttribute('aria-pressed','false');const sp=$('span',st);if(sp)sp.textContent=gT('start')}}
 function openGarage(id,opt){id=id||null;const fresh=$('#garage').hidden||id!==(GS.openId||null);GS.openId=id;
@@ -10547,7 +10554,7 @@ function gBind(){
     if(tg.id==='gDyno'){if(GS.blown)return;GS.eng='run';$('#gStart').setAttribute('aria-pressed','true');GS.dyno={t:0,k:-1};GS.nosOn=$('#gDynoNos').checked;return}
     if(tg.id==='gRepair'){GS.blown=null;$('#gBlown').hidden=true;return}
 
-    if(tg.id==='gReset'){GS.b={...GDEF(),base:b.base,diesel:b.diesel};if(b.diesel)GS.b.ind='vgt';gApply();gPane();return}
+    if(tg.id==='gReset'){GS.b=gStock(b.base,b.diesel);gApply();gPane();return}
     if(tg.id==='gSave'){if(GS.spec){teachToast(gT('saveCar'));return}try{localStorage.setItem('el-garage',JSON.stringify(GS.b))}catch(_){}gSavedOpt();teachToast(gT('saved'));return}
     if(tg.id==='gShare'){const url=location.href.split('#')[0]+'#garage='+gShareCode();try{navigator.clipboard.writeText(url).then(()=>teachToast(gT('copied')),()=>{fallbackCopy(url);teachToast(gT('copied'))})}catch(_){fallbackCopy(url);teachToast(gT('copied'))}return}
   });
@@ -10555,11 +10562,13 @@ function gBind(){
     const ks=ev.target.dataset&&ev.target.dataset.gsr;if(ks&&GS.spec){const q=E[GS.spec].params.find(x=>x.k===ks);gsxS(GS.spec).p[ks]=+ev.target.value;const o=$('#gspo_'+ks);if(o)o.innerHTML=gsxFmt(q,+ev.target.value);gApply();if(!GS.rqU){GS.rqU=1;requestAnimationFrame(()=>{GS.rqU=0;gsxResultsUI(GS.spec)})}}
     if(ev.target.id==='gSlow'){const v=+ev.target.value/100;GS.slow=Math.pow(10,-2.4+v*2.2)}});
   document.addEventListener('change',ev=>{const k=ev.target.dataset&&ev.target.dataset.gt;if(k){GS.b[k]=ev.target.checked;GS.userChg=true;gApply()}if(ev.target.dataset&&ev.target.dataset.gsxauto!==undefined){GS.b.autoShift=ev.target.checked}if(ev.target.id==='gPre'&&ev.target.value==='__saved'){let o=null;try{o=JSON.parse(localStorage.getItem('el-garage')||'null')}catch(_){}if(o&&GBASE[o.base]){GS.spec=null;GS.b={...GDEF(),...o};GS.built='';gFresh();ev.target.value='__saved';gApply();gPane()}return}
-    if(ev.target.id==='gPre'){const p=GPRE[ev.target.value]||{};const keep={base:GS.b.base,diesel:GS.b.diesel,color:GS.b.color,cover:GS.b.cover};GS.b={...GDEF(),...p,...keep};if(GS.b.diesel){GS.b.fuel='95';if(GS.b.ind==='na')GS.b.ind='vgt'}gApply();gPane()}});
+    if(ev.target.id==='gPre'){const p=GPRE[ev.target.value]||{};const keep={base:GS.b.base,diesel:GS.b.diesel,color:GS.b.color,cover:GS.b.cover,mass:GS.b.mass};GS.b={...gStock(GS.b.base,GS.b.diesel),...p,...keep};if(GS.b.diesel){GS.b.fuel='95';if(GS.b.ind==='na')GS.b.ind='vgt'}gApply();gPane()}});
   const hold=(id,k)=>{const el=$('#'+id);if(!el)return;const on=e=>{e.preventDefault();if(k!=='nos'&&k!=='brake'&&GS.eng!=='run'&&!GS.blown&&gCanStart()){GS.eng='run';GS.rpm=Math.max(GS.rpm,gKick());$('#gStart').setAttribute('aria-pressed','true');$('span',$('#gStart')).textContent=gT('stop')}GS.held[k]=true;if(k==='nos')GS.nosOn=true;if(k==='launch')GS.held.gas=false;el.classList.add('on')},off=()=>{GS.held[k]=false;if(k==='nos')GS.nosOn=false;el.classList.remove('on')};
     el.addEventListener('pointerdown',on);el.addEventListener('pointerup',off);el.addEventListener('pointerleave',off);el.addEventListener('pointercancel',off);el.addEventListener('contextmenu',e=>e.preventDefault())};
   document.addEventListener('keydown',ev=>{if($('#garage').hidden||ev.target.matches('input,select,textarea'))return;if(ev.code==='Space'||ev.key==='w'||ev.key==='ArrowUp'){ev.preventDefault();if(GS.eng!=='run'&&!GS.blown&&gCanStart()){GS.eng='run';GS.rpm=Math.max(GS.rpm,gKick());$('#gStart').setAttribute('aria-pressed','true');$('span',$('#gStart')).textContent=gT('stop')}GS.held.gas=true}if(ev.key==='l')GS.held.launch=true;if(ev.key==='n')GS.nosOn=true;if(GS.drive){if(ev.key==='s'||ev.key==='ArrowDown'){ev.preventDefault();GS.held.brake=true}if(!ev.repeat&&(ev.key==='e'||ev.key==='ArrowRight'))(GS.spec?gsxShift:gbShift)(1);if(!ev.repeat&&(ev.key==='q'||ev.key==='ArrowLeft'))(GS.spec?gsxShift:gbShift)(-1)}});
   document.addEventListener('keyup',ev=>{if(ev.code==='Space'||ev.key==='w'||ev.key==='ArrowUp')GS.held.gas=false;if(ev.key==='l')GS.held.launch=false;if(ev.key==='n')GS.nosOn=false;if(ev.key==='s'||ev.key==='ArrowDown')GS.held.brake=false});
+  // let go of everything when the window loses focus (switching tabs while holding GAS must not leave it stuck on)
+  const relAll=()=>{for(const k in GS.held)GS.held[k]=false;GS.nosOn=false;$$('#garage .g3btn.on').forEach(x=>x.classList.remove('on'))};window.addEventListener('blur',relAll);document.addEventListener('visibilitychange',()=>{if(document.hidden)relAll()});
   GS.bindHold=()=>{hold('gGas','gas');hold('gLaunch','launch');hold('gNos','nos');hold('gBrake','brake')};
 }
 function gPaneValue(k){const b=GS.b,o=$('#go_'+k);if(!o)return;if(k==='fdK'||k==='mass'){if(GS.tab==='gear')gPane();return}const map={boreK:()=>`${fmt(gEng(b).bore,1)} mm`,strokeK:()=>`${fmt(gEng(b).stroke,1)} mm`,cr:()=>`${fmt(gEng(b).cr,1)} : 1`,limiter:()=>b.limiter?`${fmt(b.limiter)} rpm`:`${gT('auto')} (${fmt(gRedline({...b,limiter:0}))})`,
@@ -11158,15 +11167,16 @@ function gsxShift(dir){const id=GS.spec,D=GS.dr;if(!id||!D)return;const d=GSX[id
 function gsxAt(id,N,th){const e=E[id],red=gsxRed(id),bq=Math.round((GS.boostNow||0)*10);const ck=Math.round(N/(red>1000?40:1))+'|'+(th?1:0)+'|'+bq;GS.tqc=GS.tqc||new Map();let R=GS.tqc.get(ck);
   if(!R){const save=GS.rpm;GS.rpm=Math.max(N,1);const p=gSpecP(e,th);GS.rpm=save;try{R=gsxResults(id,e.compute(p,false)||{},N/red,bq/10)}catch(_){R={}}GS.tqc.set(ck,R);if(GS.tqc.size>900)GS.tqc.clear()}return R}
 function gsxDrive(dt,thr,run){const id=GS.spec,sx=GSX[id],d=sx.drive,s=gsxSum(id),veh={...d,...s.veh},g=9.81;
-  const D=GS.dr||(GS.dr={v:0,alt:0,gear:1,shiftT:0,t0:null,t100:null,q:null,dist:0,top:0,mass:null,air:false,from:1});
+  const D=GS.dr||(GS.dr={v:0,alt:0,gear:1,shiftT:0,t0:null,t100:null,q:null,dist:0,top:0,mass:null,air:false,from:1});const v0=D.v;
   const red=gsxRed(id),idle=gsxIdle(id),brake=GS.held.brake?1:0;
   if(d.type==='car'||d.type==='moto'){const bk=gsxBox(id),box=d.type==='car'?(GBOX[bk]||GBOX.manual):(GSX_BOX[bk]||GSX_BOX.moto),M=(box.mass||veh.mass)+s.mass,wr=box.wr||veh.wr,cda=box.cda||veh.cda,fd=box.fd*s.fdk,wN=D.v/wr*60/(2*Math.PI);let F=0;
     if(box.cont){const Nt=thr?red*.82:idle*1.4;GS.cvtR=Math.max(box.cont[1],Math.min(box.cont[0],wN>5?Nt/(wN*fd):box.cont[0]))}
     const n=box.cont?1:box.r.length,ratio=box.cont?GS.cvtR:box.r[D.gear-1],Nlock=wN*ratio*fd,auto=box.auto||GS.b.autoShift!==false;
     if(!box.cont&&n>1&&D.shiftT<=0&&run&&auto&&GS.t-(D.man||-9)>1.5){if(Nlock>(thr?red*.96:idle*2.6)&&D.gear<n){D.from=D.gear;D.gear++;D.shiftT=box.shift||.3}else if(Nlock<(thr?red*.42:idle*1.25)&&D.gear>1&&D.v>.5){D.from=D.gear;D.gear--;D.shiftT=box.shift||.3}}
+    if(!box.cont&&auto&&D.v<.5&&D.gear>1&&D.shiftT<=0){D.from=D.gear;D.gear=1}
     if(D.shiftT>0){D.shiftT-=dt;const Nn=wN*box.r[D.gear-1]*fd;GS.rpm+=(Math.max(idle,Nn)-GS.rpm)*Math.min(1,dt*12)}
     else if(run){const launch=Math.min(red*.62,Math.max(idle*2.2,red*.35));
-      if(Nlock<launch&&D.gear<=1&&thr){GS.rpm+=(launch-GS.rpm)*Math.min(1,dt*8)}else if(Nlock<idle&&!thr){GS.rpm+=(idle-GS.rpm)*Math.min(1,dt*6)}else GS.rpm=Math.max(idle*.9,Nlock);
+      if(thr&&(Nlock<idle*1.1||GS.rpm>Nlock+40&&((D.eng??1)<1||Nlock<Math.min(launch,idle*2)*.97))){D.eng=Math.min(1,(D.eng||0)+dt/(D.gear<=1?1.1:1.6));const Nl=D.gear<=1?launch:Math.max(idle*1.6,Math.min(launch,Nlock+idle)),Nf=Math.max(Nlock,Math.min(Nl,idle*2));GS.rpm+=(Math.max(Nlock,Nl-(Nl-Nf)*D.eng)-GS.rpm)*Math.min(1,dt*8)}else if(Nlock<idle&&!thr){D.eng=0;GS.rpm+=(idle-GS.rpm)*Math.min(1,dt*6)}else{D.eng=1;GS.rpm=Math.max(idle*.9,Nlock)}
       const R=gsxAt(id,Math.min(GS.rpm,red),thr),Tq=R.torque??R.T??0;let tq=thr?Tq:(Nlock>idle*1.1?-Math.max(8,Tq*.1):0);if(GS.rpm>=red&&thr){tq=0;GS.rpm=red-Math.random()*red*.03}
       F=tq*ratio*fd*(box.eff||.92)/wr}
     else GS.rpm=Math.max(0,GS.rpm-dt*1500);
@@ -11190,7 +11200,7 @@ function gsxDrive(dt,thr,run){const id=GS.spec,sx=GSX[id],d=sx.drive,s=gsxSum(id
     if(run&&D.mass>dry+1&&GS.rpm>2){const e=E[id],save=GS.rpm,p=gSpecP(e,1);p.alt=Math.min(100,D.alt/1000);let R2={};try{R2=gsxResults(id,e.compute(p,false)||{},1,1)}catch(_){}GS.rpm=save;T=(R2.F||0)*ne;md=(R2.md||0)*ne;D.mass=Math.max(dry,D.mass-md*dt);D.Isp=R2.Isp}
     const rho=1.225*Math.exp(-D.alt/8500),Dr=.5*rho*D.v*Math.abs(D.v)*.35*Math.PI*Math.pow(1.85*Math.cbrt(M0/28000),2)/4*4,a=(T-Dr)/D.mass-g*Math.pow(6371/(6371+D.alt/1000),2);
     if(D.alt<=0&&a<0&&D.v<=0){D.v=0;D.alt=0}else{D.v+=a*dt;D.alt=Math.max(0,D.alt+D.v*dt)}if(D.alt<=0&&D.v<0)D.v=0;D.apo=Math.max(D.apo||0,D.alt);D.burn=D.mass<=dry+1}
-  D.dist+=Math.max(0,D.v)*dt;D.top=Math.max(D.top,D.v*3.6);if(D.v<.3&&thr&&!D.t0){D.t0=GS.t;D.dist=0}if(D.t0&&!D.t100&&D.v*3.6>=100)D.t100=GS.t-D.t0;if(D.t0&&!D.q&&D.dist>=402.3)D.q=[GS.t-D.t0,D.v*3.6];
+  D.dist+=Math.max(0,D.v)*dt;D.top=Math.max(D.top,D.v*3.6);if(v0<.3&&!thr&&!D.air)D.t0=null;if(v0<.3&&thr&&D.t0==null){D.t0=GS.t-dt;D.dist=0;D.t100=null;D.q=null}if(D.t0!=null&&!D.t100&&D.v*3.6>=100)D.t100=GS.t-D.t0;if(D.t0!=null&&!D.q&&D.dist>=402.3)D.q=[GS.t-D.t0,D.v*3.6];
   return D}
 // readouts over the 3D view while driving (labels change with the vehicle)
 const GSXH={alt:L3('alt m','الارتفاع م','ऊँचाई m'),altk:L3('alt km','الارتفاع كم','ऊँचाई km'),state:L3('state','الحالة','स्थिति'),to:L3('takeoff','الإقلاع','टेकऑफ़'),mass:L3('mass t','الكتلة طن','द्रव्यमान t'),apo:L3('apogee km','الأوج كم','शिखर km'),air:L3('AIRBORNE','في الجو','हवा में'),roll:L3('ROLL','على المدرج','रनवे पर'),meco:L3('burn-out','انتهى الوقود','बर्न-आउट'),top:L3('top km/h','الأقصى كم/س','टॉप km/h')};
