@@ -912,6 +912,30 @@ details.gsec.chg{border-color:rgba(255,123,50,.3)}details.gsec.chg .gsec-dot{bac
 .gtog.has-pic{grid-template-columns:auto minmax(0,1fr) 76px}.gtog.has-pic .gpic{grid-column:3;grid-row:1/span 2;margin:0;width:76px;align-self:center}
 .gmys-o,.gobd{position:relative}
 .gpic-one{margin:0 0 8px}.gpic-one .gpic{aspect-ratio:16/6;max-height:120px;object-fit:cover;margin:0}
+/* ===== easy to use: home doors, simple garage, first-visit guide ===== */
+.doors{margin-top:6px;margin-bottom:8px}.doors-h{font:700 13px var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:0 0 10px}
+.doors-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.door{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:18px 18px 16px;border-radius:20px;border:1px solid var(--line2);background:linear-gradient(180deg,#141a22,#0d1117);color:var(--ink);text-decoration:none;text-align:start;cursor:pointer;font:inherit;transition:.18s;min-height:150px}
+.door:hover{border-color:var(--fire);transform:translateY(-2px);box-shadow:0 14px 34px -18px rgba(255,123,50,.6)}
+.door i{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:rgba(255,123,50,.14);color:#ff9a5c}.door i svg{width:26px;height:26px}
+.door b{font:800 19px/1.15 var(--f-disp);letter-spacing:.02em}.door span{font-size:13.5px;color:var(--mute);line-height:1.45}
+.door em{position:absolute;inset-inline-end:16px;top:18px;font-style:normal;color:var(--fire);font-weight:700;font-size:18px}[dir=rtl] .door em{transform:scaleX(-1)}
+.door.d-learn i{background:rgba(88,200,240,.14);color:#6fd0f5}.door.d-gar i{background:rgba(61,220,151,.13);color:#5fe3a8}.door.d-teach i{background:rgba(185,140,255,.15);color:#c4a6ff}
+@media (max-width:900px){.doors-g{grid-template-columns:repeat(2,minmax(0,1fr))}.door{min-height:0}}
+@media (max-width:420px){.door{padding:14px}.door b{font-size:17px}.door span{font-size:12.5px}}
+.gmode{display:flex;margin:8px 0 0;width:100%}.gmode button{flex:1}
+.gadv{display:none!important}
+.gmore{margin:14px 0 4px;padding:12px;border-radius:14px;border:1px dashed #3a4656;text-align:center}.gmore p{margin:0 0 8px;font-size:13px;color:var(--mute)}
+.gtip-card{position:absolute;z-index:7;top:50%;left:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 28px));padding:18px 20px;border-radius:18px;background:rgba(10,13,18,.94);backdrop-filter:blur(14px);border:1px solid rgba(255,123,50,.45);box-shadow:0 24px 60px rgba(0,0,0,.6);animation:dlgIn .25s}
+.gtip-card b{display:block;font:800 20px var(--f-disp);margin-bottom:8px}.gtip-card ol{margin:0 0 14px;padding-inline-start:20px;display:grid;gap:7px;font-size:14px;line-height:1.45;color:#d4dbe5}.gtip-card li::marker{color:var(--fire);font-weight:700}
+.ghelp{font-weight:700;color:#ffb38a!important}
+/* compact garage header: the 3D view starts higher */
+.gar-head{padding-top:14px}.gar-head h1{font-size:clamp(30px,4vw,44px);margin:6px 0 4px}.gar-head p{font-size:14.5px}
+.gbase{padding:7px 11px;min-width:0;border-radius:12px}.gbase b{font-size:16px}.gbase small{font-size:10.5px}
+.gar-grp{margin-top:10px!important}.gar-bases{padding-top:8px;gap:6px}
+@media (max-width:760px){.gtip-card{top:auto;bottom:12px;transform:translateX(-50%)}}
+.gmode button{min-height:34px;font-size:13px}.gmode button.on{background:rgba(255,123,50,.16)!important;color:#ffc09a!important;box-shadow:inset 0 0 0 1px rgba(255,123,50,.55)}
+#garage .gar-head .chip.cat{display:none}
 
 </style>
 </head>
@@ -11844,6 +11868,57 @@ function guiRefresh(el){const det=el&&el.closest('details.gsec');if(det){const c
   clearTimeout(GUI.rt);GUI.rt=setTimeout(guiMods,120)}
 document.addEventListener('input',e=>{const d=e.target.dataset;if(d&&(d.gs||d.gsr)&&e.target.closest('#gPane'))setTimeout(()=>guiRefresh(e.target),0)});
 document.addEventListener('change',e=>{const d=e.target.dataset;if(d&&d.gt&&!d.gsxf&&e.target.closest('#gPane'))setTimeout(()=>guiRefresh(e.target),0)});
+
+/* EngineLab — easy to use: four clear doors on the home page (Lab, Learn, Garage, Teacher), a Simple / All parts switch
+   in the garage (the simple view keeps the parts beginners need; everything else is one tap away), a short guide the first
+   time you open the garage, and a "How to use" button to see it again. */
+(function(){
+const S={door:{lab:['Do the lab','نفّذ التجربة','लैब करें'],labD:['The CT 150 petrol-engine experiment, step by step, with your table, graphs and report.','تجربة محرك البنزين CT 150 خطوة بخطوة مع الجدول والرسوم والتقرير.','CT 150 पेट्रोल-इंजन प्रयोग, कदम-दर-कदम, तालिका, ग्राफ़ व रिपोर्ट सहित।'],
+  learn:['Learn the engines','تعلّم المحركات','इंजन सीखें'],learnD:['26 engines in 3D: watch every part move and hear it run.','26 محركاً ثلاثي الأبعاد: شاهد كل جزء يتحرك واسمعه يعمل.','3D में 26 इंजन: हर पुर्ज़ा चलते देखें और सुनें।'],
+  gar:['Build in the garage','ابنِ في الكراج','गैराज में बनाएँ'],garD:['Add turbos and parts, run the dyno, find faults and drive it.','أضف توربو وقطعاً وشغّل الداينو واكتشف الأعطال وقُدها.','टर्बो व पार्ट्स जोड़ें, डायनो चलाएँ, खराबियाँ खोजें और चलाएँ।'],
+  teach:['Teacher','المعلّم','शिक्षक'],teachD:['Set the class experiment and see the answers.','جهّز تجربة الصف واطّلع على الإجابات.','कक्षा का प्रयोग सेट करें और उत्तर देखें।'],title:['What do you want to do?','ماذا تريد أن تفعل؟','आप क्या करना चाहते हैं?']},
+ gm:{simple:['Simple','بسيط','सरल'],adv:['All parts','كل القطع','सभी पार्ट्स'],more:['Show all parts (+{n})','أظهر كل القطع (+{n})','सभी पार्ट्स दिखाएँ (+{n})'],moreD:['The simple view shows the main parts. Switch to All parts for every option.','العرض البسيط يُظهر القطع الأساسية. انتقل إلى «كل القطع» لكل الخيارات.','सरल व्यू मुख्य पार्ट्स दिखाता है। हर विकल्प के लिए "सभी पार्ट्स" चुनें।']},
+ tip:{t:['Welcome to the garage','أهلاً بك في الكراج','गैराज में स्वागत है'],s1:['Pick an engine from the buttons above the 3D view.','اختر محركاً من الأزرار فوق العرض ثلاثي الأبعاد.','3D व्यू के ऊपर के बटनों से इंजन चुनें।'],s2:['Press Start, then hold GAS (or the space bar) to rev it.','اضغط تشغيل ثم اضغط البنزين (أو المسافة) لرفع الدوران.','स्टार्ट दबाएँ, फिर GAS (या स्पेस बार) दबाए रखें।'],
+  s3:['Add parts in the panel: each card shows a picture of the part. The new part glows in the 3D view.','أضف القطع من اللوحة: كل بطاقة تُظهر صورة القطعة، والقطعة الجديدة تتوهج في العرض.','पैनल से पार्ट्स जोड़ें: हर कार्ड पर पार्ट की तस्वीर है, नया पार्ट 3D में चमकता है।'],s4:['Run the dyno to see the power, or press Drive and race 0–100.','شغّل الداينو لرؤية القوة، أو اضغط قيادة وتسابق من 0 إلى 100.','पावर देखने के लिए डायनो चलाएँ, या ड्राइव दबाकर 0–100 दौड़ें।'],
+  ok:['Got it','فهمت','समझ गया'],help:['How to use','طريقة الاستخدام','कैसे इस्तेमाल करें']}};
+const L={en:0,ar:1,hi:2};for(const l in L){const I=I18N[l];if(!I)continue;const i=L[l];for(const sec in S){I[sec]=I[sec]||{};for(const k in S[sec])I[sec][k]=S[sec][k][i]}}
+})();
+/* ---------- home doors ---------- */
+(function(){const how=document.querySelector('#home .how');if(!how||document.querySelector('.doors'))return;
+  const ic={lab:'<path d="M9 3h6M10 3v6L4 19a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3L14 9V3"/><path d="M7 15h10"/>',learn:'<path d="M3 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3zM21 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"/>',gar:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3z"/>',teach:'<circle cx="12" cy="7" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'};
+  const d=document.createElement('section');d.className='doors wrap';d.setAttribute('aria-labelledby','h-doors');
+  d.innerHTML=`<h2 id="h-doors" class="doors-h" data-i="door.title"></h2><div class="doors-g">${[['lab','a','#lab'],['learn','b'],['gar','a','#garage'],['teach','b']].map(([k,tag,href])=>`<${tag==='a'?`a href="${href}"`:'button type="button"'} class="door d-${k}" data-door="${k}"><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ic[k]}</svg></i><b data-i="door.${k}"></b><span data-i="door.${k}D"></span><em aria-hidden="true">→</em></${tag==='a'?'a':'button'}>`).join('')}</div>`;
+  how.parentNode.insertBefore(d,how);
+  d.addEventListener('click',e=>{const b=e.target.closest('[data-door]');if(!b)return;if(b.dataset.door==='learn'){const c=document.getElementById('btnChoose');if(c)c.click();else document.getElementById('engines').scrollIntoView({behavior:'smooth'})}if(b.dataset.door==='teach'){const u=document.getElementById('btnUnlock');if(u)u.click()}})})();
+
+/* ---------- garage: Simple / All parts ---------- */
+const GMODE={k:'el-gmode',get(){try{return localStorage.getItem(this.k)||'simple'}catch(_){return'simple'}},set(v){try{localStorage.setItem(this.k,v)}catch(_){}}};
+// the parts a beginner needs; everything else lives under "All parts"
+const G_SIMPLE=new Set(['boreK','strokeK','cr','limiter','ind','tsize','boost','sc','bov','ic','intake','exh','exhSys','cam','map','fuel','lim','pops','pistons','rods','crank','gbox','fdK','mass','autoShift','nos','shot','v8crank',
+  'fAir','fVac','fMaf','fInj','fPlugs','fRings','fChain','fGasket','fWg']);
+function guiSimple(){const host=$('#gPane');if(!host)return;const simple=GMODE.get()==='simple'&&!GUI.q;const panel=$('.gar-panel');if(panel)panel.classList.toggle('gsimple',simple);
+  let hidden=0;const seen=new Set();
+  host.querySelectorAll('[data-gk],[data-gs],[data-gt]').forEach(el=>{const k=el.dataset.gk||el.dataset.gs||el.dataset.gt,box=el.closest('.gcards,.gsl,.gtog');if(!box)return;const hide=simple&&!G_SIMPLE.has(k);box.classList.toggle('gadv',hide);
+    const pv=box.previousElementSibling;if(pv&&pv.classList.contains('gpic-one'))pv.classList.toggle('gadv',hide);if(hide&&!seen.has(k)){seen.add(k);hidden++}});
+  host.querySelectorAll('details.gsec').forEach(det=>{const ctl=det.querySelectorAll('.gcards,.gsl,.gtog');if(!ctl.length){det.classList.remove('gadv');return}det.classList.toggle('gadv',simple&&[...ctl].every(c=>c.classList.contains('gadv')))});
+  let more=host.querySelector('.gmore');if(simple&&hidden&&!GS.spec){if(!more){more=document.createElement('div');more.className='gmore';host.appendChild(more)}more.innerHTML=`<p>${esc(t('gm.moreD'))}</p><button type="button" class="btn sm ghost" data-gmode="adv">${esc(t('gm.more').replace('{n}',hidden))}</button>`}else if(more)more.remove();
+  // the special engines: the design-number tab is for the advanced view
+  if(GS.spec){const tb=host.querySelector('[data-gstab="tune"]');if(tb)tb.hidden=simple}
+  const sw=$('#gMode');if(sw)sw.querySelectorAll('[data-gmode]').forEach(b=>{const on=(b.dataset.gmode==='simple')===(GMODE.get()==='simple');b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)})}
+function guiModeSwitch(){const tl=$('#gTools');if(!tl||$('#gMode'))return;const m=document.createElement('div');m.id='gMode';m.className='gmode seg sm';m.setAttribute('role','group');
+  m.innerHTML=`<button type="button" data-gmode="simple"></button><button type="button" data-gmode="adv"></button>`;tl.insertBefore(m,tl.querySelector('#gMods'))}
+function guiModeText(){const m=$('#gMode');if(!m)return;m.querySelector('[data-gmode="simple"]').textContent=t('gm.simple');m.querySelector('[data-gmode="adv"]').textContent=t('gm.adv')}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-gmode]');if(!b||!b.closest('#garage'))return;GMODE.set(b.dataset.gmode==='adv'?'adv':'simple');if(GS.spec&&GMODE.get()==='simple'&&GS.stab==='tune')GS.stab='parts';gPane();if(b.closest('.gmore'))$('#gPane').scrollTop=0});
+{const P=gPane;gPane=function(){if(GS.spec&&GMODE.get()==='simple'&&GS.stab==='tune'&&!GUI.q)GS.stab='parts';P();if($('#garage').hidden)return;guiModeSwitch();guiModeText();guiSimple()}}
+// jumping to a part from the "Changed" strip opens the full view if that part is an advanced one
+{const G=guiGo;guiGo=function(k,tab){if(GMODE.get()==='simple'&&(!G_SIMPLE.has(k)||GS.spec&&tab==='tune'))GMODE.set('adv');G(k,tab)}}
+
+/* ---------- first visit: a short guide (and a "How to use" button to see it again) ---------- */
+function gTipShow(){const w=$('#g3wrap');if(!w)return;let c=w.querySelector('.gtip-card');if(c)c.remove();c=document.createElement('div');c.className='gtip-card';c.setAttribute('role','dialog');c.setAttribute('aria-label',t('tip.t'));
+  c.innerHTML=`<b>${esc(t('tip.t'))}</b><ol>${['s1','s2','s3','s4'].map(k=>`<li>${esc(t('tip.'+k))}</li>`).join('')}</ol><button type="button" class="btn sm" id="gTipOk">${esc(t('tip.ok'))}</button>`;w.appendChild(c);
+  c.querySelector('#gTipOk').addEventListener('click',()=>{c.remove();try{localStorage.setItem('el-tip-gar','1')}catch(_){}})}
+function gHelpBtn(){const pr=$('.gar-presets');if(!pr)return;let h=$('#gHelp');if(!h){h=document.createElement('button');h.type='button';h.id='gHelp';h.className='txtbtn ghelp';pr.insertBefore(h,pr.firstChild);h.addEventListener('click',gTipShow)}h.textContent='? '+t('tip.help')}
+{const O=openGarage;openGarage=function(id,opt){O(id,opt);gHelpBtn();let seen=false;try{seen=!!localStorage.getItem('el-tip-gar')}catch(_){}if(!seen&&!$('#g3wrap .gtip-card'))setTimeout(gTipShow,400)}}
 
 /* EngineLab — the shared 3D view used everywhere (home hero, engine pages, lab rigs, garage).
    One WebGL renderer is moved between hosts; the model is rebuilt only when the engine changes. */
