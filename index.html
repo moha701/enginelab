@@ -864,6 +864,42 @@ details.gsec.chg{border-color:rgba(255,123,50,.3)}details.gsec.chg .gsec-dot{bac
 .calc-link{margin:10px 0 0;font-size:.84rem}.calc-link a,.hero-calc a,.foot-calc a{color:var(--air);text-decoration:none}.calc-link a:hover,.hero-calc a:hover{text-decoration:underline}
 .hero-calc{margin:12px 0 0;font-size:.92rem}.gcalc{font-size:.8rem;margin-inline-end:auto}
 @media print{.calc-nav,.calc-q,.calc-back{display:none}}
+/* ===== faults & gauges ===== */
+.g3gauges{position:absolute;top:140px;inset-inline-start:14px;display:grid;grid-template-columns:repeat(2,108px);gap:6px;pointer-events:none;z-index:2}
+.g3gauges[hidden]{display:none}
+.gg{position:relative;padding:6px 9px 8px;border-radius:11px;background:rgba(8,11,15,.66);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);overflow:hidden;min-width:0}
+.gg small{display:block;font-size:10px;color:#8f9aab;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gg b{display:block;font:700 15.5px/1.2 var(--f-mono);color:#e9eef5;white-space:nowrap}
+.gg em{display:block;font-style:normal;font-size:9.5px;color:#7f8a9b;font-family:var(--f-mono);white-space:nowrap;min-height:11px}
+.gg i{position:absolute;inset-inline:0;bottom:0;height:3px;background:rgba(255,255,255,.06)}.gg i u{display:block;height:100%;width:0;background:#3ddc97;transition:width .25s}
+[dir=rtl] .gg i u{margin-inline-start:0}
+.gg.s-warn{border-color:rgba(255,192,77,.55)}.gg.s-warn b{color:#ffd27a}.gg.s-warn i u{background:#ffc04d}
+.gg.s-bad{border-color:rgba(255,77,77,.7);animation:ggPulse 1s infinite}.gg.s-bad b{color:#ff8a8a}.gg.s-bad i u{background:#ff4d4d}
+@keyframes ggPulse{50%{box-shadow:0 0 0 2px rgba(255,77,77,.35)}}
+@media (prefers-reduced-motion:reduce){.gg.s-bad{animation:none}}
+.g3cel{font:700 11.5px/1.3 var(--f-mono)!important;color:#ffb020!important;letter-spacing:.03em;text-shadow:0 0 10px rgba(255,160,0,.45)}
+.g3cel[hidden]{display:none}
+.gfw{color:#ffd9a8!important}.gfw b{color:#ffc07a}
+.g3blown.lock{background:radial-gradient(circle,rgba(120,80,10,.55),rgba(5,6,8,.88))}.g3blown.lock b{color:#ffb020;text-shadow:0 0 30px rgba(255,170,0,.5)}.g3blown.lock p{color:#ffe7c2}
+.gmys{margin:0 0 12px;padding:12px 13px;border-radius:14px;border:1px dashed #3a4656;background:rgba(255,255,255,.02)}
+.gmys>b{display:block;font-size:14.5px;margin-bottom:4px}.gmys p{margin:0 0 10px;font-size:13px;color:var(--mute);line-height:1.5}
+.gmys.on{border-style:solid;border-color:rgba(255,123,50,.5);background:linear-gradient(180deg,rgba(255,123,50,.1),rgba(255,123,50,.02))}
+.gmys.done{border-style:solid;border-color:rgba(61,220,151,.5);background:linear-gradient(180deg,rgba(61,220,151,.1),rgba(61,220,151,.02))}
+.gmys-h{font-size:12.5px!important}
+.gmys-l{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.gmys-o{padding:9px 10px;border-radius:11px;border:1px solid #2a3442;background:#121821;color:var(--ink);font-weight:600;font-size:13px;text-align:start;cursor:pointer;line-height:1.3}
+.gmys-o:hover{border-color:#ff7b32}.gmys-o.no{opacity:.45;cursor:default;text-decoration:line-through}
+.gmys-f{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;flex-wrap:wrap}.gmys-f small{color:var(--mute)}
+.gobd{margin:0 0 6px;padding:10px 12px;border-radius:12px;background:#0b0f14;border:1px solid #1d242e;font-size:13px}
+.gobd>b{display:block;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:#8f9aab;margin-bottom:4px}
+.gobd p{margin:0;color:var(--mute)}.gobd ul{margin:0;padding:0;list-style:none;display:grid;gap:4px}.gobd li{color:#ffd9a8}.gobd code{font-family:var(--f-mono);color:#ffb020;font-weight:700;margin-inline-end:6px}
+@media (max-width:1100px) and (min-width:761px){.g3gauges{grid-template-columns:repeat(2,100px)}}
+@media (max-width:760px){
+  .gar-view{grid-template-areas:'view view' 'live live' 'gg gg' 'tach ctl' 'bar bar'}
+  .g3gauges{grid-area:gg;position:static;grid-template-columns:repeat(4,minmax(0,1fr));padding:0 8px;gap:5px}
+  .gg{padding:5px 6px 7px}.gg b{font-size:13px}.gg small{font-size:9px}.gg em{font-size:8.5px}
+  .gmys-l{grid-template-columns:1fr}
+}
 
 </style>
 </head>
@@ -8730,6 +8766,17 @@ function calcData(){
     {n:K3('Friction, torque and power','الاحتكاك والعزم والقدرة','घर्षण, टॉर्क और शक्ति'),eq:'FMEP = 0.6 + 0.09[N|1000] + 0.025([N|1000])^2 (+ parts)      T = [BMEP · V_d|4π]      P = T · [2πN|60] − P_{sc}',v:['FMEP','BMEP','T','P'],x:GM?()=>`5000 rpm: ${f(GM.m.torque,0)} N·m, ${f(GM.m.hp,0)} hp`:null},
     {n:K3('Supercharger drive power','قدرة تشغيل الشاحن','सुपरचार्जर चलाने की शक्ति'),eq:'P_{sc} = [ṁ · c_p · (T_2 − 298)|0.92]',v:['c_p']},
     {n:K3('Engine health','صحة المحرك','इंजन स्वास्थ्य'),eq:'risk = max([p_{max}|p_{limit}], [N|N_{limit}], [boost|boost_{limit}], heat, knock, lean)',v:[],d:K3('p_max ≈ 4.6·IMEP + 22 bar (petrol). Each limit grows with stronger parts. Above 1 = damage.','p_max ≈ 4.6·IMEP + 22 bar (بنزين). كل حد يزيد بالقطع الأقوى. فوق 1 = تلف.','p_max ≈ 4.6·IMEP + 22 bar (पेट्रोल)। मज़बूत पार्ट से हर सीमा बढ़ती है। 1 से ऊपर = नुकसान।')}]},
+  {id:'faults',n:K3('Faults & gauges','الأعطال والعدادات','खराबियाँ व गेज'),items:[
+    {n:K3('Vacuum leak (unmetered air)','تسريب التخلخل (هواء غير مقيس)','वैक्यूम लीक (बिना मापी हवा)'),eq:'λ = λ_{set} · (1 + 0.17 · max(0, 1 − 1.7·thr))',v:['λ'],d:K3('Strongest at idle, almost gone at full throttle. With a turbo the same hole also leaks 10 % of the boost.','الأقوى في السلانسيه ويكاد يختفي مع الدعسة الكاملة. مع التوربو يسرّب الثقب نفسه 10 % من البوست.','आइडल पर सबसे ज़्यादा, फ़ुल थ्रॉटल पर लगभग नहीं। टर्बो के साथ यही छेद 10 % बूस्ट भी निकालता है।')},
+    {n:K3('Dirty MAF sensor','حساس MAF متّسخ','गंदा MAF सेंसर'),eq:'λ = λ_{set} · 1.07  (petrol)      λ = λ_{set} · 1.12  (diesel)',v:['λ'],d:K3('The sensor under-reads the air, so the ECU injects less fuel.','الحساس يقرأ هواءً أقل فيحقن الكمبيوتر وقوداً أقل.','सेंसर कम हवा पढ़ता है, इसलिए ECU कम ईंधन देता है।')},
+    {n:K3('Leaking injector','بخاخ يسرّب','लीक इंजेक्टर'),eq:'λ = λ_{set} · 0.91      IMEP × 0.885  (petrol),  × 0.85  (diesel)',v:['λ','IMEP'],d:K3('Extra fuel is added but it burns late and badly: more fuel, black smoke and a little less power.','يُضاف وقود زائد لكنه يحترق متأخراً وبشكل سيئ: وقود أكثر ودخان أسود وقوة أقل قليلاً.','अतिरिक्त ईंधन देर से और खराब जलता है: ज़्यादा ईंधन, काला धुआँ, थोड़ी कम पावर।')},
+    {n:K3('Clogged air filter','فلتر هواء مسدود','बंद एयर फ़िल्टर'),eq:'PR = PR_{0} − 0.075 · ([N|N_{red}])^2 · thr',v:['PR','N'],d:K3('The pressure drop grows with the square of the airflow, so only the top end suffers.','هبوط الضغط يزيد مع مربع تدفق الهواء، لذا يتأثر الأعلى فقط.','दाब में गिरावट हवा के प्रवाह के वर्ग से बढ़ती है, इसलिए सिर्फ़ ऊपरी हिस्सा प्रभावित।')},
+    {n:K3('Misfire from worn plugs','احتراق متقطع من البواجي المستهلكة','घिसे प्लग से मिसफ़ायर'),eq:'IMEP × (1 − 0.02 − 0.07 · thr · (1 + 0.6·boost))',v:['IMEP'],d:K3('More load and more boost need more spark voltage, so worn plugs misfire most under boost.','الحمل والبوست يحتاجان جهد شرارة أعلى، لذا تتقطع البواجي المستهلكة أكثر مع البوست.','ज़्यादा लोड व बूस्ट को ज़्यादा स्पार्क वोल्टेज चाहिए, इसलिए घिसे प्लग बूस्ट पर सबसे ज़्यादा मिसफ़ायर करते हैं।')},
+    {n:K3('Worn rings, blown gasket, stretched chain','شنابر مستهلكة، جوان محروق، جنزير مرتخٍ','घिसी रिंग, फटी गैस्केट, खिंची चेन'),eq:'rings: IMEP × 0.95,  η_v − 0.025,  FMEP + 0.035      gasket: IMEP × 0.955,  boost_{limit} × 0.55      chain: cams 5° late',v:['IMEP','FMEP'],d:K3('The late cams move the power peak up and cost low-rpm torque.','الكامات المتأخرة تنقل قمة القوة للأعلى وتخسر عزم الدوران المنخفض.','देर से चलने वाले कैम पावर पीक ऊपर ले जाते हैं और नीचे का टॉर्क घटाते हैं।')},
+    {n:K3('Wastegate stuck shut + limp mode','بوابة عالقة مغلقة + وضع الطوارئ','वेस्टगेट बंद अटका + लिम्प मोड'),eq:'boost = boost_{set} · (3x^2 − 2x^3) · (1 + 0.5·[N|N_{red}])      IMEP × 0.72  if  boost > 1.25 · boost_{set}',v:['N','IMEP'],d:K3('Stuck open: boost × 0.3.','عالقة مفتوحة: البوست × 0.3.','खुला अटका: बूस्ट × 0.3।')},
+    {n:K3('Oil pressure gauge','عداد ضغط الزيت','तेल दाब गेज'),eq:'p_{oil} = (1.1 + 4.3·min(1, [N|4200])^{0.8}) · k_{visc} · (1 − 0.007·(T_{oil} − 95))',v:['N'],d:K3('k_visc: 0W-20 0.86, 5W-30 1, 10W-60 1.18. Hot oil is thinner, so the pressure falls.','k_visc: 0W-20 0.86، 5W-30 1، 10W-60 1.18. الزيت الساخن أرق فيقل الضغط.','k_visc: 0W-20 0.86, 5W-30 1, 10W-60 1.18। गर्म तेल पतला होता है, इसलिए दाब गिरता है।')},
+    {n:K3('Compression test','فحص الانضغاط','कम्प्रेशन टेस्ट'),eq:'p_{c} = 1.013 · CR^{1.15} · 0.78  (petrol, cranking)      × 1.1 / 0.78  (diesel)',v:[],d:K3('Worn rings × 0.72, blown gasket × 0.55 (one cylinder), stretched chain × 0.92. Below 80 % of new is a warning.','الشنابر المستهلكة × 0.72، الجوان المحروق × 0.55 (أسطوانة واحدة)، الجنزير المرتخي × 0.92. أقل من 80 % من الجديد تحذير.','घिसी रिंग × 0.72, फटी गैस्केट × 0.55 (एक सिलेंडर), खिंची चेन × 0.92। नए के 80 % से कम चेतावनी है।')},
+    {n:K3('Temperatures warming up','ارتفاع درجات الحرارة','तापमान का बढ़ना'),eq:'T ← T + (T_{target} − T) · (1 − e^{−Δt/τ})',v:[],d:K3('Oil τ ≈ 14 s, coolant τ ≈ 10 s, exhaust τ ≈ 2 s. A blown gasket adds 18–32 °C to the coolant target.','الزيت τ ≈ 14 ث، سائل التبريد τ ≈ 10 ث، العادم τ ≈ 2 ث. الجوان المحروق يضيف 18–32 °C لهدف التبريد.','तेल τ ≈ 14 s, कूलेंट τ ≈ 10 s, एग्ज़ॉस्ट τ ≈ 2 s। फटी गैस्केट कूलेंट लक्ष्य में 18–32 °C जोड़ती है।')}]},
   {id:'drive',n:K3('Driving','القيادة','ड्राइविंग'),items:[
     {n:K3('Engine speed from road speed','سرعة المحرك من سرعة السيارة','सड़क गति से इंजन गति'),eq:'N = [v|r_w] · [60|2π] · i_g · i_f',v:['N','v','r_w','i_g','i_f']},
     {n:K3('Force at the wheels','القوة عند العجلات','पहियों पर बल'),eq:'F = [T · i_g · i_f · η_{gb}|r_w],    F ≤ 1.05 · m · g · 0.56  (tyre grip)',v:['F','T','i_g','i_f','r_w','m'],d:K3('Beyond grip the tyres spin; traction control trims torque to stay at the limit.','بعد حد التماسك تنزلق الإطارات؛ التحكم بالجر يقلل العزم ليبقى عند الحد.','पकड़ से आगे टायर फिसलते हैं; ट्रैक्शन कंट्रोल टॉर्क घटाकर सीमा पर रखता है।')},
@@ -9424,6 +9471,12 @@ function g3Fx(dt,st){const T=G3.THREE,a=G3.anim;if(!a)return;
   if(st.flame>0&&a.tail){for(const tl of[a.tail,a.tail2].filter(Boolean)){const n=Math.ceil(st.flame*6);for(let i=0;i<n;i++)spawn(tl.clone(),new T.Vector3(3+Math.random()*3,(Math.random()-.5)*.6,(Math.random()-.5)*.6),.18+Math.random()*.2,.5+Math.random()*.5*st.flame,st.nosF?0x9fd0ff:0xffffff)}}
   if(st.purge&&a.purgePos){for(let i=0;i<3;i++)spawn(a.purgePos.clone(),new T.Vector3((Math.random()-.3)*.8,1.4+Math.random()*1.4,(Math.random()-.5)*.8),.55+Math.random()*.3,.35+Math.random()*.35,0xcfe2ff)}
   if(st.nos&&a.nosPos){for(let i=0;i<2;i++)spawn(a.nosPos.clone(),new T.Vector3(-1-Math.random(),Math.random()*.8,(Math.random()-.5)),.5,.35,0x6fa8ff)}
+  // exhaust smoke (faults): soft, normally blended puffs that grow, drift back and rise; blue = oil, white = coolant, black = rich fuel
+  if(!G3.smPool){G3.smPool=[];const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(.45,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,64,64);G3.smTex=new T.CanvasTexture(c)}
+  const tails=[a.tail,a.tail2].filter(Boolean);
+  if(st.smoke&&tails.length&&st.slow!==0){for(const sm of st.smoke){if(!(sm.a>0))continue;for(const tl of tails){let n=sm.a*dt*26/tails.length;while(n>0){if(Math.random()<n){let p=G3.smPool.find(q=>!q.alive);if(!p){if(G3.smPool.length>120)break;const m=new T.SpriteMaterial({map:G3.smTex,depthWrite:false,transparent:true,blending:T.NormalBlending});p={sp:new T.Sprite(m)};p.sp.renderOrder=5;G3.scene.add(p.sp);G3.smPool.push(p)}
+          p.alive=true;p.t=0;p.life=1.9+Math.random()*1.3;p.size=.5+Math.random()*.35;p.grow=2.6+sm.a*2.2;p.op=Math.min(.85,.35+.5*sm.a)*(sm.dark?1.15:1);p.vel=new T.Vector3(.7+Math.random()*.6,.6+Math.random()*.5,(Math.random()-.5)*.6);p.sp.position.copy(tl).add(G3.root.position);p.sp.material.color.set(sm.c);p.sp.material.rotation=Math.random()*6.28;p.sp.visible=true}n-=1}}}}
+  for(const p of G3.smPool){if(!p.alive)continue;p.t+=dt;if(p.t>p.life){p.alive=false;p.sp.visible=false;continue}const k=p.t/p.life;p.vel.y+=dt*.9;p.vel.x*=1-dt*.7;p.sp.position.addScaledVector(p.vel,dt);p.sp.scale.setScalar(p.size*(1+p.grow*k));p.sp.material.opacity=p.op*Math.pow(1-k,1.3)*Math.min(1,p.t/.12)}
   for(const s of G3.fxPool){if(!s.alive)continue;s.t+=dt;if(s.t>s.life){s.alive=false;s.sp.visible=false;continue}const k=s.t/s.life;s.sp.position.addScaledVector(s.vel,dt);s.sp.scale.setScalar(s.size*(.6+k));s.sp.material.opacity=(1-k)}}
 function g3Pick(){if(!G3.parts.length)return null;G3.ray.setFromCamera(G3.ptr,G3.cam);const hits=G3.ray.intersectObjects(G3.root.children,true).filter(h=>h.object.userData.part&&h.object.visible);
   if(G3.clip.constant<100)return hits.find(h=>{const p=h.point;return G3.clip.distanceToPoint(p)>=0||!['block','head','cover','pan','liner'].includes(h.object.userData.part)})||null;return hits[0]||null}
@@ -10121,6 +10174,7 @@ const GDEF=()=>({base:'I6',diesel:false,ind:'na',tsize:1,boost:1,ar:.82,bov:'spo
   pistons:'cast',rods:'stock',crank:'cast',springs:'stock',gasket:'stock',cr:0,boreK:0,strokeK:0,
   nos:'none',shot:75,nosRpm:3000,
   head:'stock',manifold:'stock',tb:'stock',cat:'stock',xpipe:'none',wg:'internal',bc:'stock',chra:'journal',wheel:'cast',fuelSys:'stock',di:'port',coils:'stock',flywheel:'stock',oil:'wet',rad:'stock',bearings:'stock',hybrid:'none',map:'stock',crp:'stock',egr:'on',dpf:'on',valvetrain:'stock',vvl:false,eqlen:false,balDel:false,wmi:false,oilCooler:false,studs:false,squirters:false,flat:false,bbg:false,camAdv:0,plugs:'stock',oilVisc:'5w30',ewp:false,block:'stock',girdle:false,windage:false,rockers:false,trac:'off',exhValve:'none',wrap:'none',nosHeat:false,nosPurge:false,
+  fAir:false,fRings:false,fPlugs:false,fInj:false,fVac:false,fChain:false,fGasket:false,fMaf:false,fWg:'ok',
   gbox:'manual',fdK:1,autoShift:true,mass:1450,color:'#b3121b',cover:'#15171b',carbonPlenum:false,scColor:'chrome'});
 const GS={b:GDEF(),stock:null,rpm:0,thr:0,eng:'off',spool:0,boostNow:0,egt:300,lastThr:0,bov:0,pops:0,cut:false,cutT:0,limPh:0,nosOn:false,dyno:null,curve:[],stockCurve:[],view:'solid',labels:false,phases:true,auto:true,slow:1/40,explode:false,blown:null,built:'',held:{gas:false,rev:false,launch:false,nos:false},t:0,lastPull:null};
 function gEng(b){const d=b.diesel&&GDIESEL[b.base]?GDIESEL[b.base]:GENG[b.base];return{...d,bore:d.bore+b.boreK,stroke:d.stroke+b.strokeK,cr:(b.cr||d.cr),red:d.red}}
@@ -10129,24 +10183,25 @@ function gRedline(b){const e=gEng(b),base=e.red,sk=Math.pow(GENG[b.base].stroke/
 /* ---- the model: returns everything at one rpm and throttle ---- */
 function gModel(b,N,thr=1,o={}){
   const e=gEng(b),n=GBASE[b.base].n,Vd=gDisp(b)/1000,diesel=b.diesel,F=GFUEL[diesel?'diesel':b.fuel],red=e.red*Math.pow(GENG[b.base].stroke/e.stroke,.8);
-  const ind=b.ind,turbo=['t1','twin','tscroll','vgt','seq','etb','tc'].includes(ind),sc=['roots','screw','cent','tc'].includes(ind);
+  const ind=b.ind,turbo=['t1','twin','tscroll','vgt','seq','etb','tc'].includes(ind),sc=['roots','screw','cent','tc'].includes(ind),cA=(b.camAdv||0)-(b.fChain?5:0);
   // breathing: volumetric efficiency vs rpm
   const camF={stock:0,street:.45,race:1,custom:clamp((b.camDur-220)/80,0,1.3)}[b.cam]??0;
   const twoBank=GBASE[b.base].lay!=='I'&&!GBASE[b.base].vr;
   let ve0=(e.ve||.9)-.04+.06*camF+({stock:0,cold:.015,cone:.025,itb:.06}[b.intake]||0)+(b.exh==='headers'?.03:0)+({stock:0,sport:.015,straight:.035}[b.exhSys]||0)+(diesel?.04:0)
     +({stock:0,port:.02,cnc:.035,bigvalve:.045}[b.head]||0)+({stock:0,short:-.006,long:.012,vis:.008}[b.manifold]||0)+(b.tb==='big'?.008:0)+({stock:-.012,hiflow:-.004,race:0}[b.cat]??0)+(twoBank?({none:0,h:.004,x:.008}[b.xpipe]||0):0)+(b.di==='dual'&&!diesel?.005:0)+(b.vvl?.015:0)+(b.eqlen&&GBASE[b.base].lay==='B'?.008:0)+(diesel?(b.dpf==='on'?-.015:0)+(b.egr==='off'?.01:0):0)+(b.exhValve==='quiet'?-.012:b.exhValve==='open'?.004:b.exhValve==='auto'?(N>3500||thr>.7?.004:-.012):0);
-  const npk=red*((e.pk||.68)+.12*camF+(b.intake==='itb'?.05:0)+(b.exh==='headers'?.03:0)+({stock:0,port:.01,cnc:.015,bigvalve:.03}[b.head]||0)+({stock:0,short:.06,long:-.08,vis:0}[b.manifold]||0)+(b.vvl?.02:0)-(b.camAdv||0)*.011),wid=red*(.62-.14*camF)*(b.vvt?1.25:1)*(b.vvl?1.15:1)*({stock:1,short:.92,long:.95,vis:1.25}[b.manifold]||1);
-  let ve=ve0-.28*Math.pow((N-npk)/wid,2)+(b.camAdv||0)*.0025*(N<npk?1:-1)*Math.min(1,Math.abs(N-npk)/wid);if(N<npk)ve-=(camF*.12*(b.vvl?.5:1)+(b.head==='bigvalve'?.03:0))*Math.max(0,1-N/(red*.45));ve=clamp(ve,.35,1.14);
+  const npk=red*((e.pk||.68)+.12*camF+(b.intake==='itb'?.05:0)+(b.exh==='headers'?.03:0)+({stock:0,port:.01,cnc:.015,bigvalve:.03}[b.head]||0)+({stock:0,short:.06,long:-.08,vis:0}[b.manifold]||0)+(b.vvl?.02:0)-cA*.011),wid=red*(.62-.14*camF)*(b.vvt?1.25:1)*(b.vvl?1.15:1)*({stock:1,short:.92,long:.95,vis:1.25}[b.manifold]||1);
+  let ve=ve0-.28*Math.pow((N-npk)/wid,2)+cA*.0025*(N<npk?1:-1)*Math.min(1,Math.abs(N-npk)/wid);if(N<npk)ve-=(camF*.12*(b.vvl?.5:1)+(b.head==='bigvalve'?.03:0))*Math.max(0,1-N/(red*.45));if(b.fRings)ve-=.025;ve=clamp(ve,.35,1.14);
   // boost
-  let pr=1-(b.intake==='stock'?.03:.015)*(b.tb==='big'?.5:1),scLoss=0,boost=0,spool=0,Tc=298;const tz=GTURBO[b.tsize]||GTURBO[1];
+  let pr=1-(b.intake==='stock'?.03:.015)*(b.tb==='big'?.5:1)-(b.fAir?.075*Math.pow(Math.min(1.15,N/red),2)*Math.max(.2,thr):0),scLoss=0,boost=0,spool=0,Tc=298;const tz=GTURBO[b.tsize]||GTURBO[1];
   if(turbo){let ns=red*tz.spool*Math.pow(2.5/Math.max(.8,Vd*1000),.25)*({t1:1,twin:.92,tscroll:.86,vgt:.72,seq:.68,etb:.42,tc:1}[ind]||1)*(b.ar<.7?.9:b.ar>.9?1.1:1)*(b.chra==='ball'?.86:1)*({stock:1,manual:.97,ebc:.9}[b.bc]||1)*({none:1,wrap:.97,ceramic:.95}[b.wrap]||1);
     ns*=1.45;spool=ns;const x=clamp((N-ns*.5)/(ns*.5),0,1);let bt=b.boost*x*x*(3-2*x);
     if(b.als&&o.als)bt=Math.max(bt,b.boost*.85);
     if(b.wg!=='external'&&b.boost>1.4)bt*=1-.12*(b.boost-1.4)*Math.min(1,N/red);
+    if(b.fWg==='shut')bt=b.boost*x*x*(3-2*x)*(1+.5*Math.min(1,N/red));else if(b.fWg==='open')bt*=.3;if(b.fAir)bt*=1-.12*Math.min(1,N/red);
     const flow=tz.flow*(ind==='twin'||ind==='seq'?1.85:1)*(b.wheel==='billet'?1.12:1),need=1.2*(1+bt)*Vd*ve*N/120*1.18;if(need>flow)bt*=Math.max(.45,1-(need-flow)/flow*.9);
     boost=bt}
   if(sc){const sb=ind==='cent'?b.sc*Math.pow(N/red,2)*1.15:b.sc*clamp(N/(red*.18),0,1)*(ind==='roots'?1-.12*N/red:1);if(ind==='tc')boost=Math.max(boost,sb*clamp(1.4-N/(spool||red*.4),0,1));else boost=sb;}
-  boost*=({eco:.85,stock:1,sport:1.05,race:1.1}[b.map]||1)*(o.bbg??1);
+  boost*=({eco:.85,stock:1,sport:1.05,race:1.1}[b.map]||1)*(o.bbg??1)*(b.fVac&&!diesel?.9:1);
   boost*=thr>0?clamp(thr*1.15,0,1):0;pr=pr+boost;
   // charge temperature after compressor + intercooler + fuel cooling
   if(boost>0){const eta=ind==='roots'?.55:ind==='screw'||ind==='tc'?.7:ind==='cent'?.74:.72,T2=298*(1+(Math.pow(pr,.286)-1)/eta),eps={none:0,street:.68,race:.84,w2a:.8}[b.ic]??0;Tc=T2-eps*(T2-298);
@@ -10155,7 +10210,8 @@ function gModel(b,N,thr=1,o={}){
   // air mass per second and fuel
   const thrE=diesel?1:Math.max(.08,thr),rho=1.18*pr*(298/Tc),mair=rho*Vd*ve*N/120*(diesel?1:thrE);
   let lam=diesel?Math.max(1.12-({stock:0,cp3:.04,race:.07}[b.crp]||0),1.62-.5*(b.dfuel/100-1)-boost*.03-({stock:0,cp3:.03,race:.05}[b.crp]||0)):(thr>.9?(b.map==='eco'?Math.max(b.lam,.96):b.map==='race'?Math.min(b.lam,.85):b.lam):1),mfReq=mair/(F.afr*lam);
-  if(diesel)mfReq=mair/(F.afr*lam);
+  if(!diesel){if(b.fVac)lam*=1+.17*Math.max(0,1-thrE*1.7);if(b.fMaf)lam*=1.07;if(b.fInj)lam*=.91}else{if(b.fMaf)lam*=1.12;if(b.fInj)lam*=.9}
+  mfReq=mair/(F.afr*lam);
   const injMax=n*b.inj/60*.75*.85/1000*({stock:1,uprated:1,race:1}[b.pump])*(b.di==='dual'?1.6:1),pumpMax={stock:.04,uprated:.075,race:.15}[b.pump]*(F.afr<10?1:1)*(Vd>4e-3?1.4:1)*(b.fuelSys==='return'?1.35:1);
   const fuelCap=Math.min(injMax*1000*0.001*1000/1000,pumpMax);let mf=Math.min(mfReq,fuelCap),lean=mfReq>fuelCap?mfReq/fuelCap:1;lam=lam*lean;
   // knock margin (spark ignition)
@@ -10164,26 +10220,26 @@ function gModel(b,N,thr=1,o={}){
   const timingEff=diesel?0:clamp(tim-retard,-14,6);
   // indicated efficiency
   const g=1.33,etaO=1-1/Math.pow(e.cr,g-1),etaI=(diesel?.44*(1-1/Math.pow(e.cr,.26))/(1-1/Math.pow(17,.26))*({stock:1,cp3:1.02,race:1.035}[b.crp]||1):etaO*.71*(1-Math.pow(timingEff/14,2)*.6+(timingEff>0?0:timingEff*.006)))*(b.coils==='race'&&!diesel?1.008:1)*(b.plugs==='iridium'&&!diesel?1.004:1),lamF=diesel?1:(lam<1?1-.9*Math.pow(lam-.89,2)*(lam<.89?1.8:1):Math.max(.6,1.02/lam-.02));
-  const qin=mf*F.lhv*1e6*(diesel?1:Math.min(1,1/lam)),Wi=qin*etaI*lamF;let imep=Wi/(Vd*N/120)/1e5;
+  const qin=mf*F.lhv*1e6*(diesel?1:Math.min(1,1/lam)),Wi=qin*etaI*lamF;let imep=Wi/(Vd*N/120)/1e5*(b.fRings?.95:1)*(b.fGasket?.955:1)*(b.fPlugs&&!diesel?1-(.02+.07*thrE*(1+.6*boost)):1)*(b.fChain?.98:1)*(b.fInj?(diesel?.85:.885):1)*(b.fWg==='shut'&&turbo&&boost>b.boost*1.25+.05?.72:1);
   // nitrous shot
   let nosW=0;if(b.nos!=='none'&&o.nos&&N>=b.nosRpm){nosW=b.shot*745.7*(b.nos==='dry'?.9:1)*(b.nosHeat?1:.9);imep+=nosW/(Vd*N/120)/1e5}
   // friction and pumping
-  const fmep=(.6+.09*N/1000+.025*Math.pow(N/1000,2))*(diesel?1.25:1)*(b.pistons==='forged'?.98:1)-(b.oil==='dry'?.05:0)-(b.bearings==='coated'?.015:0)-(b.balDel&&(b.base==='I4'||b.base==='I3')?.02:0)+({'0w20':-.02,'5w30':0,'10w60':.025}[b.oilVisc]||0)-(b.windage?.014*Math.min(1.3,N/red):0)-(b.rockers?.01:0)-(b.ewp?.012:0)+(turbo?Math.max(0,boost*.12*(b.ar<.7?1.4:1)):0)+(!diesel?(1-thrE)*.9:0);
+  const fmep=(.6+.09*N/1000+.025*Math.pow(N/1000,2))*(diesel?1.25:1)*(b.pistons==='forged'?.98:1)-(b.oil==='dry'?.05:0)-(b.bearings==='coated'?.015:0)-(b.balDel&&(b.base==='I4'||b.base==='I3')?.02:0)+({'0w20':-.02,'5w30':0,'10w60':.025}[b.oilVisc]||0)-(b.windage?.014*Math.min(1.3,N/red):0)-(b.rockers?.01:0)-(b.ewp?.012:0)+(b.fRings?.035:0)+(b.fInj?.01:0)+(turbo?Math.max(0,boost*.12*(b.ar<.7?1.4:1)):0)+(!diesel?(1-thrE)*.9:0);
   // valve float above spring limit
   const vf=red+({stock:500,uprated:1400,race:2800}[b.springs]||500)+(b.valvetrain==='titanium'?900:0)+(b.rockers?300:0);let floatK=N>vf?Math.max(.3,1-(N-vf)/1500):1;
   const tqH=b.hybrid==='48v'&&thr>0?45*thr*Math.max(0,1-N/3200):0,bmep=Math.max(-3,(imep*floatK-fmep)),torque=bmep*1e5*Vd/(4*Math.PI)+tqH,pw=torque*2*Math.PI*N/60-scLoss;
   // stresses & temperatures
   const pmax=diesel?5.2*imep+45:4.6*imep+22,pLim={cast:100,hyper:115,forged:178,billet:240}[b.pistons]*(diesel?1.75:1)*(b.squirters?1.08:1)*({stock:1,sleeved:1.1,billet:1.22}[b.block]||1),rpmLim=red+({stock:600,forged:1900,billet:3200}[b.rods]||600)+({cast:0,forged:300,billet:600}[b.crank]||0)+({wet:0,baffled:200,dry:450}[b.oil]||0)+(b.bearings==='coated'?250:0)+(b.girdle?300:0)+({'0w20':-150,'5w30':0,'10w60':150}[b.oilVisc]||0)+(b.block==='billet'?200:0),
-    torqLim=(diesel?2.6:1)*({stock:1,forged:1.9,billet:2.7}[b.rods])*Vd*1000*({cast:1,forged:1.35,billet:1.7}[b.crank])*150*(b.girdle?1.08:1)*({stock:1,sleeved:1.05,billet:1.15}[b.block]||1),gLim={stock:1.1,mls:2.6}[b.gasket]*(b.studs?1.35:1);
-  const egt=diesel?430+390*clamp(1.6-lam,0,1.2)*thrE+boost*40:620+260*thrE*Math.min(1.2,N/red+.2)+retard*9+Math.max(0,lam-.88)*900+boost*55-(b.ic==='race'?15:0)+(o.als?180:0);
-  const st={piston:pmax/pLim,rod:Math.max(N/rpmLim,(torque/Math.max(1,torqLim))*.9),gasket:boost/gLim*(b.bc==='manual'?1.06:1),valves:N/vf*.95,heat:(egt-200)/(diesel?560:800)*({stock:1,alu:.93,race:.86}[b.rad]||1)*(b.oilCooler?.94:1)*(b.squirters?.97:1)*(b.ewp?.97:1)*({'0w20':1.02,'5w30':1,'10w60':.98}[b.oilVisc]||1),knock:diesel?0:(km<0&&!b.knockProt?1.1+(-km)*.05:km<0?.75:clamp(.6-km/20,0,.75)),lean:lean>1.02?.8+(lean-1)*2:0};
+    torqLim=(diesel?2.6:1)*({stock:1,forged:1.9,billet:2.7}[b.rods])*Vd*1000*({cast:1,forged:1.35,billet:1.7}[b.crank])*150*(b.girdle?1.08:1)*({stock:1,sleeved:1.05,billet:1.15}[b.block]||1),gLim={stock:1.1,mls:2.6}[b.gasket]*(b.studs?1.35:1)*(b.fGasket?.55:1);
+  const egt=(diesel?430+390*clamp(1.6-lam,0,1.2)*thrE+boost*40:620+260*thrE*Math.min(1.2,N/red+.2)+retard*9+Math.max(0,lam-.88)*900+boost*55-(b.ic==='race'?15:0)+(o.als?180:0)+(b.fPlugs?45*thrE:0))+(b.fChain?15:0);
+  const st={piston:pmax/pLim,rod:Math.max(N/rpmLim,(torque/Math.max(1,torqLim))*.9),gasket:boost/gLim*(b.bc==='manual'?1.06:1),valves:N/vf*.95*(b.fChain?1.08:1),heat:(egt-200)/(diesel?560:800)*(b.fGasket?1.3:1)*({stock:1,alu:.93,race:.86}[b.rad]||1)*(b.oilCooler?.94:1)*(b.squirters?.97:1)*(b.ewp?.97:1)*({'0w20':1.02,'5w30':1,'10w60':.98}[b.oilVisc]||1),knock:diesel?0:(km<0&&!b.knockProt?1.1+(-km)*.05:km<0?.75:clamp(.6-km/20,0,.75)),lean:lean>1.02?.8+(lean-1)*2:0};
   const risk=Math.max(...Object.values(st));
   return{N,torque:Math.max(0,torque),hp:Math.max(0,pw)/745.7,kw:Math.max(0,pw)/1000,boost,ve,lam,egt,km,retard,mf:mf*3600,mair,imep,bmep,pmax,st,risk,spool,Tc,scLoss:scLoss/745.7,lean,nosW,red,vf,bsfc:pw>0?mf*3600/(pw/1000)*1000:0}}
 function gCurve(b,o={}){const red=gRedline(b),pts=[];for(let N=1000;N<=red;N+=100)pts.push(gModel(b,N,1,o));return pts}
 function gPeak(c){const p=c.reduce((m,x)=>x.hp>m.hp?x:m,c[0]),t=c.reduce((m,x)=>x.torque>m.torque?x:m,c[0]),bo=Math.max(...c.map(x=>x.boost)),risk=Math.max(...c.map(x=>x.risk));return{p,t,bo,risk,sp:c.find(x=>x.boost>=bo*.9&&bo>.05)}}
 
 /* ---------- UI ---------- */
-const GTABS=['engine','ind','air','ecu','int','gear','nos','look'];
+const GTABS=['engine','ind','air','ecu','int','gear','nos','cond','look'];
 const GOPT={
   plugs:[['stock'],['colder'],['iridium']],oilVisc:[['0w20'],['5w30'],['10w60']],block:[['stock'],['sleeved'],['billet']],trac:[['off'],['low'],['high']],exhValve:[['none'],['auto'],['open'],['quiet']],wrap:[['none'],['wrap'],['ceramic']],
   ind:[['na'],['t1'],['twin'],['tscroll'],['vgt'],['seq'],['etb'],['roots'],['screw'],['cent'],['tc']],
@@ -10205,10 +10261,12 @@ const GPRE={
   itb:{rockers:true,windage:true,camAdv:-2,intake:'itb',exh:'headers',exhSys:'straight',cam:'race',springs:'uprated',fuel:'98',timing:2,pops:'mild',head:'cnc',cat:'race',xpipe:'x',coils:'race',flywheel:'ultra',oil:'dry',bearings:'coated',map:'race',flat:true},
   eco:{oilVisc:'0w20',ewp:true,map:'eco',hybrid:'48v',di:'dual',manifold:'vis',cat:'stock',flywheel:'stock'}};
 function gNum(v,d=0){return fmt(v,d)}
+// cranking speed when the engine is started (special engines run on their own scales: N1 %, throttle %, a steam engine's 40 rpm idle…)
+function gKick(){return GS.spec&&GSPEC[GS.spec]?Math.min(300,gsxIdle(GS.spec)*.6):300}
 function gT(k){return t('gar.'+k)}
 // the factory build of a layout: every time you pick an engine it starts from here, so nothing hidden carries over
 function gStock(base,diesel){const b={...GDEF(),base,diesel:!!(diesel&&GDIESEL[base])};if(b.diesel)b.ind='vgt';if(base==='W16')Object.assign(b,{ind:'twin',boost:1.2,ic:'race'});if(base==='W12')Object.assign(b,{ind:'twin',boost:.8});return b}
-function gFresh(){if(typeof GUI!=='undefined'){GUI.q='';GUI.open={};const q=$('#gQ');if(q)q.value='';const x=$('#gQx');if(x)x.hidden=true}const pr=$('#gPre');if(pr)pr.value='stock';GS.dr=null;GS.drive=false;GS.eng='off';GS.rpm=0;GS.boostNow=0;GS.tqc=null;GS.bov=0;
+function gFresh(){GS.mys=null;GS.gg={};{const bl=$('#gBlown');if(bl&&bl.classList.contains('lock')){bl.hidden=true;bl.classList.remove('lock')}}if(typeof GUI!=='undefined'){GUI.q='';GUI.open={};const q=$('#gQ');if(q)q.value='';const x=$('#gQx');if(x)x.hidden=true}const pr=$('#gPre');if(pr)pr.value='stock';GS.dr=null;GS.drive=false;GS.eng='off';GS.rpm=0;GS.boostNow=0;GS.tqc=null;GS.bov=0;
   const d=$('#gDrive');if(d)d.setAttribute('aria-pressed','false');const g=$('#garage');if(g)g.classList.remove('driving');const st=$('#gStart');if(st){st.setAttribute('aria-pressed','false');const sp=$('span',st);if(sp)sp.textContent=gT('start')}}
 function openGarage(id,opt){id=id||null;const fresh=$('#garage').hidden||id!==(GS.openId||null);GS.openId=id;
   $('#home').hidden=true;$('#sim').hidden=true;$('#lab').hidden=true;$('#labx').hidden=true;$('#garage').hidden=false;S.id=null;
@@ -10238,7 +10296,8 @@ function gBuildUI(){
    <div class="gar-view" id="g3wrap">
     <div id="g3host" class="g3host"></div>
     <p class="g3fail" id="g3fail" hidden>${esc(gT('noGL'))}</p>
-    <div class="g3hud"><b id="gName"></b><span id="gSpec"></span><span id="gFire"></span></div>
+    <div class="g3hud"><b id="gName"></b><span id="gSpec"></span><span id="gFire"></span><span id="gCel" class="g3cel" hidden></span></div>
+    <div id="gGauges" class="g3gauges" ${GS.gauges?'':'hidden'} aria-live="off"></div>
     <div class="g3live"><div><small id="gLhpL">${esc(gT('k.hp'))}</small><b id="gLhp">0</b></div><div><small id="gLnmL">${esc(gT('k.nm'))}</small><b id="gLnm">0</b></div><div><small id="gLboL">${esc(gT('k.boost'))}</small><b id="gLbo">0.00</b></div></div>
     <canvas id="gTach" class="g3tach" width="220" height="220" aria-hidden="true"></canvas>
     <div class="g3ctl">
@@ -10260,6 +10319,7 @@ function gBuildUI(){
      <button type="button" class="g3t" id="gLabels" aria-pressed="false">${esc(gT('v.labels'))}</button>
      <button type="button" class="g3t" id="gPhases" aria-pressed="true">${esc(gT('v.phases'))}</button>
      <button type="button" class="g3t" id="gAuto" aria-pressed="true">${esc(gT('v.auto'))}</button>
+     <button type="button" class="g3t" id="gGauge" aria-pressed="${GS.gauges?'true':'false'}">${esc(gT('v.gauges'))}</button>
      <label class="g3slow">${esc(gT('v.speed'))}<input type="range" id="gSlow" min="0" max="100" value="45"></label>
      <div class="seg sm" id="gCam">${['iso','front','side','top'].map(v=>`<button type="button" data-gcam="${v}">${esc(gT('c.'+v))}</button>`).join('')}</div>
     </div>
@@ -10301,6 +10361,7 @@ function gPane(){
     gSlider('fdK',.7,1.4,.01,'×',2,v=>`${fmt(gbFd(b),2)} : 1`)+(G.mass?'':gSlider('mass',700,3200,10,'kg',0))+(!G.auto&&!G.cont?gToggle('autoShift'):'')+
     gH('gbTable')+`<table class="gbt"><thead><tr><th>${esc(gT('gb.gear'))}</th><th>${esc(gT('gb.ratio'))}</th><th>${esc(gT('gb.vmax'))}</th></tr></thead><tbody>${gbTable(b).map(([g2,q,vm])=>`<tr><td>${g2}</td><td dir="ltr">${fmt(q,2)}</td><td dir="ltr">${fmt(vm,0)} km/h</td></tr>`).join('')}</tbody></table><p class="gnote">${esc(gT('gb.how'))}</p>`}
   if(k==='nos'){h+=gH('nos')+gCards('nos',GOPT.nos,2)+(b.nos!=='none'?gSlider('shot',25,400,25,'hp',0)+gSlider('nosRpm',1500,6000,100,'rpm',0)+gToggle('nosHeat')+gToggle('nosPurge')+`<p class="gnote">${esc(gT('nosNote'))}</p>`:'')}
+  if(k==='cond')h+=gPaneCond(b);
   if(k==='look'){h+=gH('color')+`<div class="gsw">${GCOL.map(c=>`<button type="button" class="gswc${b.color===c?' on':''}" data-gcol="${c}" style="--c:${c}" aria-label="${c}"></button>`).join('')}</div>`+gH('cover')+`<div class="gsw">${GCOL.map(c=>`<button type="button" class="gswc${b.cover===c?' on':''}" data-gcov="${c}" style="--c:${c}" aria-label="${c}"></button>`).join('')}</div>`+gToggle('carbonPlenum')}
   $('#gPane').innerHTML=h;
 }
@@ -10317,7 +10378,7 @@ function gApply(force){
 }
 function gHud(){const b=GS.b,e=gEng(b),ck=GS.ck;$('#gName').textContent=gT('lay.'+b.base)+(b.diesel?' · '+gT('diesel'):'');
   const indT=b.ind==='na'?gT('o.ind.na'):gT('o.ind.'+b.ind);$('#gSpec').innerHTML=`<bdi dir="ltr">${fmt(gDisp(b),1)} L · DOHC ${GBASE[b.base].n*4}V</bdi> · ${esc(indT)}`;
-  if(ck)$('#gFire').innerHTML=esc(gT('fire'))+' <bdi dir="ltr">'+ck.order.join('-')+'</bdi>'}
+  if(ck)$('#gFire').innerHTML=esc(gT('fire'))+' <bdi dir="ltr">'+ck.order.join('-')+'</bdi>';gCelHud()}
 function gSummary(){
   const b=GS.b,c=GS.curve,pk=gPeak(c),sp=gPeak(GS.stockCurve),e=gEng(b),red=gRedline(b),diesel=b.diesel;
   const d=(v,s)=>{const x=v-s;return`<em class="${x>=0?'up':'dn'}">${x>=0?'+':''}${fmt(x,0)}</em>`};
@@ -10328,7 +10389,7 @@ function gSummary(){
   const worst={};for(const x of c)for(const[k,v]of Object.entries(x.st))worst[k]=Math.max(worst[k]||0,v);
   $('#gHealth').innerHTML=Object.entries(worst).filter(([k])=>!(diesel&&k==='knock')).map(([k,v])=>`<div class="ghb"><span>${esc(gT('st.'+k))}</span><i><u style="width:${clamp(v*100,2,100)}%;background:${v<.75?'#3ddc97':v<.95?'#ffc04d':'#ff4d4d'}"></u></i><b dir="ltr">${fmt(v*100,0)}%</b></div>`).join('');
   const w=[];if(worst.knock>1)w.push('wKnock');if(worst.lean>.8)w.push('wLean');if(worst.gasket>1)w.push('wGasket');if(worst.piston>1)w.push('wPiston');if(worst.rod>1)w.push('wRod');if(worst.valves>1)w.push('wValve');if(worst.heat>1)w.push('wHeat');
-  $('#gWarn').innerHTML=w.length?w.map(k=>`<p>⚠ ${esc(gT(k))}</p>`).join(''):`<p class="ok">✓ ${esc(gT('wOk'))}</p>`;
+  const fw=gFaultWarn(b);$('#gWarn').innerHTML=w.length||fw?w.map(k=>`<p>⚠ ${esc(gT(k))}</p>`).join('')+fw:`<p class="ok">✓ ${esc(gT('wOk'))}</p>`;
   $('#gSpecs').innerHTML=[[gT('sp.lay'),gT('lay.'+b.base)],[gT('sp.bs'),`${fmt(e.bore,1)} × ${fmt(e.stroke,1)} mm`],[gT('disp'),`${fmt(gDisp(b)*1000,0)} cm³`],[gT('sp.cr'),`${fmt(e.cr,1)} : 1`],[gT('fire'),GS.ck?GS.ck.order.join('-'):'—'],[gT('sp.ratio'),fmt(e.bore/e.stroke,2)+(e.bore>e.stroke?' ('+gT('sp.over')+')':' ('+gT('sp.under')+')')],[gT('sp.crank'),GS.ck?(GS.ck.split?gT('sp.split'):gT('sp.shared'))+' · '+(GBASE[b.base].lay==='V'?GBASE[b.base].bank+'°':GBASE[b.base].lay==='B'?'180°':'—'):'']]
     .map(([a,v])=>`<div><dt>${esc(a)}</dt><dd dir="ltr">${esc(v)}</dd></div>`).join('');
   GS.peak=pk;
@@ -10340,7 +10401,7 @@ function gChart(prog){const cv=$('#gChart');if(!cv||!cv.offsetParent)return;cons
     {pts:cur.map(x=>[x.N,x.hp]),color:'#ff7b32',w:3,fill:'rgba(255,123,50,.10)'},{pts:cur.map(x=>[x.N,x.torque]),color:'#58c8f0',w:3,ax:'r'}]})}
 /* ---------- live engine (throttle, limiter tones, launch, pops) ---------- */
 function gTick(dt){
-  if($('#garage').hidden)return;if(window.__g3freeze){if(GS.frz)return;GS.frz=true}else GS.frz=false;if(GS.spec)return gTickSpec(dt);const b=GS.b,red=gRedline(b),idle=(b.diesel?GDIESEL[b.base]:GENG[b.base]).idle+({stock:0,street:80,race:220,custom:clamp((b.camDur-240)*4,0,300)}[b.cam]||0);GS.t+=dt;
+  if($('#garage').hidden)return;if(window.__g3freeze){if(GS.frz)return;GS.frz=true}else GS.frz=false;if(GS.spec)return gTickSpec(dt);const b=GS.b,red=gRedline(b),idle=(b.diesel?GDIESEL[b.base]:GENG[b.base]).idle+({stock:0,street:80,race:220,custom:clamp((b.camDur-240)*4,0,300)}[b.cam]||0)+gIdleHunt(b);GS.t+=dt;
   const run=GS.eng==='run';let target=0,thr=0;const H=GS.held;
   if(GS.dyno){const d=GS.dyno;d.t+=dt;const N=1000+(red-1000)*Math.min(1,d.t/7);GS.rpm=N;thr=1;if(d.t>=7.6){GS.dyno=null;GS.lastPull=true;gChart();thr=0}
     else if(Math.floor(d.t*10)!==d.k){d.k=Math.floor(d.t*10);gChart(N)}}
@@ -10368,11 +10429,11 @@ function gTick(dt){
   GS.lastThr=thr;GS.thr=thr;GS.pops=Math.max(0,GS.pops-dt*1.5);GS.egt+=(((run||GS.dyno)?m.egt:280)-GS.egt)*(1-Math.exp(-dt/1.8));
   // engine blow-up check during a pull
   if(GS.dyno&&m.risk>1.18&&!GS.blown){GS.blown=Object.entries(m.st).sort((x,y)=>y[1]-x[1])[0][0];GS.dyno=null;GS.eng='off';gBlown()}
-  GS.m=m;
+  GS.m=m;gGaugeTick(dt);
   // 3D frame
   const flame=(b.diesel?0:(GS.pops*(b.pops==='loud'?1:b.pops==='mild'?.5:.25)+(GS.cut&&b.pops!=='off'?.6:0)+(b.als&&run&&!thr?.3*(Math.random()<.12?1:0):0)))*((Math.random()<.5)?1:0);
   g3Frame(dt,{rpm:GS.rpm,run:run||!!GS.dyno,thr,load:thr?1:.15,boost:GS.boostNow,egt:GS.egt,slow:GS.slow,camDur:b.cam==='custom'?b.camDur:{stock:236,street:256,race:284}[b.cam],camLift:b.cam==='custom'?b.camLift:{stock:1,street:1.12,race:1.25}[b.cam],
-    explode:GS.explode,auto:GS.auto&&!GS.held.gas,labels:GS.labels,phases:GS.phases,flame,nos:GS.nosOn&&thr,purge:b.nosPurge&&b.nos!=='none'&&GS.t-(GS.purgeT??-9)<.55,cutCyl:GS.cut,wg:clamp((GS.boostNow-b.boost*.82)/(b.boost*.18+.01),0,1),bov:(GS.t-(GS.bovT??-9))<.4?1:0,gb:gGbState(b)});
+    explode:GS.explode,auto:GS.auto&&!GS.held.gas,labels:GS.labels,phases:GS.phases,flame,nos:GS.nosOn&&thr,purge:b.nosPurge&&b.nos!=='none'&&GS.t-(GS.purgeT??-9)<.55,cutCyl:GS.cut,wg:clamp((GS.boostNow-b.boost*.82)/(b.boost*.18+.01),0,1),bov:(GS.t-(GS.bovT??-9))<.4?1:0,gb:gGbState(b),smoke:gSmoke(b,run||!!GS.dyno,thr,m)});
   if(GS.drive&&GS.dr)ecoCar(dt,b,run,thr,m);
   if(GS.drive&&GS.dr&&(!GS.uiD||GS.t-GS.uiD>.1)){GS.uiD=GS.t;ecoHUD();const D=GS.dr,G=GBOX[b.gbox]||GBOX.manual;$('#gSpd').textContent=fmt(D.v*3.6,0);$('#gGear').textContent=G.cont?'D':(D.v<.05&&!GS.held.gas?'N':String(D.gear));$('#g0100').textContent=D.t100?fmt(D.t100,2)+' s':'—';$('#gQm').textContent=D.q?fmt(D.q[0],2)+' s':'—'}
   gTach();
@@ -10407,15 +10468,16 @@ function gBind(){
     if(tg.id==='gsxReset'){GS.sb[GS.spec]=null;gApply();gPane();return}
     if(tg.id==='gsxDrive'){const db=$('#gDrive');if(!GS.drive)db.click();const w=$('#g3wrap');if(w&&w.getBoundingClientRect().top<0||w.getBoundingClientRect().bottom>innerHeight)w.scrollIntoView({behavior:'smooth',block:'center'});return}
     if(tg.dataset.gk){const k=tg.dataset.gk,v=tg.dataset.gv;b[k]=isNaN(+v)||k==='fuel'?v:+v;if(k==='gbox'){GS.dr=null;GS.cvtRs=null}gApply();gPane();return}
-    if(tg.id==='gDrive'){GS.drive=!GS.drive;GS.dr=null;tg.setAttribute('aria-pressed',GS.drive);$('#garage').classList.toggle('driving',GS.drive);if(GS.spec)$('#garage').classList.toggle('noshift',!gsxCanShift(GS.spec));if(!GS.drive)gsxHudReset();if(GS.drive&&GS.eng!=='run'&&!GS.blown){GS.eng='run';GS.rpm=Math.max(GS.rpm,300);$('#gStart').setAttribute('aria-pressed','true');$('span',$('#gStart')).textContent=gT('stop')}return}
+    if(tg.id==='gDrive'){GS.drive=!GS.drive;GS.dr=null;tg.setAttribute('aria-pressed',GS.drive);$('#garage').classList.toggle('driving',GS.drive);if(GS.spec)$('#garage').classList.toggle('noshift',!gsxCanShift(GS.spec));if(!GS.drive)gsxHudReset();if(GS.drive&&GS.eng!=='run'&&!GS.blown&&gCanStart()){GS.eng='run';GS.rpm=Math.max(GS.rpm,gKick());$('#gStart').setAttribute('aria-pressed','true');$('span',$('#gStart')).textContent=gT('stop')}return}
     if(tg.id==='gUp'){(GS.spec?gsxShift:gbShift)(1);return}if(tg.id==='gDn'){(GS.spec?gsxShift:gbShift)(-1);return}
     if(tg.dataset.gcol){b.color=tg.dataset.gcol;gApply();gPane();return}if(tg.dataset.gcov){b.cover=tg.dataset.gcov;gApply();gPane();return}
     if(tg.dataset.gview){GS.view=tg.dataset.gview;g3View(GS.view);$$('#gView [data-gview]').forEach(x=>x.classList.toggle('on',x.dataset.gview===GS.view));return}
     if(tg.dataset.gcam){g3ResetCam(tg.dataset.gcam);return}
     const tog=(k,id)=>{GS[k]=!GS[k];tg.setAttribute('aria-pressed',GS[k])};
+    if(tg.id==='gGauge'){tog('gauges');gGaugeShow();return}
     if(tg.id==='gExplode')return tog('explode');if(tg.id==='gLabels')return tog('labels');if(tg.id==='gPhases')return tog('phases');if(tg.id==='gAuto')return tog('auto');
     if(tg.id==='gSound'){sndToggle();return}
-    if(tg.id==='gStart'){if(GS.blown)return;GS.eng=GS.eng==='run'?'off':'run';if(GS.eng==='run'&&GS.rpm<300)GS.rpm=300;tg.setAttribute('aria-pressed',GS.eng==='run');$('span',tg).textContent=gT(GS.eng==='run'?'stop':'start');return}
+    if(tg.id==='gStart'){if(GS.blown||(GS.eng!=='run'&&!gCanStart()))return;GS.eng=GS.eng==='run'?'off':'run';if(GS.eng==='run')GS.rpm=Math.max(GS.rpm,gKick());tg.setAttribute('aria-pressed',GS.eng==='run');$('span',tg).textContent=gT(GS.eng==='run'?'stop':'start');return}
     if(tg.id==='gDyno'){if(GS.blown)return;GS.eng='run';$('#gStart').setAttribute('aria-pressed','true');GS.dyno={t:0,k:-1};GS.nosOn=$('#gDynoNos').checked;return}
     if(tg.id==='gRepair'){GS.blown=null;$('#gBlown').hidden=true;return}
 
@@ -10428,9 +10490,9 @@ function gBind(){
     if(ev.target.id==='gSlow'){const v=+ev.target.value/100;GS.slow=Math.pow(10,-2.4+v*2.2)}});
   document.addEventListener('change',ev=>{const k=ev.target.dataset&&ev.target.dataset.gt;if(k){GS.b[k]=ev.target.checked;gApply()}if(ev.target.dataset&&ev.target.dataset.gsxauto!==undefined){GS.b.autoShift=ev.target.checked}if(ev.target.id==='gPre'&&ev.target.value==='__saved'){let o=null;try{o=JSON.parse(localStorage.getItem('el-garage')||'null')}catch(_){}if(o&&GBASE[o.base]){GS.spec=null;GS.b={...GDEF(),...o};GS.built='';gFresh();ev.target.value='__saved';gApply();gPane()}return}
     if(ev.target.id==='gPre'){const p=GPRE[ev.target.value]||{};const keep={base:GS.b.base,diesel:GS.b.diesel,color:GS.b.color,cover:GS.b.cover};GS.b={...GDEF(),...p,...keep};if(GS.b.diesel){GS.b.fuel='95';if(GS.b.ind==='na')GS.b.ind='vgt'}gApply();gPane()}});
-  const hold=(id,k)=>{const el=$('#'+id);if(!el)return;const on=e=>{e.preventDefault();if(k!=='nos'&&GS.eng!=='run'&&!GS.blown){GS.eng='run';GS.rpm=Math.max(GS.rpm,300);$('#gStart').setAttribute('aria-pressed','true');$('span',$('#gStart')).textContent=gT('stop')}GS.held[k]=true;if(k==='nos')GS.nosOn=true;if(k==='launch')GS.held.gas=false;el.classList.add('on')},off=()=>{GS.held[k]=false;if(k==='nos')GS.nosOn=false;el.classList.remove('on')};
+  const hold=(id,k)=>{const el=$('#'+id);if(!el)return;const on=e=>{e.preventDefault();if(k!=='nos'&&k!=='brake'&&GS.eng!=='run'&&!GS.blown&&gCanStart()){GS.eng='run';GS.rpm=Math.max(GS.rpm,gKick());$('#gStart').setAttribute('aria-pressed','true');$('span',$('#gStart')).textContent=gT('stop')}GS.held[k]=true;if(k==='nos')GS.nosOn=true;if(k==='launch')GS.held.gas=false;el.classList.add('on')},off=()=>{GS.held[k]=false;if(k==='nos')GS.nosOn=false;el.classList.remove('on')};
     el.addEventListener('pointerdown',on);el.addEventListener('pointerup',off);el.addEventListener('pointerleave',off);el.addEventListener('pointercancel',off);el.addEventListener('contextmenu',e=>e.preventDefault())};
-  document.addEventListener('keydown',ev=>{if($('#garage').hidden||ev.target.matches('input,select,textarea'))return;if(ev.code==='Space'||ev.key==='w'||ev.key==='ArrowUp'){ev.preventDefault();if(GS.eng!=='run'){GS.eng='run';GS.rpm=300}GS.held.gas=true}if(ev.key==='l')GS.held.launch=true;if(ev.key==='n')GS.nosOn=true;if(GS.drive){if(ev.key==='s'||ev.key==='ArrowDown'){ev.preventDefault();GS.held.brake=true}if(!ev.repeat&&(ev.key==='e'||ev.key==='ArrowRight'))(GS.spec?gsxShift:gbShift)(1);if(!ev.repeat&&(ev.key==='q'||ev.key==='ArrowLeft'))(GS.spec?gsxShift:gbShift)(-1)}});
+  document.addEventListener('keydown',ev=>{if($('#garage').hidden||ev.target.matches('input,select,textarea'))return;if(ev.code==='Space'||ev.key==='w'||ev.key==='ArrowUp'){ev.preventDefault();if(GS.eng!=='run'&&!GS.blown&&gCanStart()){GS.eng='run';GS.rpm=Math.max(GS.rpm,gKick());$('#gStart').setAttribute('aria-pressed','true');$('span',$('#gStart')).textContent=gT('stop')}GS.held.gas=true}if(ev.key==='l')GS.held.launch=true;if(ev.key==='n')GS.nosOn=true;if(GS.drive){if(ev.key==='s'||ev.key==='ArrowDown'){ev.preventDefault();GS.held.brake=true}if(!ev.repeat&&(ev.key==='e'||ev.key==='ArrowRight'))(GS.spec?gsxShift:gbShift)(1);if(!ev.repeat&&(ev.key==='q'||ev.key==='ArrowLeft'))(GS.spec?gsxShift:gbShift)(-1)}});
   document.addEventListener('keyup',ev=>{if(ev.code==='Space'||ev.key==='w'||ev.key==='ArrowUp')GS.held.gas=false;if(ev.key==='l')GS.held.launch=false;if(ev.key==='n')GS.nosOn=false;if(ev.key==='s'||ev.key==='ArrowDown')GS.held.brake=false});
   GS.bindHold=()=>{hold('gGas','gas');hold('gLaunch','launch');hold('gNos','nos');hold('gBrake','brake')};
 }
@@ -10462,7 +10524,7 @@ function gTickSpec(dt){const id=GS.spec,sp=GSPEC[id],sx=GSX[id],run=GS.eng==='ru
   if(GS.drive&&sx){gsxDrive(dt,thr,run);ecoSpec(dt,run,thr);if(!GS.uiD||GS.t-GS.uiD>.1){GS.uiD=GS.t;gsxDriveHUD();ecoHUD()}}
   const e=E[id];if(!GS.spT||GS.t-GS.spT>.1){GS.spT=GS.t;const p=gSpecP(e,thr);let R={};try{R=gsxResults(id,e.compute(p,false)||{},GS.rpm/red,GS.boostNow)}catch(_){}GS.specP=p;GS.specR=R}
   const R=GS.specR||{},burnt=GS.drive&&GS.dr&&GS.dr.burn,on=run&&!burnt&&GS.rpm>(sp.idle*.5);
-  g3Frame(dt,{rpm:GS.rpm,run:on,thr:thr&&!burnt?1:0,load:thr?1:.15,boost:Math.max(GS.boostNow,thr?.25:0),egt:on?(thr?660:430):280,slow:GS.slow,explode:GS.explode,auto:GS.auto&&!GS.held.gas,labels:GS.labels,phases:GS.phases,flame:0,bov:(GS.t-(GS.bovT??-9))<.4?1:0,wg:clamp(GS.boostNow-.85,0,1)*6});
+  g3Frame(dt,{rpm:GS.rpm,run:on,thr:thr&&!burnt?1:0,load:thr?1:.15,boost:Math.max(GS.boostNow,thr?.25:0),egt:on?(thr?660:430):280,slow:GS.slow,explode:GS.explode,auto:GS.auto&&!GS.held.gas,labels:GS.labels,phases:GS.phases,flame:0,bov:(GS.t-(GS.bovT??-9))<.4?1:0,wg:clamp(GS.boostNow-.85,0,1)*6,smoke:gsxSmoke(id,on,thr)});gGaugeTick(dt);
   gTach();
   if(!GS.uiT||GS.t-GS.uiT>.12){GS.uiT=GS.t;const k=on?1:0,pw=R.power??R.Pnet??R.Pout??0,F=R.thrust??(R.F!=null?R.F/1000:null);
     const t1=id==='rocket'?(R.Isp||0):id==='turbofan'?(R.fuelKgh||0):Math.max(0,pw);$('#gLhp').textContent=fmt(t1*k,t1*k<10?1:0);$('#gLnm').textContent=fmt(Math.max(0,(F!=null&&(id==='turbofan'||id==='rocket'))?F:(R.torque||R.T||0))*k,1);$('#gLbo').textContent=fmt(id==='rocket'?GS.rpm:id==='turbofan'?(R.eth||0)*k:Math.max(0,(R.eff||0)*(R.eff<=1?100:1))*k,0)+'%'}}
@@ -10935,18 +10997,18 @@ function gsxDef(g){return(g.o.find(o=>o.def)||g.o[0]).v}
 function gsxS(id){GS.sb=GS.sb||{};if(!GS.sb[id]){const sx=GSX[id]||{},st={p:{...(sx.init||{})},parts:{}};(sx.parts||[]).forEach(g=>st.parts[g.k]=gsxDef(g));GS.sb[id]=st}return GS.sb[id]}
 function gsxOpts(id){const st=gsxS(id);return(GSX[id]?.parts||[]).map(g=>g.o.find(o=>o.v===st.parts[g.k])||g.o[0])}
 // add up every chosen part: pw power ×, ef efficiency ×, red/idle shifts, boost (turbo power that arrives with rpm), spool time, risk, sound, 3D, vehicle
-function gsxSum(id){const s={pw:1,ef:1,red:0,idle:0,boost:0,boostK:1,spool:0,inert:1,risk:0,lowcut:0,cd:1,eta:.8,mass:0,kwh:75,rg:.12,h2:5.6,boostKW:30,awd:0,rev:0,fdk:1,snd:{},vis:{},p:{},veh:{}};
+function gsxSum(id){const s={pw:1,ef:1,red:0,idle:0,boost:0,boostK:1,spool:0,inert:1,risk:0,lowcut:0,cd:1,eta:.8,mass:0,kwh:75,rg:.12,h2:5.6,boostKW:30,awd:0,rev:0,fdk:1,snd:{},vis:{},p:{},veh:{},smoke:{},gauge:{},lock:0,kwhK:1,topcut:0};
   for(const o of gsxOpts(id)){s.pw*=o.pw||1;s.ef*=o.ef||1;s.red+=o.red||0;s.idle+=o.idle||0;s.boost+=o.boost||0;s.boostK*=o.boostK||1;s.spool+=o.spool||0;s.inert*=o.inert||1;s.risk+=o.risk||0;s.lowcut+=o.lowcut||0;s.cd*=o.cd||1;s.fdk*=o.fdk||1;
     if(o.eta)s.eta=o.eta;s.mass+=o.mass||0;if(o.kwh)s.kwh=o.kwh;if(o.rg!=null)s.rg=o.rg;if(o.h2)s.h2=o.h2;if(o.boostKW)s.boostKW=o.boostKW;if(o.awd)s.awd=1;if(o.rev)s.rev=1;
-    Object.assign(s.vis,o.vis||{});Object.assign(s.veh,o.veh||{});for(const k in(o.snd||{}))s.snd[k]=k==='gain'||k==='lp'?(s.snd[k]||1)*o.snd[k]:(s.snd[k]||0)+o.snd[k];Object.assign(s.p,o.p||{})}
-  s.boost*=s.boost?s.boostK:1;s.lowcut=Math.max(0,s.lowcut);return s}
+    Object.assign(s.vis,o.vis||{});Object.assign(s.veh,o.veh||{});s.topcut+=o.topcut||0;s.kwhK*=o.kwhK||1;if(o.lock)s.lock=1;for(const k in(o.smoke||{}))s.smoke[k]=(s.smoke[k]||0)+o.smoke[k];for(const k in(o.gauge||{}))s.gauge[k]=/K$/.test(k)?(s.gauge[k]??1)*o.gauge[k]:(s.gauge[k]||0)+o.gauge[k];for(const k in(o.snd||{}))s.snd[k]=k==='gain'||k==='lp'?(s.snd[k]||1)*o.snd[k]:(s.snd[k]||0)+o.snd[k];Object.assign(s.p,o.p||{})}
+  s.boost*=s.boost?s.boostK:1;s.lowcut=Math.max(0,s.lowcut);s.kwh*=s.kwhK;return s}
 // simulator settings for this build: defaults → your tune → part changes (big bore, high-compression head…)
 function gsxParams(e){const id=e.id,st=gsxS(id),sum=gsxSum(id),p={};for(const q of e.params)p[q.k]=q.def;
   for(const k in st.p){const q=e.params.find(x=>x.k===k);if(q)p[k]=q.type==='sel'?st.p[k]:Math.max(q.min,Math.min(q.max,+st.p[k]))}
   for(const k in sum.p){const v=sum.p[k],q=e.params.find(x=>x.k===k);if(!q||q.type==='sel')continue;let nv=typeof v==='string'?(v[0]==='*'?p[k]*+v.slice(1):v[0]==='+'?p[k]+ +v.slice(1):+v):v;p[k]=Math.max(q.min,Math.min(q.max*1.15,nv))}
   return p}
 // the parts scale what the simulator computes; a turbo's extra power arrives with speed (boostNow 0…1)
-function gsxResults(id,R,frac,boostNow){const s=gsxSum(id);let k=s.pw*(1+s.boost*(boostNow??Math.max(0,Math.min(1,(frac-.3)/.4))));if(s.lowcut)k*=1-s.lowcut*Math.max(0,1-frac/.55);
+function gsxResults(id,R,frac,boostNow){const s=gsxSum(id);let k=s.pw*(1+s.boost*(boostNow??Math.max(0,Math.min(1,(frac-.3)/.4))));if(s.lowcut)k*=1-s.lowcut*Math.max(0,1-frac/.55);if(s.topcut)k*=1-s.topcut*Math.max(0,(frac-.5)/.5);
   const o={...R};for(const q of['power','torque','hp','Pb','thrust','F','Pnet','Pout','T','Pel','W','We','Tmax'])if(typeof o[q]==='number')o[q]*=k;
   if(typeof o.eff==='number')o.eff=Math.min(o.eff*s.ef,o.eff>1?99:.99);if(typeof o.fuel==='number')o.fuel*=k/s.ef;if(typeof o.fuelKgh==='number')o.fuelKgh*=k/s.ef;if(typeof o.tsfc==='number')o.tsfc/=s.ef;if(typeof o.Isp==='number')o.Isp*=s.ef;if(typeof o.md==='number')o.md*=k/s.ef;if(typeof o.h2kg==='number')o.h2kg*=k/s.ef;return o}
 function gsxRed(id){return GSPEC[id].red+gsxSum(id).red}
@@ -10959,7 +11021,7 @@ function gsxVis(id){const s=gsxSum(id),p=E[id]?gsxParams(E[id]):{},v={...s.vis};
   if(id==='fuelcell'){v.cells=Math.round((p.cells||330)/30)*30;v.area=Math.round((p.area||240)/40)*40}if(id==='rocket'){v.eps=p.eps||16}return v}
 
 /* ---------- UI: Tune / Parts / Drive / About for the non-car engines ---------- */
-const GSXL={tune:L3('Tune','الضبط','ट्यून'),parts:L3('Parts','القطع','पार्ट्स'),drive:L3('Drive','القيادة','ड्राइव'),info:L3('About','عن المحرك','जानकारी'),
+const GSXL={cond:L3('Faults','الأعطال','खराबियाँ'),tune:L3('Tune','الضبط','ट्यून'),parts:L3('Parts','القطع','पार्ट्स'),drive:L3('Drive','القيادة','ड्राइव'),info:L3('About','عن المحرك','जानकारी'),
   tuneNote:L3('The real design numbers of this engine. Change them and watch the power, the curve and the 3D model react.','أرقام التصميم الحقيقية لهذا المحرك. غيّرها وشاهد القوة والمنحنى والنموذج ثلاثي الأبعاد يتغيرون.','इस इंजन के असली डिज़ाइन नंबर। इन्हें बदलें और पावर, कर्व व 3D मॉडल को बदलते देखें।'),
   partsNote:L3('Bolt on real upgrade parts for this engine. Many of them change the 3D model too.','ركّب قطع ترقية حقيقية لهذا المحرك. كثير منها يغيّر النموذج ثلاثي الأبعاد أيضاً.','इस इंजन के असली अपग्रेड पार्ट्स लगाएँ। कई 3D मॉडल भी बदलते हैं।'),
   res:L3('Results','النتائج','परिणाम'),pc:L3('Chamber pressure','ضغط الغرفة','कक्ष दाब'),md:L3('Propellant flow','تدفق الوقود','ईंधन प्रवाह'),eth:L3('Thermal efficiency','الكفاءة الحرارية','ऊष्मीय दक्षता'),pk:L3('Peak power','أقصى قدرة','अधिकतम पावर'),pt:L3('Peak torque','أقصى عزم','अधिकतम टॉर्क'),pth:L3('Peak thrust','أقصى دفع','अधिकतम थ्रस्ट'),best:L3('Best efficiency','أفضل كفاءة','सर्वश्रेष्ठ दक्षता'),
@@ -10967,7 +11029,7 @@ const GSXL={tune:L3('Tune','الضبط','ट्यून'),parts:L3('Parts','ا�
   health:L3('Engine health','صحة المحرك','इंजन स्वास्थ्य'),stock:L3('vs stock','مقارنة بالوكالة','स्टॉक की तुलना में'),curve:L3('Solid: your build · dashed: stock','الخط المتصل: تعديلك · المتقطع: الوكالة','ठोस: आपका बिल्ड · डैश: स्टॉक'),
   veh:L3('Vehicle','المركبة','वाहन'),pickup:L3('Pickup truck, 2.6 t (manual / auto) or a 16 t truck with the 18-speed box.','بيك أب ٢٫٦ طن (يدوي / أوتوماتيك) أو شاحنة ١٦ طناً بجير ١٨ سرعة.','पिकअप ट्रक 2.6 t (मैनुअल / ऑटो) या 18-स्पीड बॉक्स के साथ 16 t ट्रक।'),
   shift:L3('Auto shift','تبديل تلقائي','ऑटो शिफ़्ट'),runOk:L3('All good — safe to run.','كل شيء جيد — آمن للتشغيل.','सब ठीक — चलाना सुरक्षित।'),runRisk:L3('Pushing hard: watch the health bar.','ضغط عالٍ: راقب شريط الصحة.','बहुत ज़्यादा दबाव: हेल्थ बार देखें।')};
-function gPaneSpec(){const id=GS.spec,e=E[id],sx=GSX[id];if(!sx){$('#gPane').innerHTML='';return}const tabs=['tune','parts','drive','info'];if(!tabs.includes(GS.stab))GS.stab='parts';
+function gPaneSpec(){const id=GS.spec,e=E[id],sx=GSX[id];if(!sx){$('#gPane').innerHTML='';return}const tabs=['tune','parts','cond','drive','info'];if(!tabs.includes(GS.stab))GS.stab='parts';
   let h=`<div class="gtabs gsx-tabs" role="tablist">${tabs.map(k=>`<button type="button" role="tab" data-gstab="${k}" class="${GS.stab===k?'on':''}" aria-selected="${GS.stab===k}">${esc(sxT(GSXL[k]))}</button>`).join('')}</div><div class="gsx-body">`;
   const st=gsxS(id);
   if(GS.stab==='tune'){h+=`<p class="gnote">${esc(sxT(GSXL.tuneNote))}</p>`;
@@ -10975,7 +11037,8 @@ function gPaneSpec(){const id=GS.spec,e=E[id],sx=GSX[id];if(!sx){$('#gPane').inn
       if(q.type==='sel')h+=`<div class="gsl"><div class="gsl-h"><label>${esc(lab)}</label></div><div class="gcards c3">${q.opts.map(o=>`<button type="button" class="gcard${String(o)===String(v)?' on':''}" data-gsp="${k}" data-gv="${o}"><b>${esc(t('opt.'+k+'.'+o))}</b></button>`).join('')}</div><small>${esc(help)}</small></div>`;
       else h+=`<div class="gsl"><div class="gsl-h"><label for="gsp_${k}">${esc(lab)}</label><output id="gspo_${k}" dir="ltr">${gsxFmt(q,v)}</output></div><input type="range" id="gsp_${k}" data-gsr="${k}" min="${q.min}" max="${q.max}" step="${q.step||1}" value="${v}"><small>${esc(help)}</small></div>`}
     h+=`<button type="button" class="txtbtn" id="gsxReset">${esc(gT('reset'))}</button>`}
-  if(GS.stab==='parts'){h+=`<p class="gnote">${esc(sxT(GSXL.partsNote))}</p>`;for(const g of sx.parts){h+=`<h3 class="gh">${esc(sxT(g.n))}</h3><div class="gcards c2">${g.o.map(o=>`<button type="button" class="gcard${st.parts[g.k]===o.v?' on':''}" data-gsx="${g.k}" data-gv="${o.v}"><b>${esc(sxT(o.n))}</b><small>${esc(sxT(o.d))}</small></button>`).join('')}</div>`}}
+  if(GS.stab==='parts'){h+=`<p class="gnote">${esc(sxT(GSXL.partsNote))}</p>`;for(const g of sx.parts){if(g.f)continue;h+=`<h3 class="gh">${esc(sxT(g.n))}</h3><div class="gcards c2">${g.o.map(o=>`<button type="button" class="gcard${st.parts[g.k]===o.v?' on':''}" data-gsx="${g.k}" data-gv="${o.v}"><b>${esc(sxT(o.n))}</b><small>${esc(sxT(o.d))}</small></button>`).join('')}</div>`}}
+  if(GS.stab==='cond')h+=gsxPaneCond(id);
   if(GS.stab==='drive'){const d=sx.drive,X=GSXD[d.type];h+=`<p class="gnote">${esc(sxT(X.how))}</p>`;if(d.veh==='pickup')h+=`<p class="gnote">${esc(sxT(GSXL.pickup))}</p>`;
     const boxes=d.boxes||GSPEC[id].box;if(boxes){const cur=gsxBox(id);h+=gH('gbox')+`<div class="gcards c2">${boxes.map(v=>`<button type="button" class="gcard${cur===v?' on':''}" data-gsbox="${v}"><b>${esc(gT('gb.o.'+v))}</b><small>${esc(gT('gb.d.'+v))}</small></button>`).join('')}</div>`}
     if(d.type==='car'||d.type==='moto')h+=`<label class="gtog"><input type="checkbox" data-gsxauto ${GS.b.autoShift!==false?'checked':''}><span>${esc(sxT(GSXL.shift))}</span></label>`;
@@ -11224,6 +11287,234 @@ A('fuelcell',[
   {v:'both',n:L3('Ejector + blower','قاذف + نافخ','इजेक्टर + ब्लोअर'),d:L3('Ejector at high load, blower at low load: best of both.','القاذف عند الحمل العالي والنافخ عند المنخفض: أفضل الاثنين.','हाई लोड पर इजेक्टर, लो लोड पर ब्लोअर: दोनों का फ़ायदा।'),ef:1.015}]}]);
 })();
 
+/* EngineLab — Faults & gauges.
+   Car engines: nine real-world faults (each changes the physics, the sound, the exhaust smoke and the warning light),
+   a live gauge cluster (boost / vacuum, lambda, EGT, oil pressure + temperature, coolant, knock retard, compression test),
+   OBD-II trouble codes, and a "mystery fault" game: the garage hides a fault and you diagnose it.
+   The ten other engines get their own faults (worn apex seals, hydraulic lock, FOD, priming, dried membrane…) and gauges. */
+const CT={
+  tab:['Faults','الأعطال','खराबियाँ'],gauges:['Gauges','العدادات','गेज'],
+  note:['Switch on a fault and run the engine: watch the gauges, listen, and look at the exhaust smoke. Real mechanics diagnose engines exactly like this.','شغّل عطلاً ثم شغّل المحرك: راقب العدادات واستمع وانظر إلى دخان العادم. هكذا يشخّص الميكانيكيون المحركات فعلاً.','कोई खराबी चालू करें और इंजन चलाएँ: गेज देखें, सुनें और धुआँ देखें। असली मैकेनिक ऐसे ही इंजन जाँचते हैं।'],
+  hBreath:['Air & sensors','الهواء والحساسات','हवा व सेंसर'],hFuel:['Fuel & ignition','الوقود والإشعال','ईंधन व इग्निशन'],hMech:['Mechanical wear','التآكل الميكانيكي','यांत्रिक घिसाव'],hTurbo:['Turbo','التوربو','टर्बो'],hFaults:['Faults','الأعطال','खराबियाँ'],
+  // mystery game
+  mysT:['Mystery fault','عطل غامض','रहस्यमय खराबी'],mysD:['The garage hides one fault in this engine. Run it, use the gauges, listen and watch the smoke, then pick what is wrong.','يخفي الكراج عطلاً واحداً في هذا المحرك. شغّله واستخدم العدادات واستمع وراقب الدخان، ثم اختر العطل.','गैराज इस इंजन में एक खराबी छिपाता है। इसे चलाएँ, गेज देखें, सुनें, धुआँ देखें, फिर बताएँ क्या खराब है।'],
+  mysGo:['Start a mystery','ابدأ لغزاً','रहस्य शुरू करें'],mysQ:['What is wrong with this engine?','ما العطل في هذا المحرك؟','इस इंजन में क्या खराब है?'],mysHint:['Tip: start the engine and switch on Gauges under the 3D view.','نصيحة: شغّل المحرك وفعّل العدادات أسفل العرض ثلاثي الأبعاد.','सुझाव: इंजन चालू करें और 3D व्यू के नीचे गेज चालू करें।'],
+  mysOk:['Correct! Well diagnosed.','صحيح! تشخيص ممتاز.','सही! बढ़िया निदान।'],mysNo:['Not this one, look again.','ليس هذا، انظر مجدداً.','यह नहीं, फिर देखें।'],mysGive:['Show the answer','أظهر الإجابة','उत्तर दिखाएँ'],mysAns:['It was:','كان العطل:','खराबी थी:'],
+  mysFix:['Fix it','أصلحه','ठीक करें'],mysNew:['New mystery','لغز جديد','नया रहस्य'],mysTries:['Guesses: {n}','المحاولات: {n}','अनुमान: {n}'],
+  // check-engine light
+  cel:['CHECK ENGINE','افحص المحرك','चेक इंजन'],obd:['OBD-II scanner','قارئ أعطال OBD-II','OBD-II स्कैनर'],obdNone:['No trouble codes stored.','لا توجد رموز أعطال.','कोई फ़ॉल्ट कोड नहीं।'],obdOff:['Start the engine to read live codes.','شغّل المحرك لقراءة الرموز.','कोड पढ़ने के लिए इंजन चालू करें।'],
+  noCode:['No warning light for this one: find it with the gauges, the sound and the smoke.','لا يضيء ضوء تحذير لهذا العطل: اكتشفه بالعدادات والصوت والدخان.','इसकी चेतावनी लाइट नहीं जलती: गेज, आवाज़ और धुएँ से पहचानें।'],
+  lockT:['HYDRAULIC LOCK','قفل هيدروليكي','हाइड्रोलिक लॉक'],lockD:['Oil has filled a lower cylinder, and liquid cannot be compressed. Starting now would bend a connecting rod. Turn off the fault (drain the cylinder) first.','امتلأت أسطوانة سفلية بالزيت، والسائل لا ينضغط. التشغيل الآن سيثني ذراع توصيل. أطفئ العطل (صرّف الأسطوانة) أولاً.','नीचे के सिलेंडर में तेल भर गया है, और तरल दबता नहीं। अभी चालू करने से कनेक्टिंग रॉड मुड़ जाएगी। पहले खराबी बंद करें (सिलेंडर खाली करें)।'],lockOk:['OK','حسناً','ठीक है'],
+  // gauges
+  g:{boost:['Boost','البوست','बूस्ट'],vac:['Vacuum','التخلخل','वैक्यूम'],lam:['Lambda λ','لامدا λ','लैम्ब्डा λ'],egt:['EGT','حرارة العادم','EGT'],oilP:['Oil press.','ضغط الزيت','तेल दाब'],oilT:['Oil temp','حرارة الزيت','तेल तापमान'],cool:['Coolant','سائل التبريد','कूलेंट'],knock:['Knock retard','تأخير الدق','नॉक रिटार्ड'],comp:['Compression','الانضغاط','कम्प्रेशन'],
+    cht:['Cyl. head','رأس الأسطوانة','सिलेंडर हेड'],man:['Manifold','ضغط المشعب','मैनिफ़ोल्ड'],n1:['N1 fan','N1 المروحة','N1 फ़ैन'],n2:['N2 core','N2 القلب','N2 कोर'],ff:['Fuel flow','تدفق الوقود','ईंधन प्रवाह'],vib:['Vibration','الاهتزاز','कंपन'],
+    pc:['Chamber','ضغط الغرفة','कक्ष दाब'],isp:['Isp','الدفع النوعي','Isp'],of:['O/F ratio','نسبة O/F','O/F अनुपात'],tc:['Gas temp','حرارة الغاز','गैस तापमान'],
+    pb:['Boiler','المرجل','बॉयलर'],chest:['Steam chest','صندوق البخار','स्टीम चेस्ट'],water:['Water level','منسوب الماء','पानी स्तर'],cut:['Cut-off','القطع','कट-ऑफ़'],
+    th:['Hot end','الطرف الساخن','गर्म सिरा'],tcold:['Cold end','الطرف البارد','ठंडा सिरा'],pm:['Mean press.','الضغط المتوسط','औसत दाब'],swing:['Press. swing','تأرجح الضغط','दाब उतार-चढ़ाव'],
+    vbat:['Battery','البطارية','बैटरी'],ibat:['Current','التيار','करंट'],tmot:['Motor temp','حرارة المحرك','मोटर तापमान'],tinv:['Inverter','العاكس','इन्वर्टर'],
+    vcell:['Cell volts','جهد الخلية','सेल वोल्ट'],vstack:['Stack volts','جهد الكومة','स्टैक वोल्ट'],istack:['Current','التيار','करंट'],tstack:['Stack temp','حرارة الكومة','स्टैक तापमान'],h2:['H₂ flow','تدفق H₂','H₂ प्रवाह']}};
+const gct=k=>{const v=CT[k];return v?(LANG==='ar'?v[1]:LANG==='hi'?v[2]:v[0]):k};
+const gctg=k=>{const v=CT.g[k];return v?(LANG==='ar'?v[1]:LANG==='hi'?v[2]:v[0]):k};
+// OBD-II codes (standard SAE meanings)
+const GOBD={P0171:['System too lean (bank 1)','الخليط فقير جداً (البنك 1)','सिस्टम बहुत लीन (बैंक 1)'],P0172:['System too rich (bank 1)','الخليط غني جداً (البنك 1)','सिस्टम बहुत रिच (बैंक 1)'],P0101:['Mass air flow sensor range/performance','حساس تدفق الهواء خارج المدى','मास एयर फ़्लो सेंसर रेंज/प्रदर्शन'],
+  P0300:['Random / multiple cylinder misfire','احتراق متقطع في عدة أسطوانات','रैंडम / कई सिलेंडर मिसफ़ायर'],P0016:['Crankshaft / camshaft position correlation','عدم توافق موضع الكرنك والكامة','क्रैंकशाफ़्ट / कैमशाफ़्ट स्थिति मेल नहीं'],P0217:['Engine coolant over-temperature','ارتفاع حرارة سائل التبريد','इंजन कूलेंट अधिक तापमान'],
+  P0234:['Turbocharger overboost','زيادة بوست التوربو','टर्बो ओवरबूस्ट'],P0299:['Turbocharger underboost','نقص بوست التوربو','टर्बो अंडरबूस्ट']};
+const obdT=c=>{const v=GOBD[c];return v?(LANG==='ar'?v[1]:LANG==='hi'?v[2]:v[0]):''};
+
+/* ---------- car faults: names, explanations (cause → symptoms) ---------- */
+(function(){
+const S={fAir:['Clogged air filter','فلتر هواء مسدود','बंद एयर फ़िल्टर'],fVac:['Vacuum leak','تسريب تخلخل (فاكيوم)','वैक्यूम लीक'],fMaf:['Dirty MAF sensor','حساس MAF متّسخ','गंदा MAF सेंसर'],fInj:['Leaking injector','بخاخ يسرّب','लीक इंजेक्टर'],fPlugs:['Worn spark plugs','بواجي مستهلكة','घिसे स्पार्क प्लग'],
+  fRings:['Worn piston rings','شنابر مستهلكة','घिसी पिस्टन रिंग'],fChain:['Stretched timing chain','جنزير توقيت مرتخٍ','खिंची टाइमिंग चेन'],fGasket:['Blown head gasket','جوان رأس محروق','फटी हेड गैस्केट']};
+const D={fAir:['Dirt chokes the airflow at high rpm: less top-end power, a slightly louder intake. No warning light: you find it by looking at the filter.','الأوساخ تخنق الهواء في الدوران العالي: قوة أقل في الأعلى وصوت سحب أعلى قليلاً. لا يضيء ضوء: تكتشفه بفحص الفلتر.','गंदगी ऊँचे rpm पर हवा रोकती है: ऊपर कम पावर, इनटेक थोड़ा तेज़। कोई लाइट नहीं: फ़िल्टर देखकर पता चलता है।'],
+  fVac:['A split hose lets in air the sensor never measured: lean mixture, a hiss, a hunting idle and less vacuum on the gauge (code P0171).','خرطوم مشقوق يُدخل هواءً لم يقسه الحساس: خليط فقير وصفير وسلانسيه متذبذب وتخلخل أقل على العداد (رمز P0171).','फटी होज़ से बिना मापी हवा आती है: लीन मिश्रण, सीटी, डगमगाता आइडल और गेज पर कम वैक्यूम (कोड P0171)।'],
+  fMaf:['Oil or dust on the hot wire makes it read less air than there is: the ECU fuels lean, the engine hesitates and loses power (P0101).','الزيت أو الغبار على السلك الساخن يجعله يقرأ هواءً أقل: الكمبيوتر يضخ وقوداً أقل والمحرك يتردد ويفقد القوة (P0101).','गर्म तार पर तेल या धूल से वह कम हवा पढ़ता है: ECU लीन ईंधन देता है, इंजन झिझकता है और पावर घटती है (P0101)।'],
+  fInj:['A dribbling nozzle adds extra fuel: rich mixture, black smoke, rough idle and higher fuel use (P0172).','بخاخ يقطّر يضيف وقوداً زائداً: خليط غني ودخان أسود وسلانسيه خشن واستهلاك أعلى (P0172).','टपकता नोज़ल अतिरिक्त ईंधन देता है: रिच मिश्रण, काला धुआँ, खुरदुरा आइडल, ज़्यादा खपत (P0172)।'],
+  fPlugs:['Worn electrodes need more voltage to spark: misfires under load and boost, a stumbling sound, hot exhaust (P0300).','الأقطاب المستهلكة تحتاج جهداً أعلى للشرارة: احتراق متقطع مع الحمل والبوست وصوت متعثر وعادم ساخن (P0300).','घिसे इलेक्ट्रोड को स्पार्क के लिए ज़्यादा वोल्टेज चाहिए: लोड व बूस्ट पर मिसफ़ायर, लड़खड़ाती आवाज़, गर्म एग्ज़ॉस्ट (P0300)।'],
+  fRings:['Gas blows past the pistons and oil gets into the chambers: blue smoke (worst when you lift off), low compression, less power.','الغاز يتسرب حول المكابس والزيت يدخل غرف الاحتراق: دخان أزرق (أسوأ عند رفع القدم) وانضغاط منخفض وقوة أقل.','गैस पिस्टन के पार निकलती है और तेल चैंबर में जाता है: नीला धुआँ (पैर उठाने पर ज़्यादा), कम कम्प्रेशन, कम पावर।'],
+  fChain:['The chain has stretched so the cams run late: a rattle at idle, power moves higher and low-end torque drops (P0016).','الجنزير ارتخى فتتأخر الكامات: طقطقة في السلانسيه وتنتقل القوة للأعلى ويقل العزم السفلي (P0016).','चेन खिंच गई है, कैम देर से चलते हैं: आइडल पर खड़खड़, पावर ऊपर खिसकती है, नीचे टॉर्क घटता है (P0016)।'],
+  fGasket:['Coolant leaks into a cylinder: sweet white smoke, overheating, misfire at idle and low compression on one cylinder. Boost makes it worse (P0217).','سائل التبريد يتسرب إلى أسطوانة: دخان أبيض حلو الرائحة وارتفاع حرارة واحتراق متقطع وانضغاط منخفض في أسطوانة. البوست يزيده سوءاً (P0217).','कूलेंट सिलेंडर में रिसता है: मीठा सफ़ेद धुआँ, ओवरहीटिंग, आइडल पर मिसफ़ायर, एक सिलेंडर में कम कम्प्रेशन। बूस्ट से बिगड़ता है (P0217)।']};
+const W={ok:['Wastegate working','البوابة تعمل','वेस्टगेट ठीक','Boost is held at the target you set.','البوست يثبت عند القيمة المطلوبة.','बूस्ट आपके तय लक्ष्य पर रहता है।'],shut:['Wastegate stuck shut','البوابة عالقة مغلقة','वेस्टगेट बंद अटका','Exhaust cannot bypass the turbine: boost creeps far above target, then the ECU cuts power to protect the engine (limp mode, P0234).','العادم لا يتجاوز التوربين: البوست يرتفع كثيراً فوق المطلوب ثم يخفّض الكمبيوتر القوة لحماية المحرك (وضع الطوارئ، P0234).','एग्ज़ॉस्ट टर्बाइन को बायपास नहीं कर पाता: बूस्ट लक्ष्य से बहुत ऊपर जाता है, फिर ECU इंजन बचाने के लिए पावर घटाता है (लिम्प मोड, P0234)।'],
+  open:['Wastegate stuck open','البوابة عالقة مفتوحة','वेस्टगेट खुला अटका','Exhaust escapes past the turbine: almost no boost, the car feels naturally aspirated (P0299).','العادم يهرب حول التوربين: بوست شبه معدوم والسيارة كأنها بدون توربو (P0299).','एग्ज़ॉस्ट टर्बाइन के बगल से निकलता है: लगभग कोई बूस्ट नहीं, कार बिना टर्बो जैसी (P0299)।']};
+const L={en:0,ar:1,hi:2};
+for(const l in L){const g=I18N[l]&&I18N[l].gar;if(!g)continue;const i=L[l];g.s=g.s||{};g.sd=g.sd||{};g.o=g.o||{};g.od=g.od||{};g.h=g.h||{};g.tab=g.tab||{};g.v=g.v||{};
+  for(const k in S){g.s[k]=S[k][i];g.sd[k]=D[k][i]}g.o.fWg={};g.od.fWg={};for(const k in W){g.o.fWg[k]=W[k][i];g.od.fWg[k]=W[k][i+3]}
+  g.tab.cond=CT.tab[i];g.v.gauges=CT.gauges[i];for(const k of['hBreath','hFuel','hMech','hTurbo'])g.h[k]=CT[k][i]}
+})();
+const G_FAULTS=[['fAir',true],['fVac',true],['fMaf',true],['fInj',true],['fPlugs',true],['fRings',true],['fChain',true],['fGasket',true],['fWg','shut'],['fWg','open']];
+const gTurbo=b=>['t1','twin','tscroll','vgt','seq','etb','tc'].includes(b.ind);
+function gFaultOk(b,k,v){if(k==='fVac'||k==='fPlugs')return!b.diesel;if(k==='fWg')return gTurbo(b);return true}
+function gFaultName(k,v){return k==='fWg'?gT('o.fWg.'+v):gT('s.'+k)}
+// idle quality: a vacuum leak hunts, a misfire or a wet cylinder shakes
+function gIdleHunt(b){const t=GS.t||0;return(b.fVac&&!b.diesel?60+70*Math.sin(t*2.6):0)+((b.fGasket||b.fPlugs&&!b.diesel)?25*Math.sin(t*7.3):0)}
+
+/* ---------- smoke ---------- */
+const SMK={blue:0xa6bfe6,white:0xf4f6f8,black:0x262626};
+function gSmoke(b,run,thr,m){if(!run)return null;const out=[],idle=(b.diesel?GDIESEL[b.base]:GENG[b.base]).idle,lift=!thr&&GS.rpm>idle*1.6?1:0;
+  if(b.fRings)out.push({c:SMK.blue,a:.3+.45*lift+.2*thr});
+  if(b.fGasket)out.push({c:SMK.white,a:.5+.25*thr});
+  let blk=0;if(b.fInj)blk+=(b.diesel?.65:.38)*(.45+.55*thr);if(b.diesel&&thr&&GS.rpm<gRedline(b)*.55&&b.dpf==='off')blk+=.35;if(!b.diesel&&thr&&m&&m.lam<.8)blk+=.25;if(b.diesel&&b.fAir&&thr)blk+=.25;
+  if(blk)out.push({c:SMK.black,a:Math.min(1,blk),dark:1});return out.length?out:null}
+function gsxSmoke(id,on,thr){if(!on)return null;const s=gsxSum(id).smoke,out=[];let blue=(s.blue||0)+(id==='two'?.1:0);
+  if(blue)out.push({c:SMK.blue,a:Math.min(1,blue*(.7+.5*thr))});if(s.white)out.push({c:SMK.white,a:Math.min(1,s.white)});if(s.black)out.push({c:SMK.black,a:Math.min(1,s.black*(.5+.6*thr)),dark:1});return out.length?out:null}
+
+/* ---------- check-engine light + warnings ---------- */
+function gCelCodes(){const b=GS.b,run=GS.eng==='run'||!!GS.dyno;if(GS.spec||!run)return[];const c=new Set();
+  if(b.fVac&&!b.diesel)c.add('P0171');if(b.fMaf){c.add('P0101');if(!b.diesel)c.add('P0171')}if(b.fInj)c.add('P0172');if(b.fPlugs&&!b.diesel)c.add('P0300');if(b.fChain)c.add('P0016');
+  if(b.fGasket){c.add('P0300');if((GS.gg&&GS.gg.cool||0)>110)c.add('P0217')}if(gTurbo(b)&&b.fWg==='shut')c.add('P0234');if(gTurbo(b)&&b.fWg==='open')c.add('P0299');return[...c]}
+function gCelHud(){const el=$('#gCel');if(!el)return;const c=gCelCodes();el.hidden=!c.length;if(c.length){const txt='⚠ '+gct('cel')+' · '+c.join(' ');if(el.textContent!==txt)el.textContent=txt;el.title=c.map(x=>x+': '+obdT(x)).join('\n')}}
+function gFaultWarn(b){let h='';for(const[k,v]of G_FAULTS){if(b[k]!==v||!gFaultOk(b,k,v)||gMysHide(k))continue;h+=`<p class="gfw">🔧 <b>${esc(gFaultName(k,v))}</b>: ${esc(k==='fWg'?gT('od.fWg.'+v):gT('sd.'+k))}</p>`}return h}
+
+/* ---------- mystery fault ---------- */
+function gMysValid(){const M=GS.mys;if(!M)return false;if(M.spec!==(GS.spec||null)){GS.mys=null;return false}
+  if(M.spec){const st=gsxS(M.spec);if(st.parts[M.k]!=='on'){GS.mys=null;return false}return true}
+  if(GS.b[M.k]!==M.v){GS.mys=null;return false}return true}
+function gMysHide(k){return!!(GS.mys&&!GS.mys.done&&GS.mys.k===k&&gMysValid())}
+function gMysList(){if(GS.spec){return GSX[GS.spec].parts.filter(g=>g.f).map(g=>({k:g.k,v:'on',n:sxT(g.n)}))}const b=GS.b;return G_FAULTS.filter(([k,v])=>gFaultOk(b,k,v)).map(([k,v])=>({k,v,n:gFaultName(k,v)}))}
+function gMysStart(){const L=gMysList();if(!L.length)return;let pick=L[Math.floor(Math.random()*L.length)];if(GS.mys&&L.length>1&&pick.k===GS.mys.k&&pick.v===GS.mys.v)pick=L[(L.indexOf(pick)+1)%L.length];
+  if(GS.spec){const st=gsxS(GS.spec);for(const g of GSX[GS.spec].parts)if(g.f)st.parts[g.k]='ok';st.parts[pick.k]='on'}else{for(const[k]of G_FAULTS)GS.b[k]=GDEF()[k];GS.b[pick.k]=pick.v}
+  GS.mys={spec:GS.spec||null,k:pick.k,v:pick.v,n:0,wrong:[],done:false,gave:false};gApply();gPane()}
+function gMysGuess(k,v){const M=GS.mys;if(!M||M.done||!gMysValid())return;M.n++;if(M.k===k&&String(M.v)===String(v)){M.done=true;teachToast(gct('mysOk'))}else{M.wrong.push(k+':'+v);teachToast(gct('mysNo'))}gPane();if(M.done)gApply()}
+function gMysBox(){const M=gMysValid()?GS.mys:null;
+  if(!M)return`<div class="gmys"><b>🔍 ${esc(gct('mysT'))}</b><p>${esc(gct('mysD'))}</p><button type="button" class="btn sm" data-gmys="go">${esc(gct('mysGo'))}</button></div>`;
+  const L=gMysList();if(!M.done)return`<div class="gmys on"><b>🔍 ${esc(gct('mysQ'))}</b><p class="gmys-h">${esc(gct('mysHint'))}</p><div class="gmys-l">${L.map(o=>{const id=o.k+':'+o.v,w=M.wrong.includes(id);return`<button type="button" class="gmys-o${w?' no':''}" data-gmysg="${esc(id)}" ${w?'disabled':''}>${w?'✗ ':''}${esc(o.n)}</button>`}).join('')}</div><div class="gmys-f"><small>${esc(gct('mysTries').replace('{n}',M.n))}</small><button type="button" class="txtbtn" data-gmys="give">${esc(gct('mysGive'))}</button></div></div>`;
+  const o=L.find(x=>x.k===M.k&&String(x.v)===String(M.v));return`<div class="gmys done"><b>${M.gave?'💡 '+esc(gct('mysAns')):'✅ '+esc(gct('mysOk'))}</b><p><b>${esc(o?o.n:M.k)}</b>${M.gave?'':' · '+esc(gct('mysTries').replace('{n}',M.n))}</p><div class="gmys-f"><button type="button" class="btn sm" data-gmys="fix">${esc(gct('mysFix'))}</button><button type="button" class="btn sm ghost" data-gmys="go">${esc(gct('mysNew'))}</button></div></div>`}
+function gObdBox(){const run=GS.eng==='run'||!!GS.dyno,c=gCelCodes();return`<div class="gobd" id="gObd"><b>${esc(gct('obd'))}</b>${!run?`<p>${esc(gct('obdOff'))}</p>`:c.length?`<ul>${c.map(x=>`<li><code>${x}</code> ${esc(obdT(x))}</li>`).join('')}</ul>`:`<p>${esc(gct('obdNone'))}</p>`}</div>`}
+function gPaneCond(b){const myst=gMysValid()&&!GS.mys.done;let h=`<p class="gnote">${esc(gct('note'))}</p>`+gMysBox()+gObdBox();if(myst)return h;
+  h+=`<h3 class="gh">${esc(gct('hBreath'))}</h3>`+gToggle('fAir')+(b.diesel?'':gToggle('fVac'))+gToggle('fMaf');
+  h+=`<h3 class="gh">${esc(gct('hFuel'))}</h3>`+gToggle('fInj')+(b.diesel?'':gToggle('fPlugs'));
+  h+=`<h3 class="gh">${esc(gct('hMech'))}</h3>`+gToggle('fRings')+gToggle('fChain')+gToggle('fGasket');
+  if(gTurbo(b))h+=`<h3 class="gh">${esc(gct('hTurbo'))}</h3>`+gCards('fWg',[['ok'],['shut'],['open']],3);return h}
+function gsxPaneCond(id){const st=gsxS(id),fs=GSX[id].parts.filter(g=>g.f),myst=gMysValid()&&!GS.mys.done;let h=`<p class="gnote">${esc(gct('note'))}</p>`+gMysBox();if(myst||!fs.length)return h;
+  h+=`<h3 class="gh">${esc(gct('hFaults'))}</h3>`;for(const g of fs){const o=g.o.find(x=>x.v==='on');h+=`<label class="gtog"><input type="checkbox" data-gsxf="${g.k}" ${st.parts[g.k]==='on'?'checked':''}><span>${esc(sxT(g.n))}</span><small>${esc(sxT(o.d))}</small></label>`}return h}
+function gCanStart(){if(GS.spec&&GSX[GS.spec]&&gsxSum(GS.spec).lock){const el=$('#gBlown');if(el){el.hidden=false;el.classList.add('lock');el.innerHTML=`<b>🛑 ${esc(gct('lockT'))}</b><p>${esc(gct('lockD'))}</p><button type="button" class="btn sm" id="gLockOk">${esc(gct('lockOk'))}</button>`}return false}return true}
+
+/* ---------- gauges ---------- */
+// tile: {k, v, d decimals, u unit, mn/mx bar range, w:[lo,hi] amber, b:[lo,hi] red, sub small text}
+function gLag(k,target,tau,dt){const G=GS.gg||(GS.gg={});if(G[k]==null)G[k]=target;G[k]+=(target-G[k])*(1-Math.exp(-dt/Math.max(.05,tau)));return G[k]}
+function gGaugesCar(dt){const b=GS.b,m=GS.m||{},run=GS.eng==='run'||!!GS.dyno,red=gRedline(b),f=Math.min(1.2,GS.rpm/red),thr=GS.thr||0,e=gEng(b),turbo=gTurbo(b),forced=turbo||['roots','screw','cent','tc'].includes(b.ind),out=[];
+  const oilT=gLag('oilT',run?92+30*thr*f+Math.max(0,((m.st&&m.st.heat)||0)-.6)*35-(b.oilCooler?10:0):70,14,dt),cool=gLag('cool',run?89+5*thr*f+(b.fGasket?18+14*thr:0)-({stock:0,alu:2,race:4}[b.rad]||0)*thr:75,10,dt);
+  if(forced){const tgt=Math.max(b.boost||0,b.sc||0,.3);out.push({k:'boost',v:Math.max(0,GS.boostNow),d:2,u:'bar',mn:0,mx:Math.max(1.5,tgt*1.6),w:[-9,tgt*1.1+.1],b:[-9,tgt*1.25+.15],sub:fmt(Math.max(0,GS.boostNow)*14.5,0)+' psi'})}
+  else if(!b.diesel){const hunt=b.fVac?.05*Math.sin((GS.t||0)*2.6):0,v=run?(thr?-.04:-.62+(b.fVac?.24:0)+(b.fChain?.1:0)+(b.fRings?.06:0)+({stock:0,street:.08,race:.18,custom:.1}[b.cam]||0)+hunt):0;out.push({k:'vac',v,d:2,u:'bar',mn:-1,mx:0,w:[-9,run&&!thr?-.46:9],b:[-9,9],sub:fmt(-v*29.53,0)+' inHg'})}
+  const lam=run&&m.lam?m.lam:null,afr=b.diesel?14.5:(GFUEL[b.fuel]||GFUEL['95']).afr;
+  out.push({k:'lam',v:lam,d:2,u:'λ',mn:.6,mx:b.diesel?3:1.3,w:b.diesel?[1.25,9]:[thr?.78:.93,thr?.95:1.06],b:b.diesel?[1.12,9]:[.7,1.12],sub:lam?'AFR '+fmt(lam*afr,1):''});
+  out.push({k:'egt',v:GS.egt||0,d:0,u:'°C',mn:0,mx:b.diesel?900:1100,w:[-9,b.diesel?700:900],b:[-9,b.diesel?760:980]});
+  const oilP=run?clamp((1.1+4.3*Math.pow(Math.min(1,GS.rpm/4200),.8))*({'0w20':.86,'5w30':1,'10w60':1.18}[b.oilVisc]||1)*(1-.007*(oilT-95))+(b.oil==='dry'?.3:0),0,6.8):0;
+  out.push({k:'oilP',v:oilP,d:1,u:'bar',mn:0,mx:7,w:[run?1:-9,9],b:[run?.6:-9,9]});
+  out.push({k:'oilT',v:oilT,d:0,u:'°C',mn:20,mx:160,w:[-99,125],b:[-99,140]});
+  out.push({k:'cool',v:cool,d:0,u:'°C',mn:20,mx:130,w:[-99,105],b:[-99,112]});
+  if(!b.diesel)out.push({k:'knock',v:run&&m.retard?m.retard:0,d:1,u:'°',mn:0,mx:12,w:[-9,2],b:[-9,6]});
+  const c0=1.013*Math.pow(e.cr,1.15)*(b.diesel?1.1:.78),cmp=c0*(b.fRings?.72:1)*(b.fGasket?.55:1)*(b.fChain?.92:1);
+  out.push({k:'comp',v:cmp,d:1,u:'bar',mn:0,mx:c0*1.3,w:[c0*.8,99],b:[c0*.62,99],sub:fmt(cmp*14.5,0)+' psi · min'});return out}
+function gGaugesSpec(dt){const id=GS.spec,R=GS.specR||{},p=GS.specP||{},s=gsxSum(id),G=s.gauge,sp=GSPEC[id],red=gsxRed(id),run=GS.eng==='run',on=run&&GS.rpm>Math.max(1,sp.idle*.5),thr=GS.thr||0,f=Math.min(1.2,GS.rpm/red),K=(k)=>G[k]??1,A=k=>G[k]||0,out=[],T=(o)=>out.push(o);
+  const comp=(c0)=>{const v=c0*K('compK');T({k:'comp',v,d:1,u:'bar',mn:0,mx:c0*1.3,w:[c0*.8,99],b:[c0*.62,99],sub:fmt(v*14.5,0)+' psi'})};
+  if(id==='wankel'){if(s.boost>0)T({k:'boost',v:on?GS.boostNow*.75*K('boostK'):0,d:2,u:'bar',mn:0,mx:1.4,w:[-9,1.05],b:[-9,1.2]});else T({k:'vac',v:on?(thr?-.05:-.55):0,d:2,u:'bar',mn:-1,mx:0,w:[-9,9],b:[-9,9]});
+    const lam=on?(thr?.86:1)*K('lamK'):null;T({k:'lam',v:lam,d:2,u:'λ',mn:.6,mx:1.3,w:[.78,1.06],b:[.7,1.12],sub:lam?'AFR '+fmt(lam*14.7,1):''});
+    T({k:'egt',v:gLag('egt',on?(R.egt||900)+A('egt'):40,1.6,dt),d:0,u:'°C',mn:0,mx:1300,w:[-9,1130],b:[-9,1200]});
+    T({k:'oilP',v:on?(1+4.2*Math.pow(Math.min(1,f*1.4),.8))*K('oilPK'):0,d:1,u:'bar',mn:0,mx:7,w:[on?1:-9,9],b:[on?.6:-9,9]});
+    T({k:'cool',v:gLag('cool',on?86+10*thr*f:70,10,dt),d:0,u:'°C',mn:20,mx:130,w:[-99,105],b:[-99,112]});
+    T({k:'knock',v:on?A('knock')*(.5+.5*thr):0,d:1,u:'°',mn:0,mx:12,w:[-9,2],b:[-9,6]});comp(8.5)}
+  else if(id==='two'){T({k:'egt',v:gLag('egt',on?(R.egt||800)+A('egt'):40,1.2,dt),d:0,u:'°C',mn:0,mx:1200,w:[-9,1000],b:[-9,1070]});
+    T({k:'cht',v:gLag('cht',on?95+105*thr*f+A('cht'):30,6,dt),d:0,u:'°C',mn:0,mx:280,w:[-99,210],b:[-99,240]});
+    const lam=on?(thr?.88:.98)*K('lamK'):null;T({k:'lam',v:lam,d:2,u:'λ',mn:.6,mx:1.3,w:[.78,1.06],b:[.7,1.12],sub:lam?'AFR '+fmt(lam*14.7,1):''});comp(11)}
+  else if(id==='opposed'){T({k:'boost',v:on?(p.boost||1.2)*(.35+.65*thr)*K('boostK'):0,d:2,u:'bar',mn:0,mx:3,w:[-9,9],b:[-9,9]});
+    {const nom=1.6+2.8*Math.min(1,f*1.4);T({k:'oilP',v:on?nom*K('oilPK'):0,d:1,u:'bar',mn:0,mx:6,w:[on?nom*.7:-9,9],b:[on?nom*.5:-9,9]})}
+    T({k:'egt',v:gLag('egt',on?(R.egt||550)+A('egt'):40,2,dt),d:0,u:'°C',mn:0,mx:1100,w:[-9,900],b:[-9,960]});
+    T({k:'oilT',v:gLag('oilT',on?85+15*thr*f+A('oilT'):50,14,dt),d:0,u:'°C',mn:20,mx:150,w:[-99,110],b:[-99,125]});
+    T({k:'cool',v:gLag('cool',on?80+8*thr*f:50,12,dt),d:0,u:'°C',mn:20,mx:130,w:[-99,100],b:[-99,108]})}
+  else if(id==='radial'){T({k:'man',v:on?(R.Pman||101325)/3386:29.9,d:1,u:'inHg',mn:10,mx:60,w:[-9,9e9],b:[-9,9e9]});
+    T({k:'cht',v:gLag('cht',on?150+80*thr*Math.min(1,f/.85)+A('cht'):25,9,dt),d:0,u:'°C',mn:0,mx:300,w:[-99,232],b:[-99,260]});
+    T({k:'oilP',v:on?(2.4+3*Math.min(1,f*1.5))*K('oilPK'):0,d:1,u:'bar',mn:0,mx:7,w:[on?2.8:-9,9],b:[on?1.7:-9,9]});
+    T({k:'oilT',v:gLag('oilT',on?55+30*thr*f:25,15,dt),d:0,u:'°C',mn:0,mx:120,w:[-99,90],b:[-99,100]});
+    T({k:'egt',v:gLag('egt',on?(R.egt||900)+A('egt'):40,1.6,dt),d:0,u:'°C',mn:0,mx:1200,w:[-9,1050],b:[-9,1120]});comp(1.013*Math.pow(p.cr||6.7,1.15)*.78)}
+  else if(id==='turbofan'){const n1=on?GS.rpm:0;T({k:'n1',v:n1,d:1,u:'%',mn:0,mx:110,w:[-9,102],b:[-9,105]});T({k:'n2',v:on?Math.min(104,58+.42*n1+A('n2')):0,d:1,u:'%',mn:0,mx:110,w:[-9,102],b:[-9,105]});
+    T({k:'egt',v:gLag('egt',on?(R.egt||500)+A('egt'):30,2.5,dt),d:0,u:'°C',mn:0,mx:950,w:[-9,700],b:[-9,760]});
+    T({k:'ff',v:on?R.fuelKgh||0:0,d:0,u:'kg/h',mn:0,mx:8000,w:[-9,9e9],b:[-9,9e9]});
+    T({k:'oilP',v:on?1.8+2.6*n1/100:0,d:1,u:'bar',mn:0,mx:6,w:[on?1.5:-9,9],b:[on?1:-9,9]});
+    T({k:'vib',v:on?(.4+.3*n1/100+A('vib')*n1/100):0,d:1,u:'',mn:0,mx:5,w:[-9,2.5],b:[-9,4]})}
+  else if(id==='rocket'){T({k:'pc',v:on?(p.pc||0)*K('pcK'):0,d:0,u:'bar',mn:0,mx:Math.max(150,(p.pc||100)*1.3),w:[-9,9e9],b:[-9,9e9]});T({k:'isp',v:on?R.Isp||0:0,d:0,u:'s',mn:0,mx:460,w:[-9,9e9],b:[-9,9e9]});
+    T({k:'of',v:p.of||0,d:2,u:'',mn:0,mx:8,w:[-9,9e9],b:[-9,9e9]});T({k:'tc',v:on?(R.tcC||0)+A('tc'):20,d:0,u:'°C',mn:0,mx:4000,w:[-9,9e9],b:[-9,9e9]});
+    T({k:'vib',v:on?.5+A('vib')*(.75+.25*Math.sin((GS.t||0)*37)):0,d:1,u:'g',mn:0,mx:6,w:[-9,2.5],b:[-9,4]})}
+  else if(id==='steam'){T({k:'pb',v:(p.pb||8)*K('pbK'),d:1,u:'bar',mn:0,mx:Math.max(14,(p.pb||8)*1.4),w:[-9,9e9],b:[-9,9e9]});T({k:'chest',v:on?(R.Padm||0)/1e5:0,d:1,u:'bar',mn:0,mx:Math.max(14,(p.pb||8)*1.4),w:[-9,9e9],b:[-9,9e9]});
+    const wl=62+A('water')+(on?3*Math.sin((GS.t||0)*1.7)*thr:0);T({k:'water',v:wl,d:0,u:'%',mn:0,mx:100,w:[40,80],b:[25,88]});T({k:'cut',v:p.cut||0,d:0,u:'%',mn:0,mx:90,w:[-9,9e9],b:[-9,9e9]})}
+  else if(id==='stirling'){T({k:'th',v:gLag('th',on?(p.th||650)+A('th'):40,8,dt),d:0,u:'°C',mn:0,mx:900,w:[-9,780],b:[-9,850]});T({k:'tcold',v:(p.tc||40)+(on?5*thr:0),d:0,u:'°C',mn:0,mx:120,w:[-9,80],b:[-9,95]});
+    T({k:'pm',v:(p.pm||20)*K('pmK'),d:1,u:'bar',mn:0,mx:Math.max(40,(p.pm||20)*1.5),w:[(p.pm||20)*.85,9e9],b:[(p.pm||20)*.6,9e9]});T({k:'swing',v:on?((R.pmaxB||0)-(R.pminB||0))*K('pmK'):0,d:1,u:'bar',mn:0,mx:40,w:[-9,9e9],b:[-9,9e9]})}
+  else if(id==='electric'){const I=on?Math.max(0,R.Ibat||0)*K('ibatK')*(thr?1:.08):0,V=(p.volt||400)*(1-(on?.035*(1+A('sag'))*Math.min(1.5,I/300):0));
+    T({k:'vbat',v:V,d:0,u:'V',mn:0,mx:(p.volt||400)*1.15,w:[(p.volt||400)*.88,9e9],b:[(p.volt||400)*.8,9e9]});T({k:'ibat',v:I,d:0,u:'A',mn:0,mx:Math.max(600,(R.Ir||400)*1.5),w:[-9,9e9],b:[-9,9e9]});
+    T({k:'tmot',v:gLag('tmot',on?40+50*thr*Math.min(1,GS.rpm/8000)+A('tmot'):28,14,dt),d:0,u:'°C',mn:0,mx:180,w:[-99,130],b:[-99,150]});T({k:'tinv',v:gLag('tinv',on?38+28*thr+A('tinv'):28,8,dt),d:0,u:'°C',mn:0,mx:130,w:[-99,85],b:[-99,100]})}
+  else if(id==='fuelcell'){const vc=on?(R.Vc||.8)+A('cellV'):0;T({k:'vcell',v:vc,d:3,u:'V',mn:0,mx:1.2,w:[on?.6:-9,9],b:[on?.5:-9,9]});T({k:'vstack',v:on?(R.Vs||0)*vc/Math.max(.3,R.Vc||.8):0,d:0,u:'V',mn:0,mx:400,w:[-9,9e9],b:[-9,9e9]});
+    T({k:'istack',v:on?R.I||0:0,d:0,u:'A',mn:0,mx:500,w:[-9,9e9],b:[-9,9e9]});T({k:'tstack',v:gLag('tst',on?(p.temp||75)+5*thr+A('temp'):30,10,dt),d:0,u:'°C',mn:0,mx:110,w:[-99,85],b:[-99,92]});T({k:'h2',v:on?R.h2kg||0:0,d:2,u:'kg/h',mn:0,mx:6,w:[-9,9e9],b:[-9,9e9]})}
+  return out}
+function gGaugeShow(){const el=$('#gGauges');if(!el)return;el.hidden=!GS.gauges;el.dataset.sig='';const bt=$('#gGauge');if(bt)bt.setAttribute('aria-pressed',GS.gauges?'true':'false');if(GS.gauges){GS.ggT=0;gGaugeTick(.2,true)}}
+function gGaugeTick(dt,force){GS.ggAcc=(GS.ggAcc||0)+dt;const el=$('#gGauges');
+  // keep the temperatures moving even when the cluster is hidden, so switching it on shows the truth
+  if(!force&&GS.ggAcc<.12)return;const step=GS.ggAcc;GS.ggAcc=0;let L;try{L=GS.spec?(GSX[GS.spec]?gGaugesSpec(step):[]):gGaugesCar(step)}catch(_){L=[]}
+  const now=performance.now();if(GS.ckT==null||now-GS.ckT>400){GS.ckT=now;if(!GS.spec)gCelHud();else{const ce=$('#gCel');if(ce)ce.hidden=true}const ob=$('#gObd');if(ob&&GS.tab==='cond'&&!GS.spec){const n=document.createElement('div');n.innerHTML=gObdBox();const nb=n.firstChild;if(nb.innerHTML!==ob.innerHTML)ob.innerHTML=nb.innerHTML}}
+  if(!el||el.hidden||!GS.gauges)return;const run=GS.eng==='run'||!!GS.dyno,sig=(GS.spec||GS.b.base)+LANG+L.map(x=>x.k).join(',');
+  if(el.dataset.sig!==sig){el.dataset.sig=sig;el.innerHTML=L.map(x=>`<div class="gg" data-k="${x.k}"><small>${esc(gctg(x.k))}</small><b dir="ltr"></b><em dir="ltr"></em><i><u></u></i></div>`).join('')}
+  L.forEach((x,i)=>{const n=el.children[i];if(!n)return;const v=x.v,has=v!=null&&isFinite(v);let st='ok';if(has&&run){if(v<x.b[0]||v>x.b[1])st='bad';else if(v<x.w[0]||v>x.w[1])st='warn'}
+    const cls='gg s-'+st;if(n.className!==cls)n.className=cls;const tx=has?fmt(v,x.d)+(x.u&&x.u!=='λ'?(x.u==='°'||x.u==='%'?'':' ')+x.u:''):'—';const bb=n.children[1],em=n.children[2],u=n.children[3].firstChild;if(bb.textContent!==tx)bb.textContent=tx;const sub=x.sub||'';if(em.textContent!==sub)em.textContent=sub;
+    u.style.width=(has?clamp((v-x.mn)/(x.mx-x.mn),0,1)*100:0).toFixed(1)+'%'})}
+
+/* ---------- events ---------- */
+document.addEventListener('click',ev=>{const a=ev.target.closest('[data-gmys],[data-gmysg],#gLockOk');if(!a||!a.closest('#garage'))return;
+  if(a.id==='gLockOk'){const el=$('#gBlown');el.hidden=true;el.classList.remove('lock');return}
+  if(a.dataset.gmysg){const[k,v]=a.dataset.gmysg.split(':');gMysGuess(k,v==='true'?true:v);return}
+  const m=a.dataset.gmys;if(m==='go'){gMysStart();if(!GS.gauges){GS.gauges=true;gGaugeShow()}}
+  else if(m==='give'&&GS.mys){GS.mys.done=true;GS.mys.gave=true;gApply();gPane()}
+  else if(m==='fix'&&GS.mys){const M=GS.mys;if(M.spec)gsxS(M.spec).parts[M.k]='ok';else GS.b[M.k]=GDEF()[M.k];GS.mys=null;gApply();gPane()}});
+document.addEventListener('change',ev=>{const k=ev.target.dataset&&ev.target.dataset.gsxf;if(!k||!GS.spec)return;const st=gsxS(GS.spec);st.parts[k]=ev.target.checked?'on':'ok';if(!ev.target.checked&&GS.spec==='radial'&&k==='fHydro'){const el=$('#gBlown');if(el&&el.classList.contains('lock')){el.hidden=true;el.classList.remove('lock')}}
+  gApply()});
+
+/* ---------- the other ten engines: faults (one group each, "ok" ↔ "on"; flagged f so they live on the Faults tab) ---------- */
+(function(){
+const F=(k,n,d,fx)=>({k,f:1,n,o:[{v:'ok',n:L3('Healthy','سليم','ठीक'),d:L3('','','')},Object.assign({v:'on',n,d},fx)]});
+const A=(id,list)=>{const sx=GSX[id];if(!sx)return;for(const g of list)if(!sx.parts.some(x=>x.k===g.k))sx.parts.push(g)};
+A('wankel',[
+ F('fApex',L3('Worn apex seals','موانع قمة مستهلكة','घिसी एपेक्स सील'),L3('Gas leaks between the rotor faces: weak power, hard hot starts, a rough idle. A rotary compression test shows it.','الغاز يتسرب بين أوجه الروتور: قوة ضعيفة وتشغيل صعب وهو ساخن وسلانسيه خشن. يظهر بفحص انضغاط الروتاري.','रोटर फ़ेस के बीच गैस रिसती है: कमज़ोर पावर, गर्म इंजन मुश्किल से चालू, खुरदुरा आइडल। रोटरी कम्प्रेशन टेस्ट से दिखता है।'),{pw:.8,ef:.9,risk:.15,snd:{rough:.06,mis:.04},gauge:{compK:.6,egt:-20},smoke:{blue:.15}}),
+ F('fCarbon',L3('Carbon build-up','تراكم الكربون','कार्बन जमाव'),L3('Deposits on the rotor and seals: lazy revs, pinging under load, puffs of dark smoke.','ترسبات على الروتور والموانع: دوران كسول وطرق مع الحمل ونفثات دخان داكن.','रोटर व सील पर जमाव: सुस्त रेव, लोड पर पिंगिंग, गहरे धुएँ के झोंके।'),{pw:.92,risk:.1,snd:{rough:.03},gauge:{knock:3,egt:25},smoke:{black:.15}}),
+ F('fFlood',L3('Flooded','غارق بالوقود','फ़्लडेड'),L3('Too much fuel has wet the plugs (rotaries flood if shut off cold): misfires, black smoke, it barely idles.','وقود زائد بلّل البواجي (الروتاري يغرق إذا أُطفئ بارداً): احتراق متقطع ودخان أسود وبالكاد يعمل.','ज़्यादा ईंधन ने प्लग गीले कर दिए (ठंडे बंद करने पर रोटरी फ़्लड होता है): मिसफ़ायर, काला धुआँ, मुश्किल से आइडल।'),{lowcut:.55,pw:.9,snd:{mis:.14},gauge:{lamK:.8,egt:-60},smoke:{black:.55}})]);
+A('two',[
+ F('fPiston',L3('Worn piston & ring','مكبس وشنبر مستهلكان','घिसा पिस्टन व रिंग'),L3('Blow-by into the crankcase leaves less pressure to push the charge up the transfer ports: low power, more blue smoke, low compression.','التسرب إلى علبة المرفق يقلل الضغط الدافع للشحنة عبر منافذ النقل: قوة منخفضة ودخان أزرق أكثر وانضغاط منخفض.','क्रैंककेस में ब्लो-बाय से ट्रांसफ़र पोर्ट तक चार्ज धकेलने का दबाव घटता है: कम पावर, ज़्यादा नीला धुआँ, कम कम्प्रेशन।'),{pw:.84,risk:.12,snd:{rough:.04},gauge:{compK:.62},smoke:{blue:.35}}),
+ F('fReed',L3('Broken reed petal','ريشة صمام مكسورة','टूटी रीड पेटल'),L3('The charge spits back out of the carburettor at low rpm: weak bottom end, fuel mist at the intake, hard starting.','الشحنة ترتد من الكاربريتر بالدوران المنخفض: قاع ضعيف ورذاذ وقود عند السحب وتشغيل صعب.','कम rpm पर चार्ज कार्बोरेटर से वापस थूकता है: कमज़ोर नीचला हिस्सा, इनटेक पर ईंधन धुंध, मुश्किल स्टार्ट।'),{lowcut:.5,pw:.95,snd:{rough:.05,mis:.04},gauge:{lamK:.92}}),
+ F('fPort',L3('Carbon on the exhaust port','كربون على منفذ العادم','एग्ज़ॉस्ट पोर्ट पर कार्बन'),L3('The port and power valve choke up: the bike no longer pulls "on the pipe" near the top, and it runs hotter.','المنفذ وصمام القوة ينسدان: الدراجة لا تسحب قرب القمة وتسخن أكثر.','पोर्ट व पावर वाल्व बंद होते हैं: बाइक ऊपर “ऑन द पाइप” नहीं खींचती और गर्म चलती है।'),{topcut:.35,red:-400,gauge:{egt:30,cht:12},smoke:{blue:.1}}),
+ F('fPlug',L3('Fouled spark plug','بوجيه متّسخ','गंदा स्पार्क प्लग'),L3('An oil-wet plug: four-stroking, misfires and stalling at idle, blue smoke.','بوجيه مبلل بالزيت: احتراق كل دورتين واحتراق متقطع وانطفاء في السلانسيه ودخان أزرق.','तेल से गीला प्लग: फ़ोर-स्ट्रोकिंग, मिसफ़ायर, आइडल पर बंद होना, नीला धुआँ।'),{pw:.85,snd:{mis:.2,rough:.04},gauge:{egt:-60,cht:-10},smoke:{blue:.25}})]);
+A('opposed',[
+ F('fInj',L3('Worn injectors','بخاخات مستهلكة','घिसे इंजेक्टर'),L3('A poor spray pattern burns the fuel late and incompletely: black smoke, high exhaust temperature, less power.','نمط رش رديء يحرق الوقود متأخراً وبشكل ناقص: دخان أسود وحرارة عادم عالية وقوة أقل.','खराब स्प्रे से ईंधन देर से व अधूरा जलता है: काला धुआँ, ऊँचा एग्ज़ॉस्ट तापमान, कम पावर।'),{pw:.9,ef:.93,snd:{rough:.04},gauge:{egt:70},smoke:{black:.65}}),
+ F('fBlower',L3('Dirty scavenge blower','منفاخ كسح متّسخ','गंदा स्कैवेंज ब्लोअर'),L3('Less air to sweep the cylinders clean: lower boost, hot exhaust, smoke under load.','هواء أقل لكسح الأسطوانات: بوست أقل وعادم ساخن ودخان مع الحمل.','सिलेंडर साफ़ करने को कम हवा: कम बूस्ट, गर्म एग्ज़ॉस्ट, लोड पर धुआँ।'),{pw:.86,ef:.96,gauge:{boostK:.7,egt:50},smoke:{black:.3}}),
+ F('fOilP',L3('Low oil pressure','ضغط زيت منخفض','कम तेल दबाव'),L3('A worn pump or bearings: the gauge drops and the bearings start to knock. Shut it down before the crankshaft is ruined.','مضخة أو سبايك مستهلكة: العداد ينخفض والسبايك تبدأ بالطرق. أطفئه قبل أن يتلف الكرنك.','घिसा पंप या बेयरिंग: गेज गिरता है और बेयरिंग खटखटाने लगते हैं। क्रैंकशाफ़्ट खराब होने से पहले बंद करें।'),{risk:.35,gauge:{oilPK:.4,oilT:12},snd:{rat:.35}})]);
+A('radial',[
+ F('fFoul',L3('Oil-fouled lower plugs','بواجي سفلية ملوثة بالزيت','तेल से गंदे निचले प्लग'),L3('Oil drains into the bottom cylinders while the plane is parked: a rough start, misfires and a big blue cloud.','الزيت ينزل إلى الأسطوانات السفلية أثناء الوقوف: تشغيل خشن واحتراق متقطع وسحابة زرقاء كبيرة.','खड़े विमान में तेल निचले सिलेंडरों में जाता है: खुरदुरी शुरुआत, मिसफ़ायर और बड़ा नीला बादल।'),{pw:.93,snd:{mis:.1,rough:.04},gauge:{cht:-8},smoke:{blue:.5}}),
+ F('fHydro',L3('Hydraulic lock','قفل هيدروليكي','हाइड्रोलिक लॉक'),L3('Oil has filled a lower cylinder. Starting would bend a connecting rod! Pilots pull the propeller through by hand before every start to feel for this.','امتلأت أسطوانة سفلية بالزيت. التشغيل سيثني ذراع التوصيل! يدير الطيارون المروحة باليد قبل كل تشغيل لاكتشاف ذلك.','नीचे का सिलेंडर तेल से भर गया है। चालू करने से कनेक्टिंग रॉड मुड़ जाएगी! पायलट हर स्टार्ट से पहले हाथ से प्रोपेलर घुमाकर इसे जाँचते हैं।'),{lock:1}),
+ F('fComp',L3('Low-compression cylinder','أسطوانة منخفضة الانضغاط','कम कम्प्रेशन वाला सिलेंडर'),L3('A burnt valve or a broken ring: rough running and less power. Found with a differential compression test.','صمام محترق أو شنبر مكسور: تشغيل خشن وقوة أقل. يُكتشف بفحص الانضغاط التفاضلي.','जला वाल्व या टूटी रिंग: खुरदुरा चलना, कम पावर। डिफ़रेंशियल कम्प्रेशन टेस्ट से पता चलता है।'),{pw:.9,ef:.97,snd:{rough:.07,mis:.03},gauge:{compK:.6,cht:-6}})]);
+A('turbofan',[
+ F('fFoul',L3('Compressor fouling','اتّساخ الضاغط','कंप्रेसर गंदगी'),L3('Dirt and salt on the blades: less air per revolution, so the engine runs hotter for the same thrust. A compressor wash fixes it.','أوساخ وأملاح على الشفرات: هواء أقل لكل دورة فيسخن المحرك أكثر لنفس الدفع. غسيل الضاغط يصلحه.','ब्लेड पर गंदगी व नमक: हर चक्कर में कम हवा, उसी थ्रस्ट पर इंजन गर्म। कंप्रेसर वॉश ठीक करता है।'),{pw:.97,ef:.97,gauge:{egt:25}}),
+ F('fErode',L3('Blade erosion','تآكل الشفرات','ब्लेड क्षरण'),L3('Sand and grit wear the blade tips: bigger gaps, lower efficiency, higher EGT and less temperature margin.','الرمل والحصى يأكلان أطراف الشفرات: فجوات أكبر وكفاءة أقل وحرارة عادم أعلى وهامش أقل.','रेत व कंकड़ ब्लेड टिप घिसते हैं: बड़े गैप, कम दक्षता, ऊँचा EGT, कम तापमान मार्जिन।'),{pw:.95,ef:.95,gauge:{egt:40}}),
+ F('fFod',L3('Foreign object damage (FOD)','ضرر جسم غريب (FOD)','बाहरी वस्तु क्षति (FOD)'),L3('A bird or a stone has bent fan blades: vibration, imbalance and lost thrust. Inspected with a borescope.','طائر أو حجر ثنى شفرات المروحة: اهتزاز وعدم اتزان وفقد دفع. يُفحص بالمنظار الداخلي.','पक्षी या पत्थर ने फ़ैन ब्लेड मोड़ दिए: कंपन, असंतुलन, थ्रस्ट में कमी। बोरस्कोप से जाँच।'),{pw:.88,ef:.97,risk:.35,gauge:{vib:3.2,egt:30},snd:{grind:.35}}),
+ F('fBleed',L3('Bleed valve stuck open','صمام التنفيس عالق مفتوحاً','ब्लीड वाल्व खुला अटका'),L3('Compressed air dumps overboard: less thrust, more fuel and a higher EGT for the same setting.','الهواء المضغوط يُهدر للخارج: دفع أقل ووقود أكثر وحرارة عادم أعلى.','संपीड़ित हवा बाहर निकलती है: कम थ्रस्ट, ज़्यादा ईंधन, ऊँचा EGT।'),{pw:.9,ef:.94,gauge:{egt:20},snd:{hiss:.6}})]);
+A('rocket',[
+ F('fInj',L3('Clogged injector elements','عناصر حقن مسدودة','बंद इंजेक्टर तत्व'),L3('Uneven spray: poor mixing, lower chamber pressure and Isp, and hot streaks on the chamber wall.','رش غير متساوٍ: خلط رديء وضغط غرفة ودفع نوعي أقل وخطوط ساخنة على جدار الغرفة.','असमान स्प्रे: खराब मिश्रण, कम कक्ष दाब व Isp, दीवार पर गर्म धारियाँ।'),{pw:.9,ef:.96,gauge:{pcK:.9,tc:-120}}),
+ F('fThroat',L3('Throat erosion','تآكل العنق','थ्रोट क्षरण'),L3('The nozzle throat has worn wider: chamber pressure and thrust fall.','عنق الفوهة اتّسع بالتآكل: ينخفض ضغط الغرفة والدفع.','नोज़ल थ्रोट घिसकर चौड़ा: कक्ष दाब व थ्रस्ट घटते हैं।'),{pw:.93,ef:.97,gauge:{pcK:.88}}),
+ F('fInstab',L3('Combustion instability','عدم استقرار الاحتراق','दहन अस्थिरता'),L3('Pressure waves resonate in the chamber: violent vibration that can destroy an engine in milliseconds.','موجات ضغط ترنّ في الغرفة: اهتزاز عنيف قد يدمّر المحرك في أجزاء من الثانية.','कक्ष में दाब तरंगें गूँजती हैं: हिंसक कंपन जो मिलीसेकंड में इंजन नष्ट कर सकता है।'),{risk:.5,pw:.97,gauge:{vib:4.5},snd:{gain:1.15,rat:.5}})]);
+A('steam',[
+ F('fScale',L3('Boiler scale','ترسبات المرجل','बॉयलर स्केल'),L3('Hard-water scale insulates the tubes: more coal for the same steam, slow to raise pressure, overheated tubes.','ترسبات الماء العسر تعزل الأنابيب: فحم أكثر لنفس البخار وبطء في رفع الضغط وأنابيب محمّاة.','कठोर पानी की परत ट्यूब ढकती है: उतनी भाप को ज़्यादा कोयला, दबाव धीरे बढ़ता है, ट्यूब ज़्यादा गर्म।'),{ef:.85,pw:.93,gauge:{pbK:.9}}),
+ F('fValve',L3('Leaking valve','صمام يسرّب','लीक वाल्व'),L3('The slide valve blows steam straight to exhaust: steam wasted, a constant blow at the chimney, weaker pull.','صمام الانزلاق ينفخ البخار مباشرة إلى العادم: هدر بخار ونفخ مستمر في المدخنة وسحب أضعف.','स्लाइड वाल्व भाप सीधे एग्ज़ॉस्ट में फेंकता है: भाप बर्बाद, चिमनी पर लगातार फूँक, कमज़ोर खिंचाव।'),{pw:.88,ef:.9,snd:{hiss:.8}}),
+ F('fRings',L3('Worn piston rings','شنابر مكبس مستهلكة','घिसी पिस्टन रिंग'),L3('Steam leaks past the piston: less pull, more steam used, a hiss at the drain cocks.','البخار يتسرب حول المكبس: سحب أقل وبخار أكثر وصفير عند صمامات التصريف.','भाप पिस्टन के पार रिसती है: कम खिंचाव, ज़्यादा भाप, ड्रेन कॉक पर सीटी।'),{pw:.9,ef:.93,snd:{hiss:.45}}),
+ F('fPrime',L3('Priming (water carry-over)','الأولية (حمل الماء)','प्राइमिंग (पानी चढ़ना)'),L3('The boiler is too full and water reaches the cylinders: weak, wet exhaust and the risk of knocking a cylinder cover off.','المرجل ممتلئ جداً والماء يصل للأسطوانات: عادم ضعيف رطب وخطر خلع غطاء أسطوانة.','बॉयलर बहुत भरा, पानी सिलेंडर तक: कमज़ोर गीला एग्ज़ॉस्ट और सिलेंडर कवर टूटने का खतरा।'),{pw:.86,risk:.3,gauge:{water:28},smoke:{white:.4}})]);
+A('stirling',[
+ F('fRegen',L3('Clogged regenerator','مُجدّد مسدود','बंद रीजनरेटर'),L3('The mesh that stores heat is choked: more flow loss, less heat recovered, so efficiency drops.','الشبكة التي تخزن الحرارة مسدودة: فقد تدفق أكبر واسترجاع حرارة أقل فتنخفض الكفاءة.','गर्मी रखने वाली जाली बंद: ज़्यादा प्रवाह हानि, कम गर्मी वापस, दक्षता घटती है।'),{ef:.8,pw:.86,gauge:{th:15}}),
+ F('fLeak',L3('Working-gas leak','تسرب غاز التشغيل','कार्यकारी गैस लीक'),L3('Helium escapes through the seals: the mean pressure falls and the power drops with it.','الهيليوم يتسرب عبر الموانع: ينخفض الضغط المتوسط وتنخفض القوة معه.','हीलियम सील से निकलता है: औसत दाब गिरता है और पावर भी।'),{pw:.75,gauge:{pmK:.72}}),
+ F('fSeal',L3('Worn piston seals','موانع مكبس مستهلكة','घिसी पिस्टन सील'),L3('Gas blows past the pistons: less pressure swing, more friction and a knock.','الغاز يتسرب حول المكابس: تأرجح ضغط أقل واحتكاك أكثر وطرق.','गैस पिस्टन के पार: कम दाब उतार-चढ़ाव, ज़्यादा घर्षण, खटखट।'),{pw:.9,ef:.94,snd:{rat:.25}})]);
+A('electric',[
+ F('fMag',L3('Weakened magnets','مغناطيسات ضعيفة','कमज़ोर चुंबक'),L3('Overheating has partly demagnetised the rotor: less torque per amp, more current and heat.','الحرارة الزائدة أضعفت مغنطة الدوار: عزم أقل لكل أمبير وتيار وحرارة أكثر.','ज़्यादा गर्मी से रोटर का चुंबकत्व घटा: प्रति एम्पियर कम टॉर्क, ज़्यादा करंट व गर्मी।'),{pw:.88,ef:.97,gauge:{tmot:12,ibatK:1.08}}),
+ F('fBrg',L3('Worn bearings','رولمانات مستهلكة','घिसे बेयरिंग'),L3('A growl that rises with speed, more vibration and heat.','هدير يرتفع مع السرعة واهتزاز وحرارة أكثر.','गति के साथ बढ़ती गुर्राहट, ज़्यादा कंपन व गर्मी।'),{ef:.99,risk:.2,snd:{grind:.8},gauge:{tmot:6}}),
+ F('fInv',L3('Inverter overheating','ارتفاع حرارة العاكس','इन्वर्टर ओवरहीटिंग'),L3('Blocked coolant flow: the inverter protects itself by cutting power (derating).','تدفق تبريد مسدود: العاكس يحمي نفسه بخفض القوة.','कूलेंट रुका: इन्वर्टर खुद को बचाने के लिए पावर घटाता है (डीरेटिंग)।'),{pw:.62,gauge:{tinv:55}}),
+ F('fBat',L3('Aged battery','بطارية متقادمة','पुरानी बैटरी'),L3('Lost capacity and higher internal resistance: the voltage sags under load, less power and range.','سعة مفقودة ومقاومة داخلية أعلى: الجهد يهبط مع الحمل وقوة ومدى أقل.','क्षमता घटी, आंतरिक प्रतिरोध बढ़ा: लोड पर वोल्टेज गिरता है, कम पावर व रेंज।'),{pw:.88,kwhK:.72,gauge:{sag:2.2}})]);
+A('fuelcell',[
+ F('fDry',L3('Dried-out membrane','غشاء جاف','सूखी झिल्ली'),L3('Too little humidity: the membrane conducts protons poorly, so cell voltage and power fall and it runs hotter.','رطوبة قليلة: الغشاء يوصل البروتونات بضعف فينخفض جهد الخلية والقوة ويسخن أكثر.','कम नमी: झिल्ली प्रोटॉन ठीक से नहीं ले जाती, सेल वोल्टेज व पावर गिरते हैं, गर्म चलता है।'),{pw:.82,ef:.92,gauge:{cellV:-.07,temp:8}}),
+ F('fFlood',L3('Water flooding','غمر بالماء','पानी भराव'),L3('Liquid water blocks the gas channels at high current: the voltage collapses near full power.','الماء السائل يسد قنوات الغاز بالتيار العالي: ينهار الجهد قرب القوة القصوى.','ऊँचे करंट पर तरल पानी गैस चैनल रोकता है: पूरी पावर के पास वोल्टेज गिरता है।'),{topcut:.4,pw:.96,gauge:{cellV:-.05}}),
+ F('fPoison',L3('Catalyst poisoning (CO)','تسمم المحفز (CO)','उत्प्रेरक विषाक्तता (CO)'),L3('Impure hydrogen coats the platinum: lower voltage everywhere. Clean fuel or an air bleed is needed.','الهيدروجين غير النقي يغطي البلاتين: جهد أقل في كل مكان. يلزم وقود نظيف أو حقن هواء.','अशुद्ध हाइड्रोजन प्लैटिनम ढकता है: हर जगह कम वोल्टेज। साफ़ ईंधन या एयर ब्लीड चाहिए।'),{pw:.85,ef:.9,gauge:{cellV:-.1}})]);
+})();
+
 /* EngineLab — garage panel made easier: search every part, collapsible sections that show the current choice,
    a "changed" marker on sections and tabs, and a strip of everything you modified (tap to jump, × to undo). */
 const GUI_T={q:['Search parts and settings…','ابحث في القطع والإعدادات…','पार्ट्स व सेटिंग खोजें…'],mods:['Changed','المعدّل','बदला गया'],none:['Nothing changed yet: this is the stock engine.','لم يتغيّر شيء بعد: هذا المحرك الأصلي.','अभी कुछ नहीं बदला: यह स्टॉक इंजन है।'],
@@ -11234,16 +11525,16 @@ const GUI={q:'',open:{},skip:new Set(['base','diesel','color','cover','gbox','gb
 function guiStock(b){return{...GDEF(),...(b.diesel?{ind:'vgt'}:{})}}
 // is this control's value different from stock?  (car: GS.b vs GDEF, special engines: part / tune default)
 function guiChanged(el){const d=el.dataset;
-  if(GS.spec){const id=GS.spec,st=gsxS(id),sx=GSX[id];if(d.gsx){const g=sx.parts.find(x=>x.k===d.gsx);return g?st.parts[d.gsx]!==gsxDef(g):false}
+  if(GS.spec){const id=GS.spec,st=gsxS(id),sx=GSX[id];if(d.gsx||d.gsxf){const g=sx.parts.find(x=>x.k===(d.gsx||d.gsxf));return g&&!gMysHide(g.k)?st.parts[g.k]!==gsxDef(g):false}
     const k=d.gsr||d.gsp;if(k){const q=E[id].params.find(x=>x.k===k);if(!q)return false;const v=st.p[k];return v!=null&&String(v)!==String(q.def)}return false}
-  const k=d.gk||d.gs||d.gt;if(!k||GUI.skip.has(k))return false;const s=guiStock(GS.b);return String(GS.b[k])!==String(s[k])}
-function guiKey(el){const d=el.dataset;return d.gsx||d.gsr||d.gsp||d.gk||d.gs||d.gt||''}
+  const k=d.gk||d.gs||d.gt;if(!k||GUI.skip.has(k)||gMysHide(k))return false;const s=guiStock(GS.b);return String(GS.b[k])!==String(s[k])}
+function guiKey(el){const d=el.dataset;return d.gsx||d.gsxf||d.gsr||d.gsp||d.gk||d.gs||d.gt||''}
 // wrap every heading + its controls into a <details>; the summary shows what is chosen right now
 function guiSections(host,tab){const kids=[...host.children];let cur=null,i=0;const secs=[];
   for(const n of kids){if(n.matches('h3.gh')){const key=tab+':'+(i++)+':'+n.textContent.trim().slice(0,40);const det=document.createElement('details');det.className='gsec';det.dataset.sec=key;
       const sm=document.createElement('summary');sm.innerHTML=`<span class="gsec-t">${esc(n.textContent)}</span><span class="gsec-v"></span><i class="gsec-dot" aria-hidden="true"></i>`;det.appendChild(sm);const body=document.createElement('div');body.className='gsec-b';det.appendChild(body);n.replaceWith(det);cur=body;secs.push(det);continue}
     if(cur&&!n.matches('.gsx-res'))cur.appendChild(n)}
-  for(const det of secs){const ctl=[...det.querySelectorAll('[data-gk],[data-gs],[data-gt],[data-gsx],[data-gsr],[data-gsp]')],keys=[...new Set(ctl.map(guiKey))],chg=keys.filter(k=>{const el=ctl.find(c=>guiKey(c)===k);return el&&guiChanged(el)});
+  for(const det of secs){const ctl=[...det.querySelectorAll('[data-gk],[data-gs],[data-gt],[data-gsx],[data-gsr],[data-gsp],[data-gsxf]')],keys=[...new Set(ctl.map(guiKey))],chg=keys.filter(k=>{const el=ctl.find(c=>guiKey(c)===k);return el&&guiChanged(el)});
     const v=det.querySelector('.gsec-v');v.textContent=guiSum(det,ctl,keys,chg);
     det.classList.toggle('chg',chg.length>0);const st=GUI.open[det.dataset.sec];det.open=GUI.q?true:st!=null?st:(chg.length>0||det===secs[0]);
     det.addEventListener('toggle',()=>{if(!GUI.q)GUI.open[det.dataset.sec]=det.open})}
@@ -11268,14 +11559,14 @@ function guiUndo(k){if(GS.spec){const id=GS.spec,st=gsxS(id),g=GSX[id].parts.fin
   const s=guiStock(GS.b);GS.b[k]=s[k];if(k==='gbox'){GS.dr=null}gApply();gPane()}
 function guiGo(k,tab){if(GUI.q){GUI.q='';$('#gQ').value='';$('#gQx').hidden=true}
   if(GS.spec){GS.stab=tab||'parts'}else if(tab&&tab!==GS.tab){GS.tab=tab;$$('.gtabs [data-gtab]').forEach(b=>{b.classList.toggle('on',b.dataset.gtab===tab);b.setAttribute('aria-selected',b.dataset.gtab===tab)})}
-  gPane();const el=$(`#gPane [data-gk="${k}"],#gPane [data-gs="${k}"],#gPane [data-gt="${k}"],#gPane [data-gsx="${k}"],#gPane [data-gsr="${k}"],#gPane [data-gsp="${k}"]`);if(!el)return;const det=el.closest('details');if(det){det.open=true;GUI.open[det.dataset.sec]=true}
+  gPane();const el=$(`#gPane [data-gk="${k}"],#gPane [data-gs="${k}"],#gPane [data-gt="${k}"],#gPane [data-gsx="${k}"],#gPane [data-gsr="${k}"],#gPane [data-gsp="${k}"],#gPane [data-gsxf="${k}"]`);if(!el)return;const det=el.closest('details');if(det){det.open=true;GUI.open[det.dataset.sec]=true}
   el.scrollIntoView({block:'center',behavior:'smooth'});const tgt=el.closest('.gcards,.gsl,.gtog')||el;tgt.classList.remove('gflash');void tgt.offsetWidth;tgt.classList.add('gflash')}
 // the strip of changes
 function guiMods(){const box=$('#gMods');if(!box)return;const items=[];
-  if(GS.spec){const id=GS.spec,st=gsxS(id),sx=GSX[id];for(const g of sx.parts){const v=st.parts[g.k];if(v!==gsxDef(g)){const o=g.o.find(x=>x.v===v);items.push({k:g.k,tab:'parts',lab:o?sxT(o.n):v})}}
+  if(GS.spec){const id=GS.spec,st=gsxS(id),sx=GSX[id];for(const g of sx.parts){const v=st.parts[g.k];if(v!==gsxDef(g)&&!gMysHide(g.k)){const o=g.o.find(x=>x.v===v);items.push({k:g.k,tab:g.f?'cond':'parts',lab:o?sxT(o.n):v})}}
     for(const k of sx.tune){const q=E[id].params.find(x=>x.k===k);if(!q)continue;const v=st.p[k];if(v!=null&&String(v)!==String(q.def))items.push({k,tab:'tune',lab:prmT(E[id],k)[0]+': '+(q.type==='sel'?t('opt.'+k+'.'+v):fmt(+v,(q.step||1)<1?((q.step||1)<.1?2:1):0)+(q.u?' '+q.u:''))})}}
   else{const b=GS.b,s=guiStock(b),tk=guiTabKeys();const tabOf=k=>{for(const t in tk)if(tk[t].some(x=>x.k===k))return t;return null};
-    for(const k in s){if(GUI.skip.has(k)||String(b[k])===String(s[k]))continue;const tab=tabOf(k);if(!tab)continue;const isCard=tk[tab].some(x=>x.k===k&&x.el.dataset.gk);
+    for(const k in s){if(GUI.skip.has(k)||String(b[k])===String(s[k])||gMysHide(k))continue;const tab=tabOf(k);if(!tab)continue;const isCard=tk[tab].some(x=>x.k===k&&x.el.dataset.gk);
       const lab=isCard?gT(`o.${k}.${b[k]}`):typeof b[k]==='boolean'?gT('s.'+k):gT('s.'+k)+': '+(typeof b[k]==='number'?fmt(b[k],Math.abs(b[k])<10&&b[k]%1?2:0):b[k]);items.push({k,tab,lab})}
     // counters on the tabs
     $$('.gtabs [data-gtab]').forEach(bt=>{const n=items.filter(i=>i.tab===bt.dataset.gtab).length;let c=bt.querySelector('.gtab-n');if(n){if(!c){c=document.createElement('i');c.className='gtab-n';bt.appendChild(c)}c.textContent=n}else if(c)c.remove()})}
@@ -11285,7 +11576,7 @@ function guiMods(){const box=$('#gMods');if(!box)return;const items=[];
 // search: show every tab's controls at once, keep only what matches
 const guiHit=(txt,w)=>/^[a-z0-9]/.test(w)?txt.split(/[^a-z0-9\u00c0-\u024f.%]+/).some(t=>t.startsWith(w)):txt.includes(w);
 function guiSearch(){const host=$('#gPane'),q=GUI.q.toLowerCase(),words=q.split(/\s+/).filter(Boolean);let html='';
-  if(GS.spec){const save=GS.stab;for(const t of['tune','parts']){GS.stab=t;GUI.orig();const body=host.querySelector('.gsx-body');html+=`<div class="gsr-tab" data-t="${t}"><h4 class="gsr-h">${esc(sxT(GSXL[t]))}</h4>${body?body.innerHTML:''}</div>`}GS.stab=save;
+  if(GS.spec){const save=GS.stab;for(const t of['tune','parts','cond']){GS.stab=t;GUI.orig();const body=host.querySelector('.gsx-body');html+=`<div class="gsr-tab" data-t="${t}"><h4 class="gsr-h">${esc(sxT(GSXL[t]))}</h4>${body?body.innerHTML:''}</div>`}GS.stab=save;
     GUI.orig();const res=host.querySelector('.gsx-res');const tabs=host.querySelector('.gsx-tabs');host.innerHTML=(tabs?tabs.outerHTML:'')+`<div class="gsx-body gsearch">${html}</div>`+(res?res.outerHTML:'');gsxResultsUI(GS.spec)}
   else{const save=GS.tab;for(const t of GTABS){GS.tab=t;GUI.orig();html+=`<div class="gsr-tab" data-t="${t}"><h4 class="gsr-h">${esc(gT('tab.'+t))}</h4>${host.innerHTML}</div>`}GS.tab=save;host.innerHTML=`<div class="gsearch">${html}</div>`}
   let hits=0;host.querySelectorAll('.gsr-tab').forEach(tb=>{const secs=guiSections(tb,'q'+tb.dataset.t);let any=false;
@@ -11302,10 +11593,10 @@ gPane=function(){if(!GS.spec&&!$('#garage').hidden)guiTabKeys();GUI.orig();const
   if(GUI.q)guiSearch();else if(GS.spec){const body=host.querySelector('.gsx-body');if(body)guiSections(body,'s:'+GS.spec+':'+GS.stab)}else guiSections(host,GS.tab);
   guiMods()};
 // sliders and switches change values without redrawing the panel: refresh the markers + the strip
-function guiRefresh(el){const det=el&&el.closest('details.gsec');if(det){const ctl=[...det.querySelectorAll('[data-gk],[data-gs],[data-gt],[data-gsx],[data-gsr],[data-gsp]')],keys=[...new Set(ctl.map(guiKey))],n=keys.filter(k=>{const c=ctl.find(x=>guiKey(x)===k);return c&&guiChanged(c)}).length;det.classList.toggle('chg',n>0);det.querySelector('.gsec-v').textContent=guiSum(det,ctl,keys,keys.filter(k=>{const c=ctl.find(x=>guiKey(x)===k);return c&&guiChanged(c)}))}
+function guiRefresh(el){const det=el&&el.closest('details.gsec');if(det){const ctl=[...det.querySelectorAll('[data-gk],[data-gs],[data-gt],[data-gsx],[data-gsr],[data-gsp],[data-gsxf]')],keys=[...new Set(ctl.map(guiKey))],n=keys.filter(k=>{const c=ctl.find(x=>guiKey(x)===k);return c&&guiChanged(c)}).length;det.classList.toggle('chg',n>0);det.querySelector('.gsec-v').textContent=guiSum(det,ctl,keys,keys.filter(k=>{const c=ctl.find(x=>guiKey(x)===k);return c&&guiChanged(c)}))}
   clearTimeout(GUI.rt);GUI.rt=setTimeout(guiMods,120)}
 document.addEventListener('input',e=>{const d=e.target.dataset;if(d&&(d.gs||d.gsr)&&e.target.closest('#gPane'))setTimeout(()=>guiRefresh(e.target),0)});
-document.addEventListener('change',e=>{const d=e.target.dataset;if(d&&d.gt&&e.target.closest('#gPane'))setTimeout(()=>guiRefresh(e.target),0)});
+document.addEventListener('change',e=>{const d=e.target.dataset;if(d&&d.gt&&!d.gsxf&&e.target.closest('#gPane'))setTimeout(()=>guiRefresh(e.target),0)});
 
 /* EngineLab — the shared 3D view used everywhere (home hero, engine pages, lab rigs, garage).
    One WebGL renderer is moved between hosts; the model is rebuilt only when the engine changes. */
@@ -11412,7 +11703,7 @@ const EngSynth=class{
     const fc=Q.lp*1.55*(.62+.42*Math.min(ld,1.4))*(.8+.35*rf);for(const o of s.mf)this.bqs(o,'lp',fc,.6);
     this.bqs(s.inb,'bp',520+380*rf,.9);
     const tgt=Q.turbo?1500+5500*Math.min(1,Math.max(0,ld-.25))*Math.min(1,.35+rf):0;
-    const rough=(Q.rough||.06)*(1+1.6*Math.max(0,1-rf/.3))*(1.4-.4*Math.min(1,ld)),mis=(Q.mis||0)*(rf<.3?1:.3),lopeK=(Q.lope||0)*Math.max(0,1-rf/.38)*(1.2-.5*Math.min(1,ld));
+    const rough=(Q.rough||.06)*(1+1.6*Math.max(0,1-rf/.3))*(1.4-.4*Math.min(1,ld)),mis=(Q.mis||0)*(rf<.3?1:.3)+(Q.misL||0)*Math.min(1,ld),lopeK=(Q.lope||0)*Math.max(0,1-rf/.38)*(1.2-.5*Math.min(1,ld));
     s.lph=((s.lph||0)+6.283185*(s.rpm/60*nf*360/cyc/(Q.lopeN||6))*n/sr)%6.283185;
     const base=.28+.72*Math.min(ld,1.7),inA=(Q.intake||0)*ld*ld*rf*rf,mech=(Q.mech||0)*(.45+.55*rf),kA=(Q.knock||0)*(1.2-.55*Math.min(ld,1)),blA=(Q.blower||0)*.045*(.35+.65*Math.min(ld,1)),moA=(Q.motor||0)*.05;
     for(let i=0;i<n;i++){
@@ -11543,10 +11834,18 @@ const EngSynth=class{
       const air=this.br(s.ab,this.rnd())*.12*(.2+a)*(Q.c||1.8)/1.8;
       s.tm+=TW;if(s.tm>s.purT){s.tm=0;s.purT=12-7*a+2*this.rnd();s.pur=1}let pg=0;if(s.pur>1e-3){pg=this.br(s.ph2,this.rnd())*.14*s.pur;s.pur*=Math.exp(-1/(.09*sr))}
       const v=(this.br(s.sm,comp+air)+pump+pg);L[i]=v;R[i]=v*.95+pg*.05}}
+  fxl(L,R,n){const Q=this.Q,X=Q.fx,s=this.s,sr=this.sr;const f=s.fx||(s.fx={h:this.bq('bp',4300,.8),h2:this.bq('hp',6500,.7),r1:this.bq('bp',2300,7),r2:this.bq('bp',4200,9),e:0,g1:this.bq('bp',800,9),g2:this.bq('bp',1600,11),gp:0,gl:0});
+    const rps=Math.max(0,(Q.rpm||0)/60),hA=(X.h||0)*.028,rA=X.r||0,gA=(X.g||0)*.09,rate=rA*(18+rps*1.6);
+    f.k=(f.k||0)+1;if(gA&&(f.k&7)===1){const fg=Math.min(sr*.4,Math.max(120,rps*5.3));this.bqs(f.g1,'bp',fg,9);this.bqs(f.g2,'bp',fg*2.02,11)}
+    for(let i=0;i<n;i++){let c=0;
+      if(hA){const z=this.rnd();c+=(this.br(f.h,z)+.5*this.br(f.h2,z))*hA}
+      if(rA){if(this.rnd()*.5+.5<rate/sr)f.e=Math.max(f.e,.55+.45*Math.abs(this.rnd()));if(f.e>1e-3){const z=this.rnd()*f.e;c+=(this.br(f.r1,z)*1.4+this.br(f.r2,z))*rA*.3;f.e*=.9965}}
+      if(gA){f.gp+=rps*6.283185/sr;const am=.6+.4*Math.sin(f.gp);const z=this.rnd();c+=(this.br(f.g1,z)*6+this.br(f.g2,z)*4)*gA*am*Math.min(1,rps/8)}
+      L[i]+=c;R[i]+=c}}
   render(L,R,n){
     if(this.pend){if(this.g<2e-4||!this.Q||this.Q.kind==='off'){this.Q=this.pend;this.pend=null;this.g=0;if(this.Q.kind!=='off')this.build()}}
     const Q=this.Q;if(!Q||Q.kind==='off'||!this[Q.kind]){L.fill(0);R.fill(0);return}
-    this[Q.kind](L,R,n);
+    this[Q.kind](L,R,n);if(Q.fx&&(Q.fx.h||Q.fx.r||Q.fx.g))this.fxl(L,R,n);
     const tg=this.pend?0:(Q.vol==null?1:Q.vol),s=this.s;
     for(let i=0;i<n;i++){this.g+=(tg-this.g)*this.aG;
       // DC blocker + gentle soft limiter
@@ -11610,7 +11909,7 @@ function sndProfile(){
     if(m.kind==='jet'&&sx.ab){m.gain*=1+.6*(GS.thr?1:0);m.v9=(m.v9||500)*(GS.thr?1.35:1)}if(sx.gain&&m.kind!=='pist')m.gain*=sx.gain;
     if(GS.spec==='radial'&&m.kind==='pist'){const nc=(gsxVis('radial').cyl)||9;if(nc!==9){m.fires=evenF(nc,720,1);m.id+=':c'+nc}}
     if(m.kind==='pist'&&sx.mis)m.lope=(m.lope||0)+sx.mis*4;
-    m.id+=':'+JSON.stringify(sx);return m}
+    m.fx={h:sx.hiss||0,r:sx.rat||0,g:sx.grind||0};m.id+=':'+JSON.stringify(sx);return m}
   if(!$('#garage').hidden&&GS.ck){const b=GS.b,ck=GS.ck,map={I3:'inline3',I4:'inline4',I5:'inline5',I6:'inline6',V6:'v6',V8:'v8',V8F:'v8',V10:'v10',V12:'v12',B4:'boxer',B6:'flat6',VR6:'vr6',W12:'w12',W16:'w16',I1:'petrol'},sid=b.diesel?'diesel':map[b.base],o={...SPROF[sid]},red=gRedline(b),m=GS.m||{bmep:2};
     const turbo=['t1','twin','tscroll','vgt','seq','etb','tc'].includes(b.ind),scT=['roots','screw','tc'].includes(b.ind)||b.ind==='cent';
     const twoB=ck.banks.length>1,merge=twoB&&b.xpipe==='x',eq=b.eqlen&&GBASE[b.base].lay==='B';
@@ -11622,7 +11921,7 @@ function sndProfile(){
     const vK=GS.exv>=0?.72+.4*GS.exv:1,vL=GS.exv>=0?.78+.32*GS.exv:1;
     const load=GS.dyno||GS.thr?clamp(m.bmep/12,.25,2):.14;
     return Object.assign({},o,{id:'gar:'+b.base+(b.diesel?'d':'')+':'+b.exh+':'+ck.order.join('')+(merge?':x':'')+(eq?':eq':''),kind:'pist',cycle:720,fires,evo:130,mA:b.diesel?0:360,rpm:Math.max(60,GS.rpm),load,rmax:red,gain:(SGAIN[sid]||1)*gK*vK,vol:GS.rpm>80?1:0,
-      fire:GS.cut?0:1,lp:(o.lp||1200)*lpK*vL,tg:ex==='straight'?.12:o.tg,rough:((o.rough||.06)+camK+(b.balDel&&(b.base==='I4'||b.base==='I3')?.02:0))*(b.coils==='race'?.85:1),mis:camK*.35,intake:(o.intake||.15)*(b.intake==='itb'?3:b.intake==='cone'?1.6:1)*(vk>1?1.4:1),sp:(o.sp||0)*(b.xpipe==='h'?.5:1),motor:b.hybrid==='48v'&&GS.thr&&GS.rpm<3200?.45:0,scream:turbo&&b.wg==='external'&&GS.thr&&GS.boostNow>b.boost*.85?1:0,turb:(o.turb||.25)+(ex==='straight'?.15:0),
+      fire:GS.cut?0:1,lp:(o.lp||1200)*lpK*vL,tg:ex==='straight'?.12:o.tg,rough:((o.rough||.06)+camK+(b.balDel&&(b.base==='I4'||b.base==='I3')?.02:0)+(b.fRings?.02:0)+(b.fInj?.03:0)+(b.fVac&&!b.diesel?.03:0))*(b.coils==='race'?.85:1),mis:camK*.35+(b.fGasket?.07:0)+(b.fVac&&!b.diesel?.03:0),misL:b.fPlugs&&!b.diesel?.22:0,fx:{h:b.fVac&&!b.diesel?(GS.thr?.25:1):0,r:b.fChain?.9*Math.max(0,1-GS.rpm/3400):0,g:0},intake:(o.intake||.15)*(b.intake==='itb'?3:b.intake==='cone'?1.6:1)*(vk>1?1.4:1)*(b.fAir?1.25:1),sp:(o.sp||0)*(b.xpipe==='h'?.5:1),motor:b.hybrid==='48v'&&GS.thr&&GS.rpm<3200?.45:0,scream:turbo&&b.wg==='external'&&GS.thr&&GS.boostNow>b.boost*.85?1:0,turb:(o.turb||.25)+(ex==='straight'?.15:0),
       turbo:turbo?clamp(.35+GS.boostNow*.5,0,1.2):0,blower:scT?clamp(.7+1.2*GS.boostNow,0,2):0,bl:b.ind==='cent'?28:b.ind==='roots'?7.5:12,
       bovN:GS.bov,bovT:turbo?b.bov:'stock',flI:b.bov==='flutter'?.088+.01*(b.tsize||0):.1+.015*(b.tsize||0),flF:(b.bov==='flutter'?1250:1180)-95*(b.tsize||0),flN:Math.round(5+2.5*Math.min(1.6,GS.bovBoost||b.boost||1)),flE:clamp(.5+.32*(GS.bovBoost||1),.5,1.15),pop:b.diesel?0:GS.pops*(b.pops==='loud'?1:b.pops==='mild'?.5:.15),nos:GS.nosOn&&GS.thr>0,purge:b.nosPurge&&b.nos!=='none'&&GS.t-(GS.purgeT??-9)<.55,knock:b.diesel?.12:0})}
   if(!$('#labx').hidden&&LX.id){const e=E[LX.id],q=e.params.find(x=>x.k===labSpec(e).key),xm=Math.max(LX.x,q.min),p=lxP(xm),R=lxModel(xm),rf=lxRun();if(q.k==='rpm')p.rpm=Math.max(q.min*.5,LX.x);
