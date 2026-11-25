@@ -15,6 +15,8 @@ Created by **Mohammed Hamed Al-Shabibi** (Instagram [@mhmd8p2](https://instagram
 | **Do the lab** | The CT 150 four-stroke petrol engine experiment on the CT 159 test stand, step by step. You prepare the stand, start the engine, load it with the brake, time the fuel and record your readings. The observation table, graphs and worked calculations fill in as you go, and you can export a lab report (print, Excel or web page). |
 | **Learn the engines** | 26 engines in 3D: inline, V, W and boxer car engines, diesel, Wankel, two-stroke, opposed-piston, radial, turbofan, liquid rocket, steam, Stirling, electric motor and hydrogen fuel cell. Every moving part is animated and the sound is made live from the engine's firing order. |
 | **Build in the garage** | Fit turbos, superchargers, carburettors, cams, heads, exhausts, nitrous, gearboxes and race internals. Every part card shows a picture of the part, and the part glows in the 3D view when you fit it. Then run the dyno, read the gauges and drive it (0–100 km/h, ¼ mile). |
+| **See inside the cylinder** | Under the 3D view: the cylinder's p–V diagram (normal and log scale) and pressure against crank angle, worked out one degree at a time and live as you rev. A dot follows piston 1 in the 3D view. Knock shows as ringing on the trace (and a ping in the sound), a misfire as a missing burn. Below it: where the fuel's energy goes and where the friction is. The other engines show their own diagram (indicator diagram for steam, Stirling loop, fuel-cell curve…). Press **p–V** under the 3D view for a small live trace on top of the engine. |
+| **Dyno day** | Pick the weather and altitude (a 45 °C Muscat summer, a cool morning, Jebel Shams at 3000 m, or your own) and see the measured power next to the SAE J1349 and DIN 70020 corrected figures. The ECU tab shows each fuel's properties. |
 | **Find faults** | Switch on real faults (vacuum leak, worn rings, blown head gasket, stretched timing chain…) and diagnose them from the gauges, the sound, the exhaust smoke and the OBD-II codes. Or play **Mystery fault**: the garage hides one fault and you find it. |
 | **Teacher mode** | The teacher sets the class experiment, sees the answers and checks students' tables. |
 | **All calculations** | Every formula the site uses, with symbols, units and live worked examples. |
@@ -25,7 +27,8 @@ Created by **Mohammed Hamed Al-Shabibi** (Instagram [@mhmd8p2](https://instagram
 2. Press **Start**, then hold **GAS** (or the space bar) to rev it.
 3. Add parts in the panel on the right. **Simple** shows the main parts and **All parts** shows every option. You can search any part by name.
 4. Press **Run dyno pull** to see the power and torque curves, or press **Drive**.
-5. Turn on **Gauges** under the 3D view to watch boost, lambda, exhaust temperature, oil pressure, coolant and more.
+5. Scroll down to **Inside the cylinder** to watch the pressure in the cylinder, or press **p–V** under the 3D view.
+6. Turn on **Gauges** under the 3D view to watch boost, lambda, exhaust temperature, oil pressure, coolant and more.
 
 If you get lost in the 3D view, press **⟲ Reset view**, or use the **3/4 · Front · Side · Top** buttons.
 
